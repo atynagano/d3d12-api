@@ -5,10 +5,10 @@ edition = "2021"
 
 license = "MIT"
 description = "D3D12 bindings and helpers"
-homepage = ""
-documentation = ""
-repository = ""
-readme = ""
+# homepage = ""
+# documentation = ""
+# repository = ""
+# readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
