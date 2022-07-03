@@ -1,6 +1,6 @@
 [package]
 name = "d3d12-api"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 license = "MIT/Apache-2.0"
@@ -13,5 +13,5 @@ description = "D3D12 bindings and helpers"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-d3d12-api-core = { path = "../d3d12-api-core", version = "0.1.0" }
-root-sig-macro = { path = "../root-sig-macro", version = "0.1.0" }
+d3d12-api-core = { path = "../d3d12-api-core", version = "0.1.1" }
+root-sig-macro = { path = "../root-sig-macro", version = "0.1.1" }
