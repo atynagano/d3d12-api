@@ -1,10 +1,7 @@
 use std::ffi::c_void;
-use std::fmt::Debug;
-use std::marker::PhantomPinned;
-use std::mem::{transmute};
-use std::ops::{Deref, DerefMut};
-use std::pin::{Pin};
-use std::ptr::{NonNull, null};
+use std::mem::transmute;
+use std::ops::Deref;
+use std::ptr::null;
 use crate::aliases::win32::graphics::direct3d12::{
     DxilLibraryDesc,
     DxilSubobjectToExportsAssociation,
@@ -295,7 +292,6 @@ impl<'a> StateObjectDesc<'a> {
             obj.location = objects.last().unwrap();
         }
         for obj in &mut objects {
-            unsafe {
                 if obj.ty == StateSubobjectType::SubobjectToExportsAssociation {
                     unsafe {
                         let desc: *mut SubobjectToExportsAssociation = transmute(obj.desc);
@@ -303,7 +299,6 @@ impl<'a> StateObjectDesc<'a> {
                         (*desc).subobject_to_associate = transmute(wrapper.location);
                     }
                 }
-            }
         }
         device.create_state_object(obj_type, objects.as_slice())
     }

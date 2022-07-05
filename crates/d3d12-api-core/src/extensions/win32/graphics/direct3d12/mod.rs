@@ -1,11 +1,9 @@
 use std::mem::transmute;
-use std::ops::Deref;
-use std::ptr::null_mut;
+use std::ptr::{NonNull, null_mut};
 use std::slice;
 use crate::core::win32::foundation::HResult;
 use crate::core::win32::graphics::direct3d12::*;
 use crate::core::win32::system::com::{AsParam, Param};
-use crate::helpers::{ToUtf16, Zeroed};
 
 // pub trait ID3D12ObjectEx {}
 // impl<T: ID3D12Object> ID3D12ObjectEx for T {}
@@ -23,13 +21,13 @@ use crate::helpers::{ToUtf16, Zeroed};
 // impl<T:  ID3D12Heap> ID3D12HeapEx for T {}
 
 pub trait ID3D12ResourceEx: ID3D12Resource {
-    fn map(&self, subresource: u32, read_range: std::ops::Range<usize>) -> Result<*const u8, HResult>;
+    fn map(&self, subresource: u32, read_range: std::ops::Range<usize>) -> Result<NonNull<()>, HResult>;
 }
 
 impl<T: ID3D12Resource> ID3D12ResourceEx for T {
-    fn map(&self, subresource: u32, read_range: std::ops::Range<usize>) -> Result<*const u8, HResult> {
-        let mut out: Option<*const u8> = None;
-        <Self as ID3D12Resource>::Map(self, subresource, Some(&unsafe { transmute(read_range) }), Some(unsafe { transmute(&mut out) }))?;
+    fn map(&self, subresource: u32, read_range: std::ops::Range<usize>) -> Result<NonNull<()>, HResult> {
+        let mut out: Option<NonNull<()>> = None;
+        <Self as ID3D12Resource>::Map(self, subresource, Some(&read_range), Some(&mut out))?;
         if let Some(out) = out {
             return Ok(out);
         }

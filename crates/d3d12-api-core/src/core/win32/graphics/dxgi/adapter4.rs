@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::dxgi::*;
+
 #[repr(C)]
 pub struct DxgiAdapter4(pub(crate) DxgiAdapter3);
 
@@ -29,16 +30,15 @@ pub trait IDxgiAdapter4: IDxgiAdapter3 {
 	fn as_adapter4(&self) -> &DxgiAdapter4;
 	fn into_adapter4(self) -> DxgiAdapter4;
 
-	fn GetDesc3(&self, ) -> Result<(DxgiAdapterDesc3), HResult> {
-		let vt = self.as_param();
-		let mut _desc: DxgiAdapterDesc3 = DxgiAdapterDesc3::zeroed();
-		let f: extern "system" fn(Param<Self>, _desc: &mut DxgiAdapterDesc3, ) -> HResult
-			= unsafe { transmute(vt[18]) };
-		let ret = f(vt, &mut _desc, );
-		if ret.is_ok() {
-			return Ok((_desc));
+	fn GetDesc3(&self, ) -> Result<DxgiAdapterDesc3, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_desc: MaybeUninit<DxgiAdapterDesc3> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_desc: *mut DxgiAdapterDesc3, ) -> HResult
+				= transmute(vt[18]);
+			let _ret_ = f(vt, _out_desc.as_mut_ptr(), );
+			Ok(_out_desc.assume_init())
 		}
-		Err(ret)
 	}
 }
 

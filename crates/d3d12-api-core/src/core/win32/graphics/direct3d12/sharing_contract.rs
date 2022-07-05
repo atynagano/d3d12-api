@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::graphics::direct3d12::*;
 use crate::core::win32::foundation::*;
+
 #[repr(C)]
 pub struct D3D12SharingContract(pub(crate) Unknown);
 
@@ -30,31 +31,39 @@ pub trait ID3D12SharingContract: IUnknown {
 	fn into_sharing_contract(self) -> D3D12SharingContract;
 
 	fn Present(&self, resource: &(impl ID3D12Resource + ?Sized), subresource: u32, window: HWnd, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, resource: VTable, subresource: u32, window: HWnd, ) -> ()
-			= unsafe { transmute(vt[3]) };
-		let ret = f(vt, resource.vtable(), subresource, window, );
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, resource: VTable, subresource: u32, window: HWnd, ) -> ()
+				= transmute(vt[3]);
+			let _ret_ = f(vt, resource.vtable(), subresource, window, );
+		}
 	}
 
 	fn SharedFenceSignal(&self, fence: &(impl ID3D12Fence + ?Sized), fence_value: u64, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, fence: VTable, fence_value: u64, ) -> ()
-			= unsafe { transmute(vt[4]) };
-		let ret = f(vt, fence.vtable(), fence_value, );
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, fence: VTable, fence_value: u64, ) -> ()
+				= transmute(vt[4]);
+			let _ret_ = f(vt, fence.vtable(), fence_value, );
+		}
 	}
 
 	fn BeginCapturableWork(&self, guid: &GUID, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, guid: &GUID, ) -> ()
-			= unsafe { transmute(vt[5]) };
-		let ret = f(vt, guid, );
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, guid: &GUID, ) -> ()
+				= transmute(vt[5]);
+			let _ret_ = f(vt, guid, );
+		}
 	}
 
 	fn EndCapturableWork(&self, guid: &GUID, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, guid: &GUID, ) -> ()
-			= unsafe { transmute(vt[6]) };
-		let ret = f(vt, guid, );
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, guid: &GUID, ) -> ()
+				= transmute(vt[6]);
+			let _ret_ = f(vt, guid, );
+		}
 	}
 }
 

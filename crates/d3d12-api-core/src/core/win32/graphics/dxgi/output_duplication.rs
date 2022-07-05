@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::graphics::dxgi::*;
 use crate::core::win32::foundation::*;
+
 #[repr(C)]
 pub struct DxgiOutputDuplication(pub(crate) DxgiObject);
 
@@ -29,93 +30,46 @@ pub trait IDxgiOutputDuplication: IDxgiObject {
 	fn as_output_duplication(&self) -> &DxgiOutputDuplication;
 	fn into_output_duplication(self) -> DxgiOutputDuplication;
 
-	fn GetDesc(&self, ) -> (DxgiOutDuplDesc) {
-		let vt = self.as_param();
-		let mut _desc: DxgiOutDuplDesc = DxgiOutDuplDesc::zeroed();
-		let f: extern "system" fn(Param<Self>, _desc: &mut DxgiOutDuplDesc, ) -> ()
-			= unsafe { transmute(vt[7]) };
-		let ret = f(vt, &mut _desc, );
-		return (_desc);
+	fn GetDesc(&self, ) -> DxgiOutDuplDesc {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_desc: MaybeUninit<DxgiOutDuplDesc> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_desc: *mut DxgiOutDuplDesc, ) -> ()
+				= transmute(vt[7]);
+			let _ret_ = f(vt, _out_desc.as_mut_ptr(), );
+			_out_desc.assume_init()
+		}
 	}
 
-	fn AcquireNextFrame(&self, timeout_in_milliseconds: u32, ) -> Result<(DxgiOutDuplFrameInfo, DxgiResource), HResult> {
-		let vt = self.as_param();
-		let mut _frame_info: DxgiOutDuplFrameInfo = DxgiOutDuplFrameInfo::zeroed();
-		let mut _desktop_resource: Option<DxgiResource> = None;
-		let f: extern "system" fn(Param<Self>, timeout_in_milliseconds: u32, _frame_info: &mut DxgiOutDuplFrameInfo, _desktop_resource: &mut Option<DxgiResource>, ) -> HResult
-			= unsafe { transmute(vt[8]) };
-		let ret = f(vt, timeout_in_milliseconds, &mut _frame_info, &mut _desktop_resource, );
-		if ret.is_ok() {
-			if let (Some(_desktop_resource)) = (_desktop_resource) {
-				return Ok((_frame_info, _desktop_resource));
-			}
+	fn MapDesktopSurface(&self, ) -> Result<DxgiMappedRect, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_locked_rect: MaybeUninit<DxgiMappedRect> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_locked_rect: *mut DxgiMappedRect, ) -> HResult
+				= transmute(vt[12]);
+			let _ret_ = f(vt, _out_locked_rect.as_mut_ptr(), );
+			Ok(_out_locked_rect.assume_init())
 		}
-		Err(ret)
-	}
-
-	fn GetFrameDirtyRects(&self, mut dirty_rects_buffer: &mut [Rect], ) -> Result<(u32), HResult> {
-		let vt = self.as_param();
-		let mut _dirty_rects_buffer_size_required: u32 = u32::zeroed();
-		let f: extern "system" fn(Param<Self>, dirty_rects_buffer_size: u32, dirty_rects_buffer: *mut Rect, _dirty_rects_buffer_size_required: &mut u32, ) -> HResult
-			= unsafe { transmute(vt[9]) };
-		let ret = f(vt, size_of_val(dirty_rects_buffer) as u32, dirty_rects_buffer.as_mut_ptr_or_null(), &mut _dirty_rects_buffer_size_required, );
-		if ret.is_ok() {
-			return Ok((_dirty_rects_buffer_size_required));
-		}
-		Err(ret)
-	}
-
-	fn GetFrameMoveRects(&self, mut move_rect_buffer: &mut [DxgiOutDuplMoveRect], ) -> Result<(u32), HResult> {
-		let vt = self.as_param();
-		let mut _move_rects_buffer_size_required: u32 = u32::zeroed();
-		let f: extern "system" fn(Param<Self>, move_rects_buffer_size: u32, move_rect_buffer: *mut DxgiOutDuplMoveRect, _move_rects_buffer_size_required: &mut u32, ) -> HResult
-			= unsafe { transmute(vt[10]) };
-		let ret = f(vt, size_of_val(move_rect_buffer) as u32, move_rect_buffer.as_mut_ptr_or_null(), &mut _move_rects_buffer_size_required, );
-		if ret.is_ok() {
-			return Ok((_move_rects_buffer_size_required));
-		}
-		Err(ret)
-	}
-
-	fn GetFramePointerShape(&self, mut pointer_shape_buffer: &mut [u8], ) -> Result<(u32, DxgiOutDuplPointerShapeInfo), HResult> {
-		let vt = self.as_param();
-		let mut _pointer_shape_buffer_size_required: u32 = u32::zeroed();
-		let mut _pointer_shape_info: DxgiOutDuplPointerShapeInfo = DxgiOutDuplPointerShapeInfo::zeroed();
-		let f: extern "system" fn(Param<Self>, pointer_shape_buffer_size: u32, pointer_shape_buffer: *mut u8, _pointer_shape_buffer_size_required: &mut u32, _pointer_shape_info: &mut DxgiOutDuplPointerShapeInfo, ) -> HResult
-			= unsafe { transmute(vt[11]) };
-		let ret = f(vt, pointer_shape_buffer.len() as u32, pointer_shape_buffer.as_mut_ptr_or_null(), &mut _pointer_shape_buffer_size_required, &mut _pointer_shape_info, );
-		if ret.is_ok() {
-			return Ok((_pointer_shape_buffer_size_required, _pointer_shape_info));
-		}
-		Err(ret)
-	}
-
-	fn MapDesktopSurface(&self, ) -> Result<(DxgiMappedRect), HResult> {
-		let vt = self.as_param();
-		let mut _locked_rect: DxgiMappedRect = DxgiMappedRect::zeroed();
-		let f: extern "system" fn(Param<Self>, _locked_rect: &mut DxgiMappedRect, ) -> HResult
-			= unsafe { transmute(vt[12]) };
-		let ret = f(vt, &mut _locked_rect, );
-		if ret.is_ok() {
-			return Ok((_locked_rect));
-		}
-		Err(ret)
 	}
 
 	fn UnMapDesktopSurface(&self, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> HResult
-			= unsafe { transmute(vt[13]) };
-		let ret = f(vt, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> HResult
+				= transmute(vt[13]);
+			let _ret_ = f(vt, );
+			_ret_.ok()
+		}
 	}
 
 	fn ReleaseFrame(&self, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> HResult
-			= unsafe { transmute(vt[14]) };
-		let ret = f(vt, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> HResult
+				= transmute(vt[14]);
+			let _ret_ = f(vt, );
+			_ret_.ok()
+		}
 	}
 }
 

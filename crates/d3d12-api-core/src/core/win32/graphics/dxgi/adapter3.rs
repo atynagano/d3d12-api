@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::dxgi::*;
+
 #[repr(C)]
 pub struct DxgiAdapter3(pub(crate) DxgiAdapter2);
 
@@ -29,62 +30,65 @@ pub trait IDxgiAdapter3: IDxgiAdapter2 {
 	fn as_adapter3(&self) -> &DxgiAdapter3;
 	fn into_adapter3(self) -> DxgiAdapter3;
 
-	fn RegisterHardwareContentProtectionTeardownStatusEvent(&self, event: Handle, ) -> Result<(u32), HResult> {
-		let vt = self.as_param();
-		let mut _pdw_cookie: u32 = u32::zeroed();
-		let f: extern "system" fn(Param<Self>, event: Handle, _pdw_cookie: &mut u32, ) -> HResult
-			= unsafe { transmute(vt[12]) };
-		let ret = f(vt, event, &mut _pdw_cookie, );
-		if ret.is_ok() {
-			return Ok((_pdw_cookie));
+	fn RegisterHardwareContentProtectionTeardownStatusEvent(&self, event: Handle, ) -> Result<u32, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_pdw_cookie: MaybeUninit<u32> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, event: Handle, _out_pdw_cookie: *mut u32, ) -> HResult
+				= transmute(vt[12]);
+			let _ret_ = f(vt, event, _out_pdw_cookie.as_mut_ptr(), );
+			Ok(_out_pdw_cookie.assume_init())
 		}
-		Err(ret)
 	}
 
 	fn UnregisterHardwareContentProtectionTeardownStatus(&self, cookie: u32, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, cookie: u32, ) -> ()
-			= unsafe { transmute(vt[13]) };
-		let ret = f(vt, cookie, );
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, cookie: u32, ) -> ()
+				= transmute(vt[13]);
+			let _ret_ = f(vt, cookie, );
+		}
 	}
 
-	fn QueryVideoMemoryInfo(&self, node_index: u32, memory_segment_group: DxgiMemorySegmentGroup, ) -> Result<(DxgiQueryVideoMemoryInfo), HResult> {
-		let vt = self.as_param();
-		let mut _video_memory_info: DxgiQueryVideoMemoryInfo = DxgiQueryVideoMemoryInfo::zeroed();
-		let f: extern "system" fn(Param<Self>, node_index: u32, memory_segment_group: DxgiMemorySegmentGroup, _video_memory_info: &mut DxgiQueryVideoMemoryInfo, ) -> HResult
-			= unsafe { transmute(vt[14]) };
-		let ret = f(vt, node_index, memory_segment_group, &mut _video_memory_info, );
-		if ret.is_ok() {
-			return Ok((_video_memory_info));
+	fn QueryVideoMemoryInfo(&self, node_index: u32, memory_segment_group: DxgiMemorySegmentGroup, ) -> Result<DxgiQueryVideoMemoryInfo, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_video_memory_info: MaybeUninit<DxgiQueryVideoMemoryInfo> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, node_index: u32, memory_segment_group: DxgiMemorySegmentGroup, _out_video_memory_info: *mut DxgiQueryVideoMemoryInfo, ) -> HResult
+				= transmute(vt[14]);
+			let _ret_ = f(vt, node_index, memory_segment_group, _out_video_memory_info.as_mut_ptr(), );
+			Ok(_out_video_memory_info.assume_init())
 		}
-		Err(ret)
 	}
 
 	fn SetVideoMemoryReservation(&self, node_index: u32, memory_segment_group: DxgiMemorySegmentGroup, reservation: u64, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, node_index: u32, memory_segment_group: DxgiMemorySegmentGroup, reservation: u64, ) -> HResult
-			= unsafe { transmute(vt[15]) };
-		let ret = f(vt, node_index, memory_segment_group, reservation, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, node_index: u32, memory_segment_group: DxgiMemorySegmentGroup, reservation: u64, ) -> HResult
+				= transmute(vt[15]);
+			let _ret_ = f(vt, node_index, memory_segment_group, reservation, );
+			_ret_.ok()
+		}
 	}
 
-	fn RegisterVideoMemoryBudgetChangeNotificationEvent(&self, event: Handle, ) -> Result<(u32), HResult> {
-		let vt = self.as_param();
-		let mut _pdw_cookie: u32 = u32::zeroed();
-		let f: extern "system" fn(Param<Self>, event: Handle, _pdw_cookie: &mut u32, ) -> HResult
-			= unsafe { transmute(vt[16]) };
-		let ret = f(vt, event, &mut _pdw_cookie, );
-		if ret.is_ok() {
-			return Ok((_pdw_cookie));
+	fn RegisterVideoMemoryBudgetChangeNotificationEvent(&self, event: Handle, ) -> Result<u32, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_pdw_cookie: MaybeUninit<u32> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, event: Handle, _out_pdw_cookie: *mut u32, ) -> HResult
+				= transmute(vt[16]);
+			let _ret_ = f(vt, event, _out_pdw_cookie.as_mut_ptr(), );
+			Ok(_out_pdw_cookie.assume_init())
 		}
-		Err(ret)
 	}
 
 	fn UnregisterVideoMemoryBudgetChangeNotification(&self, cookie: u32, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, cookie: u32, ) -> ()
-			= unsafe { transmute(vt[17]) };
-		let ret = f(vt, cookie, );
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, cookie: u32, ) -> ()
+				= transmute(vt[17]);
+			let _ret_ = f(vt, cookie, );
+		}
 	}
 }
 

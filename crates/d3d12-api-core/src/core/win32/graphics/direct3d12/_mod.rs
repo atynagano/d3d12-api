@@ -459,7 +459,7 @@ impl D3D12ClearValueAnonymousUnion {}
 
 impl D3D12ClearValue {}
 
-impl D3D12Range {}
+pub type D3D12Range = std::ops::Range<usize>;
 
 impl D3D12RangeUInt64 {}
 

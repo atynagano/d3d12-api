@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::dxgi::*;
+
 #[repr(C)]
 pub struct DxgiFactory5(pub(crate) DxgiFactory4);
 
@@ -28,14 +29,6 @@ impl Clone for DxgiFactory5 {
 pub trait IDxgiFactory5: IDxgiFactory4 {
 	fn as_factory5(&self) -> &DxgiFactory5;
 	fn into_factory5(self) -> DxgiFactory5;
-
-	fn CheckFeatureSupport(&self, feature: DxgiFeature, mut feature_support_data: &mut [u8], ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, feature: DxgiFeature, feature_support_data: *mut u8, feature_support_data_size: u32, ) -> HResult
-			= unsafe { transmute(vt[28]) };
-		let ret = f(vt, feature, feature_support_data.as_mut_ptr_or_null(), feature_support_data.len() as u32, );
-		ret.ok()
-	}
 }
 
 impl IDxgiFactory5 for DxgiFactory5 {

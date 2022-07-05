@@ -2,17 +2,18 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
 
 use crate::core::win32::graphics::direct3d12::*;
+
 #[repr(C)]
 pub struct D3D12DeviceRemovedExtendedDataSettings(pub(crate) Unknown);
 
@@ -29,24 +30,30 @@ pub trait ID3D12DeviceRemovedExtendedDataSettings: IUnknown {
 	fn into_device_removed_extended_data_settings(self) -> D3D12DeviceRemovedExtendedDataSettings;
 
 	fn SetAutoBreadcrumbsEnablement(&self, enablement: D3D12DredEnablement, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, enablement: D3D12DredEnablement, ) -> ()
-			= unsafe { transmute(vt[3]) };
-		let ret = f(vt, enablement, );
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, enablement: D3D12DredEnablement, ) -> ()
+				= transmute(vt[3]);
+			let _ret_ = f(vt, enablement, );
+		}
 	}
 
 	fn SetPageFaultEnablement(&self, enablement: D3D12DredEnablement, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, enablement: D3D12DredEnablement, ) -> ()
-			= unsafe { transmute(vt[4]) };
-		let ret = f(vt, enablement, );
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, enablement: D3D12DredEnablement, ) -> ()
+				= transmute(vt[4]);
+			let _ret_ = f(vt, enablement, );
+		}
 	}
 
 	fn SetWatsonDumpEnablement(&self, enablement: D3D12DredEnablement, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, enablement: D3D12DredEnablement, ) -> ()
-			= unsafe { transmute(vt[5]) };
-		let ret = f(vt, enablement, );
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, enablement: D3D12DredEnablement, ) -> ()
+				= transmute(vt[5]);
+			let _ret_ = f(vt, enablement, );
+		}
 	}
 }
 

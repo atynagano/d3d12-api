@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -15,6 +15,7 @@ use crate::core::win32::system::com::*;
 use crate::core::win32::graphics::direct3d12::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::dxgi::common::*;
+
 #[repr(C)]
 pub struct D3D12GraphicsCommandList1(pub(crate) D3D12GraphicsCommandList);
 
@@ -30,46 +31,40 @@ pub trait ID3D12GraphicsCommandList1: ID3D12GraphicsCommandList {
 	fn as_graphics_command_list1(&self) -> &D3D12GraphicsCommandList1;
 	fn into_graphics_command_list1(self) -> D3D12GraphicsCommandList1;
 
-	fn AtomicCopyBufferUINT(&self, dst_buffer: &(impl ID3D12Resource + ?Sized), dst_offset: u64, src_buffer: &(impl ID3D12Resource + ?Sized), src_offset: u64, dependent_resources: &[Param<D3D12Resource>], dependent_subresource_ranges: &[D3D12SubresourceRangeUInt64], ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, dst_buffer: VTable, dst_offset: u64, src_buffer: VTable, src_offset: u64, dependencies: u32, dependent_resources: *const Param<D3D12Resource>, dependent_subresource_ranges: *const D3D12SubresourceRangeUInt64, ) -> ()
-			= unsafe { transmute(vt[60]) };
-		let ret = f(vt, dst_buffer.vtable(), dst_offset, src_buffer.vtable(), src_offset, dependent_resources.len() as u32, dependent_resources.as_ptr_or_null(), dependent_subresource_ranges.as_ptr_or_null(), );
-	}
-
-	fn AtomicCopyBufferUINT64(&self, dst_buffer: &(impl ID3D12Resource + ?Sized), dst_offset: u64, src_buffer: &(impl ID3D12Resource + ?Sized), src_offset: u64, dependent_resources: &[Param<D3D12Resource>], dependent_subresource_ranges: &[D3D12SubresourceRangeUInt64], ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, dst_buffer: VTable, dst_offset: u64, src_buffer: VTable, src_offset: u64, dependencies: u32, dependent_resources: *const Param<D3D12Resource>, dependent_subresource_ranges: *const D3D12SubresourceRangeUInt64, ) -> ()
-			= unsafe { transmute(vt[61]) };
-		let ret = f(vt, dst_buffer.vtable(), dst_offset, src_buffer.vtable(), src_offset, dependent_resources.len() as u32, dependent_resources.as_ptr_or_null(), dependent_subresource_ranges.as_ptr_or_null(), );
-	}
-
 	fn OMSetDepthBounds(&self, min: f32, max: f32, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, min: f32, max: f32, ) -> ()
-			= unsafe { transmute(vt[62]) };
-		let ret = f(vt, min, max, );
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, min: f32, max: f32, ) -> ()
+				= transmute(vt[62]);
+			let _ret_ = f(vt, min, max, );
+		}
 	}
 
 	fn SetSamplePositions(&self, num_samples_per_pixel: u32, num_pixels: u32, sample_positions: &D3D12SamplePosition, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, num_samples_per_pixel: u32, num_pixels: u32, sample_positions: &D3D12SamplePosition, ) -> ()
-			= unsafe { transmute(vt[63]) };
-		let ret = f(vt, num_samples_per_pixel, num_pixels, sample_positions, );
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, num_samples_per_pixel: u32, num_pixels: u32, sample_positions: &D3D12SamplePosition, ) -> ()
+				= transmute(vt[63]);
+			let _ret_ = f(vt, num_samples_per_pixel, num_pixels, sample_positions, );
+		}
 	}
 
 	fn ResolveSubresourceRegion(&self, dst_resource: &(impl ID3D12Resource + ?Sized), dst_subresource: u32, dst_x: u32, dst_y: u32, src_resource: &(impl ID3D12Resource + ?Sized), src_subresource: u32, src_rect: Option<&Rect>, format: DxgiFormat, resolve_mode: D3D12ResolveMode, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, dst_resource: VTable, dst_subresource: u32, dst_x: u32, dst_y: u32, src_resource: VTable, src_subresource: u32, src_rect: Option<&Rect>, format: DxgiFormat, resolve_mode: D3D12ResolveMode, ) -> ()
-			= unsafe { transmute(vt[64]) };
-		let ret = f(vt, dst_resource.vtable(), dst_subresource, dst_x, dst_y, src_resource.vtable(), src_subresource, src_rect, format, resolve_mode, );
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, dst_resource: VTable, dst_subresource: u32, dst_x: u32, dst_y: u32, src_resource: VTable, src_subresource: u32, src_rect: *const c_void, format: DxgiFormat, resolve_mode: D3D12ResolveMode, ) -> ()
+				= transmute(vt[64]);
+			let _ret_ = f(vt, dst_resource.vtable(), dst_subresource, dst_x, dst_y, src_resource.vtable(), src_subresource, transmute(src_rect), format, resolve_mode, );
+		}
 	}
 
 	fn SetViewInstanceMask(&self, mask: u32, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, mask: u32, ) -> ()
-			= unsafe { transmute(vt[65]) };
-		let ret = f(vt, mask, );
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, mask: u32, ) -> ()
+				= transmute(vt[65]);
+			let _ret_ = f(vt, mask, );
+		}
 	}
 }
 

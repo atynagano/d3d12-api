@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
+
 #[repr(C)]
 pub struct DxgiObject(pub(crate) Unknown);
 
@@ -29,46 +30,30 @@ pub trait IDxgiObject: IUnknown {
 	fn as_object(&self) -> &DxgiObject;
 	fn into_object(self) -> DxgiObject;
 
-	fn SetPrivateData(&self, name: &GUID, data: &[u8], ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, name: &GUID, data_size: u32, data: *const u8, ) -> HResult
-			= unsafe { transmute(vt[3]) };
-		let ret = f(vt, name, data.len() as u32, data.as_ptr_or_null(), );
-		ret.ok()
-	}
-
 	fn SetPrivateDataInterface(&self, name: &GUID, unknown: Option<&Unknown>, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, name: &GUID, unknown: Option<VTable>, ) -> HResult
-			= unsafe { transmute(vt[4]) };
-		let ret = f(vt, name, option_to_vtable(unknown), );
-		ret.ok()
-	}
-
-	fn GetPrivateData<'a>(&self, name: &GUID, mut data: &'a mut [u8], ) -> Result<(&'a mut [u8]), HResult> {
-		let vt = self.as_param();
-		let mut data_size = data.len() as u32;
-		let f: extern "system" fn(Param<Self>, name: &GUID, data_size: &mut u32, data: *mut u8, ) -> HResult
-			= unsafe { transmute(vt[5]) };
-		let ret = f(vt, name, &mut data_size, data.as_mut_ptr_or_null(), );
-		if ret.is_ok() {
-			return Ok((&mut data[..(data_size as usize)]));
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, name: &GUID, unknown: *const c_void, ) -> HResult
+				= transmute(vt[4]);
+			let _ret_ = f(vt, name, option_to_vtable(unknown), );
+			_ret_.ok()
 		}
-		Err(ret)
 	}
 
-	fn GetParent<T: IUnknown>(&self, ) -> Result<(T), HResult> {
-		let vt = self.as_param();
-		let mut _parent: Option<Unknown> = None;
-		let f: extern "system" fn(Param<Self>, riid: &GUID, _parent: &mut Option<Unknown>, ) -> HResult
-			= unsafe { transmute(vt[6]) };
-		let ret = f(vt, T::IID, &mut _parent, );
-		if ret.is_ok() {
-			if let (Some(_parent)) = (_parent) {
-				return Ok((T::from(_parent)));
+	fn GetParent<T: IUnknown>(&self, ) -> Result<T, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_parent: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, riid: &GUID, _out_parent: *mut c_void, ) -> HResult
+				= transmute(vt[6]);
+			let _ret_ = f(vt, T::IID, transmute(&mut _out_parent), );
+			if _ret_.is_ok() {
+				if let Some(_out_parent) = _out_parent {
+					return Ok(T::from(_out_parent));
+				}
 			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 }
 

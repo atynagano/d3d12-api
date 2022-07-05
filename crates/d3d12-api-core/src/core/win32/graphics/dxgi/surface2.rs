@@ -2,17 +2,18 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
+
 #[repr(C)]
 pub struct DxgiSurface2(pub(crate) DxgiSurface1);
 
@@ -27,21 +28,6 @@ impl Clone for DxgiSurface2 {
 pub trait IDxgiSurface2: IDxgiSurface1 {
 	fn as_surface2(&self) -> &DxgiSurface2;
 	fn into_surface2(self) -> DxgiSurface2;
-
-	fn GetResource<T: IUnknown>(&self, ) -> Result<(T, u32), HResult> {
-		let vt = self.as_param();
-		let mut _parent_resource: Option<Unknown> = None;
-		let mut _subresource_index: u32 = u32::zeroed();
-		let f: extern "system" fn(Param<Self>, riid: &GUID, _parent_resource: &mut Option<Unknown>, _subresource_index: &mut u32, ) -> HResult
-			= unsafe { transmute(vt[13]) };
-		let ret = f(vt, T::IID, &mut _parent_resource, &mut _subresource_index, );
-		if ret.is_ok() {
-			if let (Some(_parent_resource), ) = (_parent_resource, ) {
-				return Ok((T::from(_parent_resource), _subresource_index));
-			}
-		}
-		Err(ret)
-	}
 }
 
 impl IDxgiSurface2 for DxgiSurface2 {

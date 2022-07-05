@@ -1,15 +1,29 @@
-use std::mem::transmute;
-use crate::core::win32::ui::windows_and_messaging::{HCursor, LoadCursorA, WindowStyle};
-use crate::core::win32::foundation::HInstance;
+use std::ffi::c_void;
+use std::mem::{MaybeUninit, transmute};
+use std::ptr::null;
+use crate::core::win32::ui::windows_and_messaging::{HCursor, LoadCursorA, Msg, PeekMessageRemoveType, WindowStyle};
+use crate::core::win32::foundation::{Bool, HInstance, HWnd};
 use crate::helpers::{AsPtrOrNull, ToNullTerminated};
 
 pub fn LoadCursorAById(cursor_id: CursorId) -> (HCursor) {
     unsafe {
         #[link(name = "USER32")]
         extern "system" {
-            fn LoadCursorA(hInstance: Option<HInstance>, lpCursorName: *const u8) -> HCursor;
+            fn LoadCursorA(hInstance: *const c_void, lpCursorName: *const u8) -> HCursor;
         }
-        LoadCursorA(None, cursor_id as i32 as isize as *const u8)
+        LoadCursorA(null(), cursor_id as i32 as isize as *const u8)
+    }
+}
+
+pub fn PeekMessageA(wnd: Option<HWnd>, msg_filter_min: u32, msg_filter_max: u32, remove_msg: PeekMessageRemoveType) -> Option<Msg> {
+    unsafe {
+        #[link(name = "USER32")]
+        extern "system" {
+            fn PeekMessageA(msg: *mut Msg, wnd: *const c_void, msg_filter_min: u32, msg_filter_max: u32, remove_msg: PeekMessageRemoveType) -> Bool;
+        }
+        let mut msg: MaybeUninit<Msg> = MaybeUninit::uninit();
+        let ret = PeekMessageA(msg.as_mut_ptr(), transmute(wnd), msg_filter_min, msg_filter_max, remove_msg);
+        if ret.to_bool() { Some(msg.assume_init()) } else { None }
     }
 }
 

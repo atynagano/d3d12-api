@@ -2,7 +2,7 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::mem::transmute;
@@ -15,6 +15,7 @@ use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::dxgi::common::*;
 use crate::core::win32::graphics::direct3d::*;
 use crate::core::win32::system::com::*;
+
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct D3D12CommandQueueDesc {

@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::dxgi::*;
+
 #[repr(C)]
 pub struct DxgiDebug(pub(crate) Unknown);
 
@@ -30,11 +31,13 @@ pub trait IDxgiDebug: IUnknown {
 	fn into_debug(self) -> DxgiDebug;
 
 	fn ReportLiveObjects(&self, apiid: GUID, flags: DxgiDebugRLoFlags, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, apiid: GUID, flags: DxgiDebugRLoFlags, ) -> HResult
-			= unsafe { transmute(vt[3]) };
-		let ret = f(vt, apiid, flags, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, apiid: GUID, flags: DxgiDebugRLoFlags, ) -> HResult
+				= transmute(vt[3]);
+			let _ret_ = f(vt, apiid, flags, );
+			_ret_.ok()
+		}
 	}
 }
 

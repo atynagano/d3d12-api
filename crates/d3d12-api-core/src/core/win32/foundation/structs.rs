@@ -2,7 +2,7 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::mem::transmute;
@@ -10,6 +10,7 @@ use std::ptr::NonNull;
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::system::com::*;
+
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct Rect {
@@ -62,11 +63,5 @@ pub struct HInstance {
 #[derive(Copy, Clone, Debug)]
 pub struct BStr<'a> {
 	pub value: &'a u16,
-}
-
-#[repr(C)]
-#[derive(Copy, Clone, Debug)]
-pub struct Boolean {
-	pub value: u8,
 }
 

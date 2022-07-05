@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::dxgi::*;
+
 #[repr(C)]
 pub struct DxgiSwapChain4(pub(crate) DxgiSwapChain3);
 
@@ -30,11 +31,14 @@ pub trait IDxgiSwapChain4: IDxgiSwapChain3 {
 	fn into_swap_chain4(self) -> DxgiSwapChain4;
 
 	fn SetHDRMetaData(&self, ty: DxgiHdrMetaDataType, meta_data: Option<&[u8]>, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ty: DxgiHdrMetaDataType, size: u32, meta_data: *const u8, ) -> HResult
-			= unsafe { transmute(vt[40]) };
-		let ret = f(vt, ty, meta_data.len() as u32, meta_data.as_ptr_or_null(), );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let (_ptr_meta_data, _len_meta_data) = meta_data.deconstruct();
+			let f: extern "system" fn(Param<Self>, ty: DxgiHdrMetaDataType, size: u32, meta_data: *const u8, ) -> HResult
+				= transmute(vt[40]);
+			let _ret_ = f(vt, ty, _len_meta_data as u32, _ptr_meta_data, );
+			_ret_.ok()
+		}
 	}
 }
 

@@ -2,17 +2,18 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
+
 #[repr(C)]
 pub struct DxgiDevice1(pub(crate) DxgiDevice);
 
@@ -29,23 +30,24 @@ pub trait IDxgiDevice1: IDxgiDevice {
 	fn into_device1(self) -> DxgiDevice1;
 
 	fn SetMaximumFrameLatency(&self, max_latency: u32, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, max_latency: u32, ) -> HResult
-			= unsafe { transmute(vt[12]) };
-		let ret = f(vt, max_latency, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, max_latency: u32, ) -> HResult
+				= transmute(vt[12]);
+			let _ret_ = f(vt, max_latency, );
+			_ret_.ok()
+		}
 	}
 
-	fn GetMaximumFrameLatency(&self, ) -> Result<(u32), HResult> {
-		let vt = self.as_param();
-		let mut _max_latency: u32 = u32::zeroed();
-		let f: extern "system" fn(Param<Self>, _max_latency: &mut u32, ) -> HResult
-			= unsafe { transmute(vt[13]) };
-		let ret = f(vt, &mut _max_latency, );
-		if ret.is_ok() {
-			return Ok((_max_latency));
+	fn GetMaximumFrameLatency(&self, ) -> Result<u32, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_max_latency: MaybeUninit<u32> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_max_latency: *mut u32, ) -> HResult
+				= transmute(vt[13]);
+			let _ret_ = f(vt, _out_max_latency.as_mut_ptr(), );
+			Ok(_out_max_latency.assume_init())
 		}
-		Err(ret)
 	}
 }
 

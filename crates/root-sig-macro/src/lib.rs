@@ -1,13 +1,10 @@
 use proc_macro::TokenStream;
-use std::fmt::{Debug, Display, Formatter};
 use std::mem::transmute;
-use std::ops::{BitOrAssign, Deref};
+use std::ops::Deref;
 use std::str::FromStr;
 use proc_macro2::Group;
-use quote::{quote, ToTokens};
 use syn::*;
 use syn::parse::*;
-use syn::spanned::Spanned;
 use d3d12_api_core::aliases::win32::graphics::direct3d12::*;
 use d3d12_api_core::core::win32::graphics::direct3d12::{D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND, D3D12SerializeVersionedRootSignature, D3DRootSignatureVersion};
 

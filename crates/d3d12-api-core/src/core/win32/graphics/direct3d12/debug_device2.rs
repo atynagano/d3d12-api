@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::direct3d12::*;
+
 #[repr(C)]
 pub struct D3D12DebugDevice2(pub(crate) D3D12DebugDevice);
 
@@ -28,22 +29,6 @@ impl Clone for D3D12DebugDevice2 {
 pub trait ID3D12DebugDevice2: ID3D12DebugDevice {
 	fn as_debug_device2(&self) -> &D3D12DebugDevice2;
 	fn into_debug_device2(self) -> D3D12DebugDevice2;
-
-	fn SetDebugParameter(&self, ty: D3D12DebugDeviceParameterType, data: &[u8], ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ty: D3D12DebugDeviceParameterType, data: *const u8, data_size: u32, ) -> HResult
-			= unsafe { transmute(vt[6]) };
-		let ret = f(vt, ty, data.as_ptr_or_null(), data.len() as u32, );
-		ret.ok()
-	}
-
-	fn GetDebugParameter(&self, ty: D3D12DebugDeviceParameterType, mut data: &mut [u8], ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ty: D3D12DebugDeviceParameterType, data: *mut u8, data_size: u32, ) -> HResult
-			= unsafe { transmute(vt[7]) };
-		let ret = f(vt, ty, data.as_mut_ptr_or_null(), data.len() as u32, );
-		ret.ok()
-	}
 }
 
 impl ID3D12DebugDevice2 for D3D12DebugDevice2 {

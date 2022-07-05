@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::direct3d::dxc::*;
+
 #[repr(C)]
 pub struct DxcCompilerArgs(pub(crate) Unknown);
 
@@ -29,44 +30,57 @@ pub trait IDxcCompilerArgs: IUnknown {
 	fn as_compiler_args(&self) -> &DxcCompilerArgs;
 	fn into_compiler_args(self) -> DxcCompilerArgs;
 
-	fn GetArguments(&self, ) -> (&PWStr) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> &PWStr
-			= unsafe { transmute(vt[3]) };
-		let ret = f(vt, );
-		return (ret);
+	fn GetArguments(&self, ) -> &PWStr {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> &PWStr
+				= transmute(vt[3]);
+			let _ret_ = f(vt, );
+			_ret_
+		}
 	}
 
-	fn GetCount(&self, ) -> (u32) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> u32
-			= unsafe { transmute(vt[4]) };
-		let ret = f(vt, );
-		return (ret);
+	fn GetCount(&self, ) -> u32 {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> u32
+				= transmute(vt[4]);
+			let _ret_ = f(vt, );
+			_ret_
+		}
 	}
 
 	fn AddArguments(&self, arguments: Option<&[&str]>, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, arguments: *const PWStr, arg_count: u32, ) -> HResult
-			= unsafe { transmute(vt[5]) };
-		let ret = f(vt, arguments.to_utf16_vec().ptr(), arguments.len() as u32, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let (_ptr_arguments, _len_arguments) = arguments.deconstruct();
+			let f: extern "system" fn(Param<Self>, arguments: *const PWStr, arg_count: u32, ) -> HResult
+				= transmute(vt[5]);
+			let _ret_ = f(vt, arguments.to_utf16_vec().ptr(), _len_arguments as u32, );
+			_ret_.ok()
+		}
 	}
 
 	fn AddArgumentsUTF8(&self, arguments: Option<&[&str]>, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, arguments: *const PStr, arg_count: u32, ) -> HResult
-			= unsafe { transmute(vt[6]) };
-		let ret = f(vt, arguments.to_null_terminated_vec().ptr(), arguments.len() as u32, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let (_ptr_arguments, _len_arguments) = arguments.deconstruct();
+			let f: extern "system" fn(Param<Self>, arguments: *const PStr, arg_count: u32, ) -> HResult
+				= transmute(vt[6]);
+			let _ret_ = f(vt, arguments.to_null_terminated_vec().ptr(), _len_arguments as u32, );
+			_ret_.ok()
+		}
 	}
 
 	fn AddDefines(&self, defines: &[DxcDefine], ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, defines: *const DxcDefine, define_count: u32, ) -> HResult
-			= unsafe { transmute(vt[7]) };
-		let ret = f(vt, defines.as_ptr_or_null(), defines.len() as u32, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let (_ptr_defines, _len_defines) = defines.deconstruct();
+			let f: extern "system" fn(Param<Self>, defines: *const DxcDefine, define_count: u32, ) -> HResult
+				= transmute(vt[7]);
+			let _ret_ = f(vt, _ptr_defines, _len_defines as u32, );
+			_ret_.ok()
+		}
 	}
 }
 

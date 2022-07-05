@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::direct3d12::*;
+
 #[repr(C)]
 pub struct D3D12Device5(pub(crate) D3D12Device4);
 
@@ -29,70 +30,66 @@ pub trait ID3D12Device5: ID3D12Device4 {
 	fn as_device5(&self) -> &D3D12Device5;
 	fn into_device5(self) -> D3D12Device5;
 
-	fn CreateLifetimeTracker<T: IUnknown>(&self, owner: &(impl ID3D12LifetimeOwner + ?Sized), ) -> Result<(T), HResult> {
-		let vt = self.as_param();
-		let mut _tracker: Option<Unknown> = None;
-		let f: extern "system" fn(Param<Self>, owner: VTable, riid: &GUID, _tracker: &mut Option<Unknown>, ) -> HResult
-			= unsafe { transmute(vt[57]) };
-		let ret = f(vt, owner.vtable(), T::IID, &mut _tracker, );
-		if ret.is_ok() {
-			if let (Some(_tracker)) = (_tracker) {
-				return Ok((T::from(_tracker)));
+	fn CreateLifetimeTracker<T: IUnknown>(&self, owner: &(impl ID3D12LifetimeOwner + ?Sized), ) -> Result<T, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_tracker: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, owner: VTable, riid: &GUID, _out_tracker: *mut c_void, ) -> HResult
+				= transmute(vt[57]);
+			let _ret_ = f(vt, owner.vtable(), T::IID, transmute(&mut _out_tracker), );
+			if _ret_.is_ok() {
+				if let Some(_out_tracker) = _out_tracker {
+					return Ok(T::from(_out_tracker));
+				}
 			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 
 	fn RemoveDevice(&self, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> ()
-			= unsafe { transmute(vt[58]) };
-		let ret = f(vt, );
-	}
-
-	fn CreateMetaCommand<T: IUnknown>(&self, command_id: &GUID, node_mask: u32, creation_parameters_data: Option<&[u8]>, ) -> Result<(T), HResult> {
-		let vt = self.as_param();
-		let mut _meta_command: Option<Unknown> = None;
-		let f: extern "system" fn(Param<Self>, command_id: &GUID, node_mask: u32, creation_parameters_data: *const u8, creation_parameters_data_size_in_bytes: usize, riid: &GUID, _meta_command: &mut Option<Unknown>, ) -> HResult
-			= unsafe { transmute(vt[61]) };
-		let ret = f(vt, command_id, node_mask, creation_parameters_data.as_ptr_or_null(), creation_parameters_data.len() as usize, T::IID, &mut _meta_command, );
-		if ret.is_ok() {
-			if let (Some(_meta_command)) = (_meta_command) {
-				return Ok((T::from(_meta_command)));
-			}
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> ()
+				= transmute(vt[58]);
+			let _ret_ = f(vt, );
 		}
-		Err(ret)
 	}
 
-	fn CreateStateObject<T: IUnknown>(&self, desc: &D3D12StateObjectDesc, ) -> Result<(T), HResult> {
-		let vt = self.as_param();
-		let mut _state_object: Option<Unknown> = None;
-		let f: extern "system" fn(Param<Self>, desc: &D3D12StateObjectDesc, riid: &GUID, _state_object: &mut Option<Unknown>, ) -> HResult
-			= unsafe { transmute(vt[62]) };
-		let ret = f(vt, desc, T::IID, &mut _state_object, );
-		if ret.is_ok() {
-			if let (Some(_state_object)) = (_state_object) {
-				return Ok((T::from(_state_object)));
+	fn CreateStateObject<T: IUnknown>(&self, desc: &D3D12StateObjectDesc, ) -> Result<T, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_state_object: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, desc: &D3D12StateObjectDesc, riid: &GUID, _out_state_object: *mut c_void, ) -> HResult
+				= transmute(vt[62]);
+			let _ret_ = f(vt, desc, T::IID, transmute(&mut _out_state_object), );
+			if _ret_.is_ok() {
+				if let Some(_out_state_object) = _out_state_object {
+					return Ok(T::from(_out_state_object));
+				}
 			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 
-	fn GetRaytracingAccelerationStructurePrebuildInfo(&self, desc: &D3D12BuildRaytracingAccelerationStructureInputs, ) -> (D3D12RaytracingAccelerationStructurePrebuildInfo) {
-		let vt = self.as_param();
-		let mut _info: D3D12RaytracingAccelerationStructurePrebuildInfo = D3D12RaytracingAccelerationStructurePrebuildInfo::zeroed();
-		let f: extern "system" fn(Param<Self>, desc: &D3D12BuildRaytracingAccelerationStructureInputs, _info: &mut D3D12RaytracingAccelerationStructurePrebuildInfo, ) -> ()
-			= unsafe { transmute(vt[63]) };
-		let ret = f(vt, desc, &mut _info, );
-		return (_info);
+	fn GetRaytracingAccelerationStructurePrebuildInfo(&self, desc: &D3D12BuildRaytracingAccelerationStructureInputs, ) -> D3D12RaytracingAccelerationStructurePrebuildInfo {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_info: MaybeUninit<D3D12RaytracingAccelerationStructurePrebuildInfo> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, desc: &D3D12BuildRaytracingAccelerationStructureInputs, _out_info: *mut D3D12RaytracingAccelerationStructurePrebuildInfo, ) -> ()
+				= transmute(vt[63]);
+			let _ret_ = f(vt, desc, _out_info.as_mut_ptr(), );
+			_out_info.assume_init()
+		}
 	}
 
-	fn CheckDriverMatchingIdentifier(&self, serialized_data_type: D3D12SerializedDataType, identifier_to_check: &D3D12SerializedDataDriverMatchingIdentifier, ) -> (D3D12DriverMatchingIdentifierStatus) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, serialized_data_type: D3D12SerializedDataType, identifier_to_check: &D3D12SerializedDataDriverMatchingIdentifier, ) -> D3D12DriverMatchingIdentifierStatus
-			= unsafe { transmute(vt[64]) };
-		let ret = f(vt, serialized_data_type, identifier_to_check, );
-		return (ret);
+	fn CheckDriverMatchingIdentifier(&self, serialized_data_type: D3D12SerializedDataType, identifier_to_check: &D3D12SerializedDataDriverMatchingIdentifier, ) -> D3D12DriverMatchingIdentifierStatus {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, serialized_data_type: D3D12SerializedDataType, identifier_to_check: &D3D12SerializedDataDriverMatchingIdentifier, ) -> D3D12DriverMatchingIdentifierStatus
+				= transmute(vt[64]);
+			let _ret_ = f(vt, serialized_data_type, identifier_to_check, );
+			_ret_
+		}
 	}
 }
 

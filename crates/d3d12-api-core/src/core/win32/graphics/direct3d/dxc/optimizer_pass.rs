@@ -2,17 +2,18 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
+
 #[repr(C)]
 pub struct DxcOptimizerPass(pub(crate) Unknown);
 
@@ -28,64 +29,79 @@ pub trait IDxcOptimizerPass: IUnknown {
 	fn as_optimizer_pass(&self) -> &DxcOptimizerPass;
 	fn into_optimizer_pass(self) -> DxcOptimizerPass;
 
-	fn GetOptionName(&self, ) -> Result<(PWStr), HResult> {
-		let vt = self.as_param();
-		let mut _result: PWStr = PWStr::zeroed();
-		let f: extern "system" fn(Param<Self>, _result: &mut PWStr, ) -> HResult
-			= unsafe { transmute(vt[3]) };
-		let ret = f(vt, &mut _result, );
-		if ret.is_ok() {
-			return Ok((_result));
+	fn GetOptionName(&self, ) -> Result<PWStr, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_result: Option<PWStr> = None;
+			let f: extern "system" fn(Param<Self>, _out_result: *mut c_void, ) -> HResult
+				= transmute(vt[3]);
+			let _ret_ = f(vt, transmute(&mut _out_result), );
+			if _ret_.is_ok() {
+				if let Some(_out_result) = _out_result {
+					return Ok(_out_result);
+				}
+			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 
-	fn GetDescription(&self, ) -> Result<(PWStr), HResult> {
-		let vt = self.as_param();
-		let mut _result: PWStr = PWStr::zeroed();
-		let f: extern "system" fn(Param<Self>, _result: &mut PWStr, ) -> HResult
-			= unsafe { transmute(vt[4]) };
-		let ret = f(vt, &mut _result, );
-		if ret.is_ok() {
-			return Ok((_result));
+	fn GetDescription(&self, ) -> Result<PWStr, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_result: Option<PWStr> = None;
+			let f: extern "system" fn(Param<Self>, _out_result: *mut c_void, ) -> HResult
+				= transmute(vt[4]);
+			let _ret_ = f(vt, transmute(&mut _out_result), );
+			if _ret_.is_ok() {
+				if let Some(_out_result) = _out_result {
+					return Ok(_out_result);
+				}
+			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 
-	fn GetOptionArgCount(&self, ) -> Result<(u32), HResult> {
-		let vt = self.as_param();
-		let mut _count: u32 = u32::zeroed();
-		let f: extern "system" fn(Param<Self>, _count: &mut u32, ) -> HResult
-			= unsafe { transmute(vt[5]) };
-		let ret = f(vt, &mut _count, );
-		if ret.is_ok() {
-			return Ok((_count));
+	fn GetOptionArgCount(&self, ) -> Result<u32, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_count: MaybeUninit<u32> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_count: *mut u32, ) -> HResult
+				= transmute(vt[5]);
+			let _ret_ = f(vt, _out_count.as_mut_ptr(), );
+			Ok(_out_count.assume_init())
 		}
-		Err(ret)
 	}
 
-	fn GetOptionArgName(&self, arg_index: u32, ) -> Result<(PWStr), HResult> {
-		let vt = self.as_param();
-		let mut _result: PWStr = PWStr::zeroed();
-		let f: extern "system" fn(Param<Self>, arg_index: u32, _result: &mut PWStr, ) -> HResult
-			= unsafe { transmute(vt[6]) };
-		let ret = f(vt, arg_index, &mut _result, );
-		if ret.is_ok() {
-			return Ok((_result));
+	fn GetOptionArgName(&self, arg_index: u32, ) -> Result<PWStr, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_result: Option<PWStr> = None;
+			let f: extern "system" fn(Param<Self>, arg_index: u32, _out_result: *mut c_void, ) -> HResult
+				= transmute(vt[6]);
+			let _ret_ = f(vt, arg_index, transmute(&mut _out_result), );
+			if _ret_.is_ok() {
+				if let Some(_out_result) = _out_result {
+					return Ok(_out_result);
+				}
+			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 
-	fn GetOptionArgDescription(&self, arg_index: u32, ) -> Result<(PWStr), HResult> {
-		let vt = self.as_param();
-		let mut _result: PWStr = PWStr::zeroed();
-		let f: extern "system" fn(Param<Self>, arg_index: u32, _result: &mut PWStr, ) -> HResult
-			= unsafe { transmute(vt[7]) };
-		let ret = f(vt, arg_index, &mut _result, );
-		if ret.is_ok() {
-			return Ok((_result));
+	fn GetOptionArgDescription(&self, arg_index: u32, ) -> Result<PWStr, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_result: Option<PWStr> = None;
+			let f: extern "system" fn(Param<Self>, arg_index: u32, _out_result: *mut c_void, ) -> HResult
+				= transmute(vt[7]);
+			let _ret_ = f(vt, arg_index, transmute(&mut _out_result), );
+			if _ret_.is_ok() {
+				if let Some(_out_result) = _out_result {
+					return Ok(_out_result);
+				}
+			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 }
 

@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::dxgi::*;
+
 #[repr(C)]
 pub struct DxgiFactory1(pub(crate) DxgiFactory);
 
@@ -29,26 +30,30 @@ pub trait IDxgiFactory1: IDxgiFactory {
 	fn as_factory1(&self) -> &DxgiFactory1;
 	fn into_factory1(self) -> DxgiFactory1;
 
-	fn EnumAdapters1(&self, adapter: u32, ) -> Result<(DxgiAdapter1), HResult> {
-		let vt = self.as_param();
-		let mut _adapter: Option<DxgiAdapter1> = None;
-		let f: extern "system" fn(Param<Self>, adapter: u32, _adapter: &mut Option<DxgiAdapter1>, ) -> HResult
-			= unsafe { transmute(vt[12]) };
-		let ret = f(vt, adapter, &mut _adapter, );
-		if ret.is_ok() {
-			if let (Some(_adapter)) = (_adapter) {
-				return Ok((_adapter));
+	fn EnumAdapters1(&self, adapter: u32, ) -> Result<DxgiAdapter1, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_adapter: Option<DxgiAdapter1> = None;
+			let f: extern "system" fn(Param<Self>, adapter: u32, adapter: *mut c_void, ) -> HResult
+				= transmute(vt[12]);
+			let _ret_ = f(vt, adapter, transmute(&mut _out_adapter), );
+			if _ret_.is_ok() {
+				if let Some(_out_adapter) = _out_adapter {
+					return Ok(_out_adapter);
+				}
 			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 
-	fn IsCurrent(&self, ) -> (bool) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> Bool
-			= unsafe { transmute(vt[13]) };
-		let ret = f(vt, );
-		return (ret.to_bool());
+	fn IsCurrent(&self, ) -> bool {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> Bool
+				= transmute(vt[13]);
+			let _ret_ = f(vt, );
+			_ret_.to_bool()
+		}
 	}
 }
 

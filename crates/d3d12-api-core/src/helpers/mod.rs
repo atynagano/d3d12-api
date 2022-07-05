@@ -1,9 +1,8 @@
 use std::borrow::Cow;
 use std::fmt::{Debug, Display, Formatter};
-use std::mem::{ManuallyDrop, MaybeUninit, size_of_val, transmute};
+use std::mem::{MaybeUninit, transmute};
 use std::ops::Deref;
 use std::ptr::{null, null_mut};
-use std::slice;
 use crate::core::win32::foundation::{AsPStr, AsPWStr, PStr, PWStr};
 
 pub(crate) trait Zeroed {
@@ -55,7 +54,7 @@ impl<T> Len for Option<&mut [T]> {
     }
 }
 
-/*
+
 pub(crate) trait Deconstruct<T> {
     fn deconstruct(self) -> T;
 }
@@ -63,10 +62,9 @@ pub(crate) trait Deconstruct<T> {
 impl<T> Deconstruct<(*const T, usize)> for &[T] {
     fn deconstruct(self) -> (*const T, usize) {
         if self.len() > 0 {
-            (self.as_ptr(), self.len())
-        } else {
-            (null(), 0)
+            return (self.as_ptr(), self.len());
         }
+        (null(), 0)
     }
 }
 
@@ -79,7 +77,7 @@ impl<T> Deconstruct<(*const T, usize)> for Option<&[T]> {
         }
         (null(), 0)
     }
-}*/
+}
 
 pub(crate) enum Utf16Vec {
     Some(Vec<Utf16>, Vec<PWStr<'static>>),
@@ -216,7 +214,7 @@ impl AsPtrOrNull<u8> for str {
 impl<T> AsPtrOrNull<T> for Option<*const T> {
     fn as_ptr_or_null(&self) -> *const T {
         if let Some(v) = self {
-            return *v
+            return *v;
         }
         null()
     }
@@ -278,11 +276,11 @@ impl AsPtrOrNull<u16> for Option<&Utf16> {
 }
 
 pub(crate) trait AsMutPtrOrNull<T> {
-    fn as_mut_ptr_or_null(&mut self) -> *mut T;
+    fn as_mut_ptr_or_null(self) -> *mut T;
 }
 
 impl<T> AsMutPtrOrNull<T> for Option<&mut [T]> {
-    fn as_mut_ptr_or_null(&mut self) -> *mut T {
+    fn as_mut_ptr_or_null(self) -> *mut T {
         if let Some(v) = self {
             if let Some(w) = v.first_mut() {
                 return w as *mut T;
@@ -292,8 +290,8 @@ impl<T> AsMutPtrOrNull<T> for Option<&mut [T]> {
     }
 }
 
-impl<T> AsMutPtrOrNull<T> for [T] {
-    fn as_mut_ptr_or_null(&mut self) -> *mut T {
+impl<T> AsMutPtrOrNull<T> for &mut [T] {
+    fn as_mut_ptr_or_null(self) -> *mut T {
         if let Some(v) = self.first_mut() {
             return v as *mut T;
         }
@@ -410,7 +408,7 @@ pub fn fill_array_with_default<T: Default + Copy, const N: usize>(head: &[T]) ->
     let len = head.len();
     assert!(N >= len);
     let mut result = MaybeUninit::<[T; N]>::uninit();
-    let mut ptr = unsafe { &mut *result.as_mut_ptr() };
+    let ptr = unsafe { &mut *result.as_mut_ptr() };
     for i in 0..len {
         ptr[i] = head[i];
     }
@@ -462,7 +460,7 @@ pub fn fill_array_rest_with<T: Copy, const N: usize>(head: &[T], value: T) -> [T
     let len = head.len();
     assert!(N >= len);
     let mut result = MaybeUninit::<[T; N]>::uninit();
-    let mut ptr = unsafe { &mut *result.as_mut_ptr() };
+    let ptr = unsafe { &mut *result.as_mut_ptr() };
     for i in 0..len {
         ptr[i] = head[i];
     }

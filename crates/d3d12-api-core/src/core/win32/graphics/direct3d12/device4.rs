@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::direct3d12::*;
+
 #[repr(C)]
 pub struct D3D12Device4(pub(crate) D3D12Device3);
 
@@ -29,70 +30,72 @@ pub trait ID3D12Device4: ID3D12Device3 {
 	fn as_device4(&self) -> &D3D12Device4;
 	fn into_device4(self) -> D3D12Device4;
 
-	fn CreateCommandList1<T: IUnknown>(&self, node_mask: u32, ty: D3D12CommandListType, flags: D3D12CommandListFlags, ) -> Result<(T), HResult> {
-		let vt = self.as_param();
-		let mut _command_list: Option<Unknown> = None;
-		let f: extern "system" fn(Param<Self>, node_mask: u32, ty: D3D12CommandListType, flags: D3D12CommandListFlags, riid: &GUID, _command_list: &mut Option<Unknown>, ) -> HResult
-			= unsafe { transmute(vt[51]) };
-		let ret = f(vt, node_mask, ty, flags, T::IID, &mut _command_list, );
-		if ret.is_ok() {
-			if let (Some(_command_list)) = (_command_list) {
-				return Ok((T::from(_command_list)));
+	fn CreateCommandList1<T: IUnknown>(&self, node_mask: u32, ty: D3D12CommandListType, flags: D3D12CommandListFlags, ) -> Result<T, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_command_list: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, node_mask: u32, ty: D3D12CommandListType, flags: D3D12CommandListFlags, riid: &GUID, _out_command_list: *mut c_void, ) -> HResult
+				= transmute(vt[51]);
+			let _ret_ = f(vt, node_mask, ty, flags, T::IID, transmute(&mut _out_command_list), );
+			if _ret_.is_ok() {
+				if let Some(_out_command_list) = _out_command_list {
+					return Ok(T::from(_out_command_list));
+				}
 			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 
-	fn CreateProtectedResourceSession<T: IUnknown>(&self, desc: &D3D12ProtectedResourceSessionDesc, ) -> Result<(T), HResult> {
-		let vt = self.as_param();
-		let mut _session: Option<Unknown> = None;
-		let f: extern "system" fn(Param<Self>, desc: &D3D12ProtectedResourceSessionDesc, riid: &GUID, _session: &mut Option<Unknown>, ) -> HResult
-			= unsafe { transmute(vt[52]) };
-		let ret = f(vt, desc, T::IID, &mut _session, );
-		if ret.is_ok() {
-			if let (Some(_session)) = (_session) {
-				return Ok((T::from(_session)));
+	fn CreateProtectedResourceSession<T: IUnknown>(&self, desc: &D3D12ProtectedResourceSessionDesc, ) -> Result<T, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_session: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, desc: &D3D12ProtectedResourceSessionDesc, riid: &GUID, _out_session: *mut c_void, ) -> HResult
+				= transmute(vt[52]);
+			let _ret_ = f(vt, desc, T::IID, transmute(&mut _out_session), );
+			if _ret_.is_ok() {
+				if let Some(_out_session) = _out_session {
+					return Ok(T::from(_out_session));
+				}
 			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 
 	fn CreateCommittedResource1<T: IUnknown>(&self, heap_properties: &D3D12HeapProperties, heap_flags: D3D12HeapFlags, desc: &D3D12ResourceDesc, initial_resource_state: D3D12ResourceStates, optimized_clear_value: Option<&D3D12ClearValue>, protected_session: Option<&D3D12ProtectedResourceSession>, resource: Option<&mut Option<T>>, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let mut out_resource: Option<Unknown> = None;
-		let f: extern "system" fn(Param<Self>, heap_properties: &D3D12HeapProperties, heap_flags: D3D12HeapFlags, desc: &D3D12ResourceDesc, initial_resource_state: D3D12ResourceStates, optimized_clear_value: Option<&D3D12ClearValue>, protected_session: Option<VTable>, riid_resource: &GUID, resource: Option<&mut Option<Unknown>>, ) -> HResult
-			= unsafe { transmute(vt[53]) };
-		let ret = f(vt, heap_properties, heap_flags, desc, initial_resource_state, optimized_clear_value, option_to_vtable(protected_session), T::IID, if resource.is_some() { Some(&mut out_resource) } else { None }, );
-		if let (Some(resource), Some(out_resource)) = (resource, out_resource) { *resource = Some(T::from(out_resource)); }
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_resource: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, heap_properties: &D3D12HeapProperties, heap_flags: D3D12HeapFlags, desc: &D3D12ResourceDesc, initial_resource_state: D3D12ResourceStates, optimized_clear_value: *const c_void, protected_session: *const c_void, riid_resource: &GUID, resource: *mut c_void, ) -> HResult
+				= transmute(vt[53]);
+			let _ret_ = f(vt, heap_properties, heap_flags, desc, initial_resource_state, transmute(optimized_clear_value), option_to_vtable(protected_session), T::IID, transmute(if resource.is_some() { Some(&mut _out_resource) } else { None }), );
+			if let Some(_out_resource) = _out_resource { *resource.unwrap_unchecked() = Some(T::from(_out_resource)); }
+			_ret_.ok()
+		}
 	}
 
 	fn CreateHeap1<T: IUnknown>(&self, desc: &D3D12HeapDesc, protected_session: Option<&D3D12ProtectedResourceSession>, heap: Option<&mut Option<T>>, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let mut out_heap: Option<Unknown> = None;
-		let f: extern "system" fn(Param<Self>, desc: &D3D12HeapDesc, protected_session: Option<VTable>, riid: &GUID, heap: Option<&mut Option<Unknown>>, ) -> HResult
-			= unsafe { transmute(vt[54]) };
-		let ret = f(vt, desc, option_to_vtable(protected_session), T::IID, if heap.is_some() { Some(&mut out_heap) } else { None }, );
-		if let (Some(heap), Some(out_heap)) = (heap, out_heap) { *heap = Some(T::from(out_heap)); }
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_heap: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, desc: &D3D12HeapDesc, protected_session: *const c_void, riid: &GUID, heap: *mut c_void, ) -> HResult
+				= transmute(vt[54]);
+			let _ret_ = f(vt, desc, option_to_vtable(protected_session), T::IID, transmute(if heap.is_some() { Some(&mut _out_heap) } else { None }), );
+			if let Some(_out_heap) = _out_heap { *heap.unwrap_unchecked() = Some(T::from(_out_heap)); }
+			_ret_.ok()
+		}
 	}
 
 	fn CreateReservedResource1<T: IUnknown>(&self, desc: &D3D12ResourceDesc, initial_state: D3D12ResourceStates, optimized_clear_value: Option<&D3D12ClearValue>, protected_session: Option<&D3D12ProtectedResourceSession>, resource: Option<&mut Option<T>>, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let mut out_resource: Option<Unknown> = None;
-		let f: extern "system" fn(Param<Self>, desc: &D3D12ResourceDesc, initial_state: D3D12ResourceStates, optimized_clear_value: Option<&D3D12ClearValue>, protected_session: Option<VTable>, riid: &GUID, resource: Option<&mut Option<Unknown>>, ) -> HResult
-			= unsafe { transmute(vt[55]) };
-		let ret = f(vt, desc, initial_state, optimized_clear_value, option_to_vtable(protected_session), T::IID, if resource.is_some() { Some(&mut out_resource) } else { None }, );
-		if let (Some(resource), Some(out_resource)) = (resource, out_resource) { *resource = Some(T::from(out_resource)); }
-		ret.ok()
-	}
-
-	fn GetResourceAllocationInfo1(&self, visible_mask: u32, resource_descs: &[D3D12ResourceDesc], mut resource_allocation_info1: Option<&mut [D3D12ResourceAllocationInfo1]>, ) -> (D3D12ResourceAllocationInfo) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, visible_mask: u32, num_resource_descs: u32, resource_descs: *const D3D12ResourceDesc, resource_allocation_info1: *mut D3D12ResourceAllocationInfo1, ) -> D3D12ResourceAllocationInfo
-			= unsafe { transmute(vt[56]) };
-		let ret = f(vt, visible_mask, resource_descs.len() as u32, resource_descs.as_ptr_or_null(), resource_allocation_info1.as_mut_ptr_or_null(), );
-		return (ret);
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_resource: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, desc: &D3D12ResourceDesc, initial_state: D3D12ResourceStates, optimized_clear_value: *const c_void, protected_session: *const c_void, riid: &GUID, resource: *mut c_void, ) -> HResult
+				= transmute(vt[55]);
+			let _ret_ = f(vt, desc, initial_state, transmute(optimized_clear_value), option_to_vtable(protected_session), T::IID, transmute(if resource.is_some() { Some(&mut _out_resource) } else { None }), );
+			if let Some(_out_resource) = _out_resource { *resource.unwrap_unchecked() = Some(T::from(_out_resource)); }
+			_ret_.ok()
+		}
 	}
 }
 

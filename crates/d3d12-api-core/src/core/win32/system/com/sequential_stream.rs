@@ -2,17 +2,18 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
+
 #[repr(C)]
 pub struct SequentialStream(pub(crate) Unknown);
 
@@ -27,22 +28,6 @@ impl Clone for SequentialStream {
 pub trait ISequentialStream: IUnknown {
 	fn as_sequential_stream(&self) -> &SequentialStream;
 	fn into_sequential_stream(self) -> SequentialStream;
-
-	fn Read(&self, mut pv: &mut [u8], pcb_read: Option<&mut u32>, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, pv: *mut u8, cb: u32, pcb_read: Option<&mut u32>, ) -> HResult
-			= unsafe { transmute(vt[3]) };
-		let ret = f(vt, pv.as_mut_ptr_or_null(), pv.len() as u32, pcb_read, );
-		ret.ok()
-	}
-
-	fn Write(&self, pv: &[u8], pcb_written: Option<&mut u32>, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, pv: *const u8, cb: u32, pcb_written: Option<&mut u32>, ) -> HResult
-			= unsafe { transmute(vt[4]) };
-		let ret = f(vt, pv.as_ptr_or_null(), pv.len() as u32, pcb_written, );
-		ret.ok()
-	}
 }
 
 impl ISequentialStream for SequentialStream {

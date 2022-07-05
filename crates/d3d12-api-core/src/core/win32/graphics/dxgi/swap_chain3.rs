@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -15,6 +15,7 @@ use crate::core::win32::system::com::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::dxgi::common::*;
 use crate::core::win32::system::com::*;
+
 #[repr(C)]
 pub struct DxgiSwapChain3(pub(crate) DxgiSwapChain2);
 
@@ -30,40 +31,35 @@ pub trait IDxgiSwapChain3: IDxgiSwapChain2 {
 	fn as_swap_chain3(&self) -> &DxgiSwapChain3;
 	fn into_swap_chain3(self) -> DxgiSwapChain3;
 
-	fn GetCurrentBackBufferIndex(&self, ) -> (u32) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> u32
-			= unsafe { transmute(vt[36]) };
-		let ret = f(vt, );
-		return (ret);
+	fn GetCurrentBackBufferIndex(&self, ) -> u32 {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> u32
+				= transmute(vt[36]);
+			let _ret_ = f(vt, );
+			_ret_
+		}
 	}
 
-	fn CheckColorSpaceSupport(&self, color_space: DxgiColorSpaceType, ) -> Result<(u32), HResult> {
-		let vt = self.as_param();
-		let mut _color_space_support: u32 = u32::zeroed();
-		let f: extern "system" fn(Param<Self>, color_space: DxgiColorSpaceType, _color_space_support: &mut u32, ) -> HResult
-			= unsafe { transmute(vt[37]) };
-		let ret = f(vt, color_space, &mut _color_space_support, );
-		if ret.is_ok() {
-			return Ok((_color_space_support));
+	fn CheckColorSpaceSupport(&self, color_space: DxgiColorSpaceType, ) -> Result<u32, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_color_space_support: MaybeUninit<u32> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, color_space: DxgiColorSpaceType, _out_color_space_support: *mut u32, ) -> HResult
+				= transmute(vt[37]);
+			let _ret_ = f(vt, color_space, _out_color_space_support.as_mut_ptr(), );
+			Ok(_out_color_space_support.assume_init())
 		}
-		Err(ret)
 	}
 
 	fn SetColorSpace1(&self, color_space: DxgiColorSpaceType, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, color_space: DxgiColorSpaceType, ) -> HResult
-			= unsafe { transmute(vt[38]) };
-		let ret = f(vt, color_space, );
-		ret.ok()
-	}
-
-	fn ResizeBuffers1(&self, width: u32, height: u32, format: DxgiFormat, swap_chain_flags: u32, creation_node_mask: &[u32], present_queue: &[Param<Unknown>], ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, buffer_count: u32, width: u32, height: u32, format: DxgiFormat, swap_chain_flags: u32, creation_node_mask: *const u32, present_queue: *const Param<Unknown>, ) -> HResult
-			= unsafe { transmute(vt[39]) };
-		let ret = f(vt, creation_node_mask.len() as u32, width, height, format, swap_chain_flags, creation_node_mask.as_ptr_or_null(), present_queue.as_ptr_or_null(), );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, color_space: DxgiColorSpaceType, ) -> HResult
+				= transmute(vt[38]);
+			let _ret_ = f(vt, color_space, );
+			_ret_.ok()
+		}
 	}
 }
 

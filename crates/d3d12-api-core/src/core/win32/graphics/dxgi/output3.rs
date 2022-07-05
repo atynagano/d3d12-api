@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -15,6 +15,7 @@ use crate::core::win32::system::com::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::dxgi::common::*;
 use crate::core::win32::system::com::*;
+
 #[repr(C)]
 pub struct DxgiOutput3(pub(crate) DxgiOutput2);
 
@@ -30,16 +31,15 @@ pub trait IDxgiOutput3: IDxgiOutput2 {
 	fn as_output3(&self) -> &DxgiOutput3;
 	fn into_output3(self) -> DxgiOutput3;
 
-	fn CheckOverlaySupport(&self, enum_format: DxgiFormat, concerned_device: &(impl IUnknown + ?Sized), ) -> Result<(u32), HResult> {
-		let vt = self.as_param();
-		let mut _flags: u32 = u32::zeroed();
-		let f: extern "system" fn(Param<Self>, enum_format: DxgiFormat, concerned_device: VTable, _flags: &mut u32, ) -> HResult
-			= unsafe { transmute(vt[24]) };
-		let ret = f(vt, enum_format, concerned_device.vtable(), &mut _flags, );
-		if ret.is_ok() {
-			return Ok((_flags));
+	fn CheckOverlaySupport(&self, enum_format: DxgiFormat, concerned_device: &(impl IUnknown + ?Sized), ) -> Result<u32, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_flags: MaybeUninit<u32> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, enum_format: DxgiFormat, concerned_device: VTable, _out_flags: *mut u32, ) -> HResult
+				= transmute(vt[24]);
+			let _ret_ = f(vt, enum_format, concerned_device.vtable(), _out_flags.as_mut_ptr(), );
+			Ok(_out_flags.assume_init())
 		}
-		Err(ret)
 	}
 }
 

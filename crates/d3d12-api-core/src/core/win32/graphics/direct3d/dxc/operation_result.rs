@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::direct3d::dxc::*;
+
 #[repr(C)]
 pub struct DxcOperationResult(pub(crate) Unknown);
 
@@ -29,34 +30,37 @@ pub trait IDxcOperationResult: IUnknown {
 	fn as_operation_result(&self) -> &DxcOperationResult;
 	fn into_operation_result(self) -> DxcOperationResult;
 
-	fn GetStatus(&self, ) -> Result<(HResult), HResult> {
-		let vt = self.as_param();
-		let mut _status: HResult = HResult::zeroed();
-		let f: extern "system" fn(Param<Self>, _status: &mut HResult, ) -> HResult
-			= unsafe { transmute(vt[3]) };
-		let ret = f(vt, &mut _status, );
-		if ret.is_ok() {
-			return Ok((_status));
+	fn GetStatus(&self, ) -> Result<HResult, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_status: MaybeUninit<HResult> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_status: *mut HResult, ) -> HResult
+				= transmute(vt[3]);
+			let _ret_ = f(vt, _out_status.as_mut_ptr(), );
+			Ok(_out_status.assume_init())
 		}
-		Err(ret)
 	}
 
-	fn GetResult(&self, mut result: Option<&mut Option<DxcBlob>>,) -> Result<(), HResult> {
-		let vt = self.as_param();
-		if let Some(ref mut result) = result { **result = None; }
-		let f: extern "system" fn(Param<Self>, result: Option<&mut Option<DxcBlob>>, ) -> HResult
-			= unsafe { transmute(vt[4]) };
-		let ret = f(vt, result, );
-		ret.ok()
+	fn GetResult(&self, mut result: Option<&mut Option<DxcBlob>>, ) -> Result<(), HResult> {
+		unsafe {
+			let vt = self.as_param();
+			if let Some(ref mut result) = result { **result = None; }
+			let f: extern "system" fn(Param<Self>, result: *mut c_void, ) -> HResult
+				= transmute(vt[4]);
+			let _ret_ = f(vt, transmute(result), );
+			_ret_.ok()
+		}
 	}
 
-	fn GetErrorBuffer(&self, mut errors: Option<&mut Option<DxcBlobEncoding>>,) -> Result<(), HResult> {
-		let vt = self.as_param();
-		if let Some(ref mut errors) = errors { **errors = None; }
-		let f: extern "system" fn(Param<Self>, errors: Option<&mut Option<DxcBlobEncoding>>, ) -> HResult
-			= unsafe { transmute(vt[5]) };
-		let ret = f(vt, errors, );
-		ret.ok()
+	fn GetErrorBuffer(&self, mut errors: Option<&mut Option<DxcBlobEncoding>>, ) -> Result<(), HResult> {
+		unsafe {
+			let vt = self.as_param();
+			if let Some(ref mut errors) = errors { **errors = None; }
+			let f: extern "system" fn(Param<Self>, errors: *mut c_void, ) -> HResult
+				= transmute(vt[5]);
+			let _ret_ = f(vt, transmute(errors), );
+			_ret_.ok()
+		}
 	}
 }
 

@@ -1,12 +1,10 @@
 use std::mem::transmute;
-use std::ops::Deref;
 use std::ptr::null_mut;
 use std::slice;
 use crate::core::win32::foundation::HResult;
-use crate::aliases::win32::graphics::dxgi::{IInfoQueue, InfoQueueMessage, InfoQueueMessageCategory, InfoQueueMessageSeverity, IObject};
+use crate::aliases::win32::graphics::dxgi::{IInfoQueue, InfoQueueMessage, InfoQueueMessageCategory, InfoQueueMessageSeverity};
 use crate::core::win32::graphics::dxgi::{DXGI_DEBUG_ALL, DxgiInfoQueueMessageSeverity};
 use crate::core::win32::system::com::{AsParam, GUID, Param};
-use crate::helpers::ToUtf16;
 
 pub type Message = DxgiMessage;
 pub struct DxgiMessage {

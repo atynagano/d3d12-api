@@ -1,27 +1,31 @@
-use std::ffi::c_void;
-use std::fmt;
 use std::mem::{MaybeUninit, size_of, size_of_val, transmute};
 use std::panic::catch_unwind;
 use std::pin::Pin;
-use std::ptr::{copy, copy_nonoverlapping, NonNull, null, null_mut};
+use std::ptr::{copy_nonoverlapping, null_mut};
 use array_init::try_array_init;
-use d3d12_api::aliases::win32::graphics::direct3d12::{Blend, BlendDesc, BlendOp, ColorWriteEnable, CommandAllocator, CommandListType, CommandQueue, CommandQueueDesc, CpuDescriptorHandle, CullMode, Debug, DepthStencilDesc, DescriptorHeap, DescriptorHeapDesc, DescriptorHeapFlags, DescriptorHeapType, Device, Feature, FeatureDataRootSignature, Fence, FenceFlags, FillMode, GraphicsCommandList, GraphicsPipelineStateDesc, HeapFlags, HeapProperties, ICommandList, IDevice, InputClassification, InputElementDesc, InputLayoutDesc, IRootSignature, LogicOp, PipelineState, PrimitiveTopologyType, RasterizerDesc, RenderTargetBlendDesc, Resource, ResourceDesc, ResourceStates, RootSignature, RootSignatureDesc, RootSignatureVersion, ShaderByteCode, VertexBufferView, Viewport};
+use d3d12_api::aliases::win32::graphics::direct3d12::{Blend, BlendDesc, BlendOp, ColorWriteEnable, CommandAllocator, CommandListType, CommandQueue, CommandQueueDesc, CpuDescriptorHandle, CullMode, Debug, DescriptorHeap, DescriptorHeapDesc, DescriptorHeapFlags, DescriptorHeapType, Device, Feature, FeatureDataRootSignature, Fence, FenceFlags, FillMode, GraphicsCommandList, GraphicsPipelineStateDesc, HeapFlags, HeapProperties, ICommandList, IDevice, InputClassification, InputElementDesc, InputLayoutDesc, IRootSignature, LogicOp, PipelineState, PrimitiveTopologyType, RasterizerDesc, RenderTargetBlendDesc, Resource, ResourceDesc, ResourceStates, RootSignature, RootSignatureVersion, ShaderByteCode, VertexBufferView, Viewport};
 use d3d12_api::aliases::win32::graphics::direct3d::FeatureLevel;
 use d3d12_api::aliases::win32::graphics::dxgi::{Adapter1, AdapterFlag, Factory4, IFactory1, IFactory2, IFactory4, InfoQueue, Scaling, SwapChain3, SwapChainDesc1, SwapEffect};
 use d3d12_api::aliases::win32::graphics::dxgi::common::{AlphaMode, Format, SampleDesc};
-use d3d12_api::core::win32::foundation::{AsPStr, AsPWStr, Handle, HResult, HWnd, LParam, LResult, OkOrErr, Rect, WParam};
-use d3d12_api::core::win32::graphics::direct3d12::{D3D12_MAX_DEPTH, D3D12_MIN_DEPTH, D3D12CreateDevice, D3D12GetDebugInterface, D3D12InfoQueue, ID3D12CommandAllocator, ID3D12CommandQueue, ID3D12Debug, ID3D12DescriptorHeap, ID3D12Fence, ID3D12GraphicsCommandList, ID3D12InfoQueue, ID3D12Resource};
+use d3d12_api::core::win32::foundation::{AsPStr, Handle, HResult, HWnd, LParam, LResult, OkOrErr, Rect, WParam};
+use d3d12_api::core::win32::graphics::direct3d12::{D3D12CreateDevice, D3D12GetDebugInterface, ID3D12CommandAllocator, ID3D12CommandQueue, ID3D12Debug, ID3D12DescriptorHeap, ID3D12Fence, ID3D12GraphicsCommandList, ID3D12Resource};
 use d3d12_api::core::win32::graphics::direct3d::D3DPrimitiveTopology;
 use d3d12_api::core::win32::graphics::dxgi::{CreateDXGIFactory2, DXGI_CREATE_FACTORY_DEBUG, DXGI_MWA_NO_ALT_ENTER, DXGI_USAGE_RENDER_TARGET_OUTPUT, DXGIGetDebugInterface1, IDxgiAdapter1, IDxgiSwapChain, IDxgiSwapChain3};
 use d3d12_api::core::win32::system::com::{AsParam, IUnknown};
 use d3d12_api::core::win32::system::library_loader::GetModuleHandleA;
 use d3d12_api::core::win32::system::threading::{CreateEventA, WaitForSingleObject};
 use d3d12_api::core::win32::system::windows_programming::INFINITE;
-use d3d12_api::core::win32::ui::windows_and_messaging::{AdjustWindowRectEx, CreateStructA, CreateWindowExA, CursorId, CW_USEDEFAULT, DefWindowProcA, DispatchMessageA, GetWindowLongPtrA, IDC_ARROW, LoadCursorAById, PeekMessageA, PeekMessageRemoveType, RegisterClassExA, SetWindowLongPtrA, ShowWindow, ShowWindowCmd, TranslateMessage, WindowExStyle, WindowLongPtrIndex, WindowMessage, WindowStyle, WndClassExA, WndClassStyles};
+use d3d12_api::core::win32::ui::windows_and_messaging::{AdjustWindowRectEx, CreateStructA, CreateWindowExA, CursorId, CW_USEDEFAULT, DefWindowProcA, DispatchMessageA, GetWindowLongPtrA, LoadCursorAById, PeekMessageA, PeekMessageRemoveType, RegisterClassExA, SetWindowLongPtrA, ShowWindow, ShowWindowCmd, TranslateMessage, WindowExStyle, WindowLongPtrIndex, WindowMessage, WindowStyle, WndClassExA, WndClassStyles};
 use d3d12_api::extensions::win32::graphics::direct3d12::{ID3D12CommandQueueEx, ID3D12GraphicsCommandListEx};
 use d3d12_api::extensions::win32::graphics::dxgi::IDxgiInfoQueueEx;
 use d3d12_api::helpers::FillRestWith;
 use d3d12_api::hlsl_root_sig;
+
+/*
+todo:
+ GetWindowLongPtrAなどIntPtrを引数＆戻り値に取る関数を何とかする。
+ mut outなポインターを渡す場合必ずOptionにする。そしてzeroed()を削除する。外部関数が戻すポインタはnullでない保証がない。
+*/
 
 fn main() -> Result<(), Err> {
     let mut window = HelloTriangleWindow::new(640, 480)?;
@@ -39,6 +43,7 @@ impl From<HResult> for Err {
     fn from(value: HResult) -> Self {
         #[cfg(debug_assertions)]
         panic!("{}", value);
+        #[allow(unreachable_code)]
         Err::HResult(value)
     }
 }
@@ -55,6 +60,7 @@ impl HelloTriangleWindow {
         let class_name = "hello-triangle-window\0";
         let instance = GetModuleHandleA(None);
 
+        #[allow(invalid_value)]
         let window_class = WndClassExA {
             size: size_of::<WndClassExA>() as u32,
             style: WndClassStyles::HRedraw | WndClassStyles::VRedraw,
@@ -82,7 +88,7 @@ impl HelloTriangleWindow {
             None,
             None,
             Some(instance),
-            Some(window.as_ptr() as *const c_void),
+            window.as_ptr() as _,
         );
 
         let (factory, _, device) = create_device()?;
@@ -111,7 +117,7 @@ impl HelloTriangleWindow {
     fn run_message_loop(&mut self) {
         // note: keep self alive
         loop {
-            if let (true, msg) = PeekMessageA(None, 0, 0, PeekMessageRemoveType::Remove) {
+            if let Some(msg) = PeekMessageA(None, 0, 0, PeekMessageRemoveType::Remove) {
                 TranslateMessage(&msg);
                 DispatchMessageA(&msg);
                 if msg.message == WindowMessage::Quit {
@@ -123,7 +129,7 @@ impl HelloTriangleWindow {
 }
 
 trait Window {
-    fn on_paint(&mut self) -> Result<(), Err> { Ok(()) }
+    fn on_paint(&mut self) -> Result<(), Err> { Err(Err::HResult(HResult::E_FAIL)) }
 }
 
 impl Window for HelloTriangleWindow {
@@ -220,6 +226,10 @@ impl Frame {
             fence_value,
             fence_event,
         })
+    }
+
+    fn frame_index(&self) -> usize {
+        self.frame_index as usize
     }
 
     fn execute_command_list(&self, command_list: &impl ICommandList) {
@@ -336,7 +346,7 @@ impl Resources {
     }
 
     fn rtv_handle(&self) -> CpuDescriptorHandle {
-        self.rtv_heap.GetCPUDescriptorHandleForHeapStart() + self.rtv_descriptor_size * self.frame.frame_index as usize
+        self.rtv_heap.GetCPUDescriptorHandleForHeapStart() + self.rtv_descriptor_size * self.frame.frame_index()
     }
 
     fn populate_command_list(&self) -> Result<(), Err> {
@@ -420,7 +430,7 @@ fn get_hardware_adapter(factory: &impl IFactory1) -> Result<Adapter1, Err> {
 }
 
 fn create_pipeline_state(device: &impl IDevice, root_sig: &impl IRootSignature) -> Result<PipelineState, Err> {
-    let pipeline_state: PipelineState = device.CreateGraphicsPipelineState(&GraphicsPipelineStateDesc {
+    let pipeline_state: PipelineState = device.CreateGraphicsPipelineState(#[allow(invalid_value)] &GraphicsPipelineStateDesc {
         root_signature: root_sig.as_root_signature().as_param(),
         vs: ShaderByteCode::new(include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/hello-triangle-vs.dxil"))),
         ps: ShaderByteCode::new(include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/hello-triangle-ps.dxil"))),
@@ -478,8 +488,8 @@ fn create_pipeline_state(device: &impl IDevice, root_sig: &impl IRootSignature) 
 
 fn create_vertex_buffer(device: &impl IDevice, aspect_ratio: f32) -> Result<(Resource, VertexBufferView), Err> {
     struct Vertex {
-        position: [f32; 3],
-        color: [f32; 4],
+        #[allow(dead_code)] position: [f32; 3],
+        #[allow(dead_code)] color: [f32; 4],
     }
 
     let vertices = [
@@ -498,10 +508,11 @@ fn create_vertex_buffer(device: &impl IDevice, aspect_ratio: f32) -> Result<(Res
         Some(&mut vertex_buffer))?;
     let vertex_buffer = vertex_buffer.ok_or_err()?;
 
-    let mut data = null();
-    vertex_buffer.Map(0, None, Some(&mut data))?;
+    let mut dest = None;
+    vertex_buffer.Map(0, None, Some(&mut dest))?;
+    let dest = dest.ok_or_err()?;
     unsafe {
-        copy_nonoverlapping(vertices.as_ptr(), data as *mut Vertex, size_of_val(&vertices));
+        copy_nonoverlapping(vertices.as_ptr(), dest.as_ptr() as *mut Vertex, vertices.len());
     }
     vertex_buffer.Unmap(0, None);
 

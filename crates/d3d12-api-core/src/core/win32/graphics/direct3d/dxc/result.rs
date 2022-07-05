@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::direct3d::dxc::*;
+
 #[repr(C)]
 pub struct DxcResult(pub(crate) DxcOperationResult);
 
@@ -29,52 +30,62 @@ pub trait IDxcResult: IDxcOperationResult {
 	fn as_result(&self) -> &DxcResult;
 	fn into_result(self) -> DxcResult;
 
-	fn HasOutput(&self, dxc_out_kind: DxcOutKind, ) -> (bool) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, dxc_out_kind: DxcOutKind, ) -> Bool
-			= unsafe { transmute(vt[6]) };
-		let ret = f(vt, dxc_out_kind, );
-		return (ret.to_bool());
-	}
-
-	fn GetOutput<T: IUnknown>(&self, dxc_out_kind: DxcOutKind, object: Option<&mut Option<T>>, ) -> Result<(DxcBlobUtf16), HResult> {
-		let vt = self.as_param();
-		let mut out_object: Option<Unknown> = None;
-		let mut _output_name: Option<DxcBlobUtf16> = None;
-		let f: extern "system" fn(Param<Self>, dxc_out_kind: DxcOutKind, iid: &GUID, object: Option<&mut Option<Unknown>>, _output_name: &mut Option<DxcBlobUtf16>, ) -> HResult
-			= unsafe { transmute(vt[7]) };
-		let ret = f(vt, dxc_out_kind, T::IID, if object.is_some() { Some(&mut out_object) } else { None }, &mut _output_name, );
-		if let (Some(object), Some(out_object)) = (object, out_object) { *object = Some(T::from(out_object)); }
-		if ret.is_ok() {
-			if let (Some(_output_name)) = (_output_name) {
-				return Ok((_output_name));
-			}
+	fn HasOutput(&self, dxc_out_kind: DxcOutKind, ) -> bool {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, dxc_out_kind: DxcOutKind, ) -> Bool
+				= transmute(vt[6]);
+			let _ret_ = f(vt, dxc_out_kind, );
+			_ret_.to_bool()
 		}
-		Err(ret)
 	}
 
-	fn GetNumOutputs(&self, ) -> (u32) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> u32
-			= unsafe { transmute(vt[8]) };
-		let ret = f(vt, );
-		return (ret);
+	fn GetOutput<T: IUnknown>(&self, dxc_out_kind: DxcOutKind, object: Option<&mut Option<T>>, ) -> Result<DxcBlobUtf16, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_object: Option<Unknown> = None;
+			let mut _out_output_name: Option<DxcBlobUtf16> = None;
+			let f: extern "system" fn(Param<Self>, dxc_out_kind: DxcOutKind, iid: &GUID, object: *mut c_void, output_name: *mut c_void, ) -> HResult
+				= transmute(vt[7]);
+			let _ret_ = f(vt, dxc_out_kind, T::IID, transmute(if object.is_some() { Some(&mut _out_object) } else { None }), transmute(&mut _out_output_name), );
+			if let Some(_out_object) = _out_object { *object.unwrap_unchecked() = Some(T::from(_out_object)); }
+			if _ret_.is_ok() {
+				if let Some(_out_output_name) = _out_output_name {
+					return Ok(_out_output_name);
+				}
+			}
+			Err(_ret_)
+		}
 	}
 
-	fn GetOutputByIndex(&self, index: u32, ) -> (DxcOutKind) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, index: u32, ) -> DxcOutKind
-			= unsafe { transmute(vt[9]) };
-		let ret = f(vt, index, );
-		return (ret);
+	fn GetNumOutputs(&self, ) -> u32 {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> u32
+				= transmute(vt[8]);
+			let _ret_ = f(vt, );
+			_ret_
+		}
 	}
 
-	fn PrimaryOutput(&self, ) -> (DxcOutKind) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> DxcOutKind
-			= unsafe { transmute(vt[10]) };
-		let ret = f(vt, );
-		return (ret);
+	fn GetOutputByIndex(&self, index: u32, ) -> DxcOutKind {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, index: u32, ) -> DxcOutKind
+				= transmute(vt[9]);
+			let _ret_ = f(vt, index, );
+			_ret_
+		}
+	}
+
+	fn PrimaryOutput(&self, ) -> DxcOutKind {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> DxcOutKind
+				= transmute(vt[10]);
+			let _ret_ = f(vt, );
+			_ret_
+		}
 	}
 }
 

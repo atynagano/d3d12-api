@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::direct3d12::*;
+
 #[repr(C)]
 pub struct D3D12InfoQueue1(pub(crate) D3D12InfoQueue);
 
@@ -29,20 +30,24 @@ pub trait ID3D12InfoQueue1: ID3D12InfoQueue {
 	fn as_info_queue1(&self) -> &D3D12InfoQueue1;
 	fn into_info_queue1(self) -> D3D12InfoQueue1;
 
-	fn RegisterMessageCallback(&self, callback_func: D3D12MessageFunc, callback_filter_flags: D3D12MessageCallbackFlags, context: *const c_void, callback_cookie: &mut u32, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, callback_func: D3D12MessageFunc, callback_filter_flags: D3D12MessageCallbackFlags, context: *const c_void, callback_cookie: &mut u32, ) -> HResult
-			= unsafe { transmute(vt[38]) };
-		let ret = f(vt, callback_func, callback_filter_flags, context, callback_cookie, );
-		ret.ok()
+	fn RegisterMessageCallback(&self, callback_func: D3D12MessageFunc, callback_filter_flags: D3D12MessageCallbackFlags, context: *const impl Sized, callback_cookie: &mut u32, ) -> Result<(), HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, callback_func: D3D12MessageFunc, callback_filter_flags: D3D12MessageCallbackFlags, context: *const c_void, callback_cookie: &mut u32, ) -> HResult
+				= transmute(vt[38]);
+			let _ret_ = f(vt, callback_func, callback_filter_flags, context as _, callback_cookie, );
+			_ret_.ok()
+		}
 	}
 
 	fn UnregisterMessageCallback(&self, callback_cookie: u32, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, callback_cookie: u32, ) -> HResult
-			= unsafe { transmute(vt[39]) };
-		let ret = f(vt, callback_cookie, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, callback_cookie: u32, ) -> HResult
+				= transmute(vt[39]);
+			let _ret_ = f(vt, callback_cookie, );
+			_ret_.ok()
+		}
 	}
 }
 

@@ -2,15 +2,16 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
+
 
 #[repr(C)]
 pub struct D3D12GraphicsCommandList6(pub(crate) D3D12GraphicsCommandList5);
@@ -28,10 +29,12 @@ pub trait ID3D12GraphicsCommandList6: ID3D12GraphicsCommandList5 {
 	fn into_graphics_command_list6(self) -> D3D12GraphicsCommandList6;
 
 	fn DispatchMesh(&self, thread_group_count_x: u32, thread_group_count_y: u32, thread_group_count_z: u32, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, thread_group_count_x: u32, thread_group_count_y: u32, thread_group_count_z: u32, ) -> ()
-			= unsafe { transmute(vt[79]) };
-		let ret = f(vt, thread_group_count_x, thread_group_count_y, thread_group_count_z, );
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, thread_group_count_x: u32, thread_group_count_y: u32, thread_group_count_z: u32, ) -> ()
+				= transmute(vt[79]);
+			let _ret_ = f(vt, thread_group_count_x, thread_group_count_y, thread_group_count_z, );
+		}
 	}
 }
 

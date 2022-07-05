@@ -1,3 +1,5 @@
+#![allow(unused_imports)]
+
 use crate::core::win32::graphics::direct3d::dxc::*;
 
 pub type Cp = DxcCp;

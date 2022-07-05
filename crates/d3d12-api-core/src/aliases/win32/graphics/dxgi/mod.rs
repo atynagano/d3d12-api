@@ -1,3 +1,5 @@
+#![allow(unused_imports)]
+
 pub mod common;
 
 use crate::core::win32::graphics::dxgi::*;

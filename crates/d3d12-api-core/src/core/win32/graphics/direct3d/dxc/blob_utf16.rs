@@ -2,17 +2,18 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
+
 #[repr(C)]
 pub struct DxcBlobUtf16(pub(crate) DxcBlobEncoding);
 
@@ -28,20 +29,24 @@ pub trait IDxcBlobUtf16: IDxcBlobEncoding {
 	fn as_blob_utf16(&self) -> &DxcBlobUtf16;
 	fn into_blob_utf16(self) -> DxcBlobUtf16;
 
-	fn GetStringPointer(&self, ) -> (PWStr) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> PWStr
-			= unsafe { transmute(vt[6]) };
-		let ret = f(vt, );
-		return (ret);
+	fn GetStringPointer(&self, ) -> PWStr {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> PWStr
+				= transmute(vt[6]);
+			let _ret_ = f(vt, );
+			_ret_
+		}
 	}
 
-	fn GetStringLength(&self, ) -> (usize) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> usize
-			= unsafe { transmute(vt[7]) };
-		let ret = f(vt, );
-		return (ret);
+	fn GetStringLength(&self, ) -> usize {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> usize
+				= transmute(vt[7]);
+			let _ret_ = f(vt, );
+			_ret_
+		}
 	}
 }
 

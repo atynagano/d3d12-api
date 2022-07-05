@@ -2,17 +2,18 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
+
 #[repr(C)]
 pub struct D3D12Heap1(pub(crate) D3D12Heap);
 
@@ -29,13 +30,15 @@ pub trait ID3D12Heap1: ID3D12Heap {
 	fn into_heap1(self) -> D3D12Heap1;
 
 	fn GetProtectedResourceSession<T: IUnknown>(&self, protected_session: Option<&mut Option<T>>, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let mut out_protected_session: Option<Unknown> = None;
-		let f: extern "system" fn(Param<Self>, riid: &GUID, protected_session: Option<&mut Option<Unknown>>, ) -> HResult
-			= unsafe { transmute(vt[9]) };
-		let ret = f(vt, T::IID, if protected_session.is_some() { Some(&mut out_protected_session) } else { None }, );
-		if let (Some(protected_session), Some(out_protected_session)) = (protected_session, out_protected_session) { *protected_session = Some(T::from(out_protected_session)); }
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_protected_session: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, riid: &GUID, protected_session: *mut c_void, ) -> HResult
+				= transmute(vt[9]);
+			let _ret_ = f(vt, T::IID, transmute(if protected_session.is_some() { Some(&mut _out_protected_session) } else { None }), );
+			if let Some(_out_protected_session) = _out_protected_session { *protected_session.unwrap_unchecked() = Some(T::from(_out_protected_session)); }
+			_ret_.ok()
+		}
 	}
 }
 

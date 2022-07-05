@@ -2,15 +2,16 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
+
 
 #[repr(C)]
 pub struct Malloc(pub(crate) Unknown);
@@ -27,42 +28,52 @@ pub trait IMalloc: IUnknown {
 	fn as_malloc(&self) -> &Malloc;
 	fn into_malloc(self) -> Malloc;
 
-	fn Alloc(&self, cb: usize, ) -> (*const c_void) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, cb: usize, ) -> *const c_void
-			= unsafe { transmute(vt[3]) };
-		let ret = f(vt, cb, );
-		return (ret);
+	fn Alloc(&self, cb: usize, ) -> *const c_void {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, cb: usize, ) -> *const c_void
+				= transmute(vt[3]);
+			let _ret_ = f(vt, cb, );
+			_ret_
+		}
 	}
 
-	fn Free(&self, pv: Option<*const c_void>, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, pv: *const c_void, ) -> ()
-			= unsafe { transmute(vt[5]) };
-		let ret = f(vt, pv.as_ptr_or_null(), );
+	fn Free(&self, pv: *const (), ) -> () {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, pv: *const c_void, ) -> ()
+				= transmute(vt[5]);
+			let _ret_ = f(vt, pv as _, );
+		}
 	}
 
-	fn GetSize(&self, pv: Option<*const c_void>, ) -> (usize) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, pv: *const c_void, ) -> usize
-			= unsafe { transmute(vt[6]) };
-		let ret = f(vt, pv.as_ptr_or_null(), );
-		return (ret);
+	fn GetSize(&self, pv: *const (), ) -> usize {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, pv: *const c_void, ) -> usize
+				= transmute(vt[6]);
+			let _ret_ = f(vt, pv as _, );
+			_ret_
+		}
 	}
 
-	fn DidAlloc(&self, pv: Option<*const c_void>, ) -> (i32) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, pv: *const c_void, ) -> i32
-			= unsafe { transmute(vt[7]) };
-		let ret = f(vt, pv.as_ptr_or_null(), );
-		return (ret);
+	fn DidAlloc(&self, pv: *const (), ) -> i32 {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, pv: *const c_void, ) -> i32
+				= transmute(vt[7]);
+			let _ret_ = f(vt, pv as _, );
+			_ret_
+		}
 	}
 
 	fn HeapMinimize(&self, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> ()
-			= unsafe { transmute(vt[8]) };
-		let ret = f(vt, );
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> ()
+				= transmute(vt[8]);
+			let _ret_ = f(vt, );
+		}
 	}
 }
 

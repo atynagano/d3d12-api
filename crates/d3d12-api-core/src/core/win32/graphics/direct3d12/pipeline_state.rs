@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::direct3d::*;
+
 #[repr(C)]
 pub struct D3D12PipelineState(pub(crate) D3D12Pageable);
 
@@ -29,18 +30,20 @@ pub trait ID3D12PipelineState: ID3D12Pageable {
 	fn as_pipeline_state(&self) -> &D3D12PipelineState;
 	fn into_pipeline_state(self) -> D3D12PipelineState;
 
-	fn GetCachedBlob(&self, ) -> Result<(D3DBlob), HResult> {
-		let vt = self.as_param();
-		let mut _blob: Option<D3DBlob> = None;
-		let f: extern "system" fn(Param<Self>, _blob: &mut Option<D3DBlob>, ) -> HResult
-			= unsafe { transmute(vt[8]) };
-		let ret = f(vt, &mut _blob, );
-		if ret.is_ok() {
-			if let (Some(_blob)) = (_blob) {
-				return Ok((_blob));
+	fn GetCachedBlob(&self, ) -> Result<D3DBlob, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_blob: Option<D3DBlob> = None;
+			let f: extern "system" fn(Param<Self>, blob: *mut c_void, ) -> HResult
+				= transmute(vt[8]);
+			let _ret_ = f(vt, transmute(&mut _out_blob), );
+			if _ret_.is_ok() {
+				if let Some(_out_blob) = _out_blob {
+					return Ok(_out_blob);
+				}
 			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 }
 

@@ -2,17 +2,18 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
 
 use std::ops::{BitOr, BitOrAssign};
+
 pub const CLFS_FLAG_REENTRANT_FILE_SYSTEM: u32 = 0x8;
 pub const CLFS_FLAG_NON_REENTRANT_FILTER: u32 = 0x10;
 pub const CLFS_FLAG_REENTRANT_FILTER: u32 = 0x20;

@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -16,6 +16,7 @@ use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::dxgi::common::*;
 use crate::core::win32::graphics::dxgi::*;
 use crate::core::win32::system::com::*;
+
 #[repr(C)]
 pub struct DxgiOutput1(pub(crate) DxgiOutput);
 
@@ -31,38 +32,41 @@ pub trait IDxgiOutput1: IDxgiOutput {
 	fn as_output1(&self) -> &DxgiOutput1;
 	fn into_output1(self) -> DxgiOutput1;
 
-	fn FindClosestMatchingMode1(&self, mode_to_match: &DxgiModeDesc1, concerned_device: Option<&Unknown>, ) -> Result<(DxgiModeDesc1), HResult> {
-		let vt = self.as_param();
-		let mut _closest_match: DxgiModeDesc1 = DxgiModeDesc1::zeroed();
-		let f: extern "system" fn(Param<Self>, mode_to_match: &DxgiModeDesc1, _closest_match: &mut DxgiModeDesc1, concerned_device: Option<VTable>, ) -> HResult
-			= unsafe { transmute(vt[20]) };
-		let ret = f(vt, mode_to_match, &mut _closest_match, option_to_vtable(concerned_device), );
-		if ret.is_ok() {
-			return Ok((_closest_match));
+	fn FindClosestMatchingMode1(&self, mode_to_match: &DxgiModeDesc1, concerned_device: Option<&Unknown>, ) -> Result<DxgiModeDesc1, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_closest_match: MaybeUninit<DxgiModeDesc1> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, mode_to_match: &DxgiModeDesc1, _out_closest_match: *mut DxgiModeDesc1, concerned_device: *const c_void, ) -> HResult
+				= transmute(vt[20]);
+			let _ret_ = f(vt, mode_to_match, _out_closest_match.as_mut_ptr(), option_to_vtable(concerned_device), );
+			Ok(_out_closest_match.assume_init())
 		}
-		Err(ret)
 	}
 
 	fn GetDisplaySurfaceData1(&self, destination: &(impl IDxgiResource + ?Sized), ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, destination: VTable, ) -> HResult
-			= unsafe { transmute(vt[21]) };
-		let ret = f(vt, destination.vtable(), );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, destination: VTable, ) -> HResult
+				= transmute(vt[21]);
+			let _ret_ = f(vt, destination.vtable(), );
+			_ret_.ok()
+		}
 	}
 
-	fn DuplicateOutput(&self, device: &(impl IUnknown + ?Sized), ) -> Result<(DxgiOutputDuplication), HResult> {
-		let vt = self.as_param();
-		let mut _output_duplication: Option<DxgiOutputDuplication> = None;
-		let f: extern "system" fn(Param<Self>, device: VTable, _output_duplication: &mut Option<DxgiOutputDuplication>, ) -> HResult
-			= unsafe { transmute(vt[22]) };
-		let ret = f(vt, device.vtable(), &mut _output_duplication, );
-		if ret.is_ok() {
-			if let (Some(_output_duplication)) = (_output_duplication) {
-				return Ok((_output_duplication));
+	fn DuplicateOutput(&self, device: &(impl IUnknown + ?Sized), ) -> Result<DxgiOutputDuplication, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_output_duplication: Option<DxgiOutputDuplication> = None;
+			let f: extern "system" fn(Param<Self>, device: VTable, output_duplication: *mut c_void, ) -> HResult
+				= transmute(vt[22]);
+			let _ret_ = f(vt, device.vtable(), transmute(&mut _out_output_duplication), );
+			if _ret_.is_ok() {
+				if let Some(_out_output_duplication) = _out_output_duplication {
+					return Ok(_out_output_duplication);
+				}
 			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 }
 

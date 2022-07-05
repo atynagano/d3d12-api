@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::dxgi::*;
+
 #[repr(C)]
 pub struct DxgiSwapChain2(pub(crate) DxgiSwapChain1);
 
@@ -30,72 +31,80 @@ pub trait IDxgiSwapChain2: IDxgiSwapChain1 {
 	fn into_swap_chain2(self) -> DxgiSwapChain2;
 
 	fn SetSourceSize(&self, width: u32, height: u32, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, width: u32, height: u32, ) -> HResult
-			= unsafe { transmute(vt[29]) };
-		let ret = f(vt, width, height, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, width: u32, height: u32, ) -> HResult
+				= transmute(vt[29]);
+			let _ret_ = f(vt, width, height, );
+			_ret_.ok()
+		}
 	}
 
-	fn GetSourceSize(&self, ) -> Result<(u32, u32), HResult> {
-		let vt = self.as_param();
-		let mut _width: u32 = u32::zeroed();
-		let mut _height: u32 = u32::zeroed();
-		let f: extern "system" fn(Param<Self>, _width: &mut u32, _height: &mut u32, ) -> HResult
-			= unsafe { transmute(vt[30]) };
-		let ret = f(vt, &mut _width, &mut _height, );
-		if ret.is_ok() {
-			return Ok((_width, _height));
+	fn GetSourceSize(&self, ) -> Result<(u32, u32, ), HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_width: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_height: MaybeUninit<u32> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_width: *mut u32, _out_height: *mut u32, ) -> HResult
+				= transmute(vt[30]);
+			let _ret_ = f(vt, _out_width.as_mut_ptr(), _out_height.as_mut_ptr(), );
+			if _ret_.is_ok() {
+				return Ok((_out_width.assume_init(), _out_height.assume_init(), ));
+			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 
 	fn SetMaximumFrameLatency(&self, max_latency: u32, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, max_latency: u32, ) -> HResult
-			= unsafe { transmute(vt[31]) };
-		let ret = f(vt, max_latency, );
-		ret.ok()
-	}
-
-	fn GetMaximumFrameLatency(&self, ) -> Result<(u32), HResult> {
-		let vt = self.as_param();
-		let mut _max_latency: u32 = u32::zeroed();
-		let f: extern "system" fn(Param<Self>, _max_latency: &mut u32, ) -> HResult
-			= unsafe { transmute(vt[32]) };
-		let ret = f(vt, &mut _max_latency, );
-		if ret.is_ok() {
-			return Ok((_max_latency));
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, max_latency: u32, ) -> HResult
+				= transmute(vt[31]);
+			let _ret_ = f(vt, max_latency, );
+			_ret_.ok()
 		}
-		Err(ret)
 	}
 
-	fn GetFrameLatencyWaitableObject(&self, ) -> (Handle) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> Handle
-			= unsafe { transmute(vt[33]) };
-		let ret = f(vt, );
-		return (ret);
+	fn GetMaximumFrameLatency(&self, ) -> Result<u32, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_max_latency: MaybeUninit<u32> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_max_latency: *mut u32, ) -> HResult
+				= transmute(vt[32]);
+			let _ret_ = f(vt, _out_max_latency.as_mut_ptr(), );
+			Ok(_out_max_latency.assume_init())
+		}
+	}
+
+	fn GetFrameLatencyWaitableObject(&self, ) -> Handle {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> Handle
+				= transmute(vt[33]);
+			let _ret_ = f(vt, );
+			_ret_
+		}
 	}
 
 	fn SetMatrixTransform(&self, matrix: &DxgiMatrix3X2F, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, matrix: &DxgiMatrix3X2F, ) -> HResult
-			= unsafe { transmute(vt[34]) };
-		let ret = f(vt, matrix, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, matrix: &DxgiMatrix3X2F, ) -> HResult
+				= transmute(vt[34]);
+			let _ret_ = f(vt, matrix, );
+			_ret_.ok()
+		}
 	}
 
-	fn GetMatrixTransform(&self, ) -> Result<(DxgiMatrix3X2F), HResult> {
-		let vt = self.as_param();
-		let mut _matrix: DxgiMatrix3X2F = DxgiMatrix3X2F::zeroed();
-		let f: extern "system" fn(Param<Self>, _matrix: &mut DxgiMatrix3X2F, ) -> HResult
-			= unsafe { transmute(vt[35]) };
-		let ret = f(vt, &mut _matrix, );
-		if ret.is_ok() {
-			return Ok((_matrix));
+	fn GetMatrixTransform(&self, ) -> Result<DxgiMatrix3X2F, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_matrix: MaybeUninit<DxgiMatrix3X2F> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_matrix: *mut DxgiMatrix3X2F, ) -> HResult
+				= transmute(vt[35]);
+			let _ret_ = f(vt, _out_matrix.as_mut_ptr(), );
+			Ok(_out_matrix.assume_init())
 		}
-		Err(ret)
 	}
 }
 

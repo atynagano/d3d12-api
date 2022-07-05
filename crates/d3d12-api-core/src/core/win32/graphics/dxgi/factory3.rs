@@ -2,15 +2,16 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
+
 
 #[repr(C)]
 pub struct DxgiFactory3(pub(crate) DxgiFactory2);
@@ -27,12 +28,14 @@ pub trait IDxgiFactory3: IDxgiFactory2 {
 	fn as_factory3(&self) -> &DxgiFactory3;
 	fn into_factory3(self) -> DxgiFactory3;
 
-	fn GetCreationFlags(&self, ) -> (u32) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> u32
-			= unsafe { transmute(vt[25]) };
-		let ret = f(vt, );
-		return (ret);
+	fn GetCreationFlags(&self, ) -> u32 {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> u32
+				= transmute(vt[25]);
+			let _ret_ = f(vt, );
+			_ret_
+		}
 	}
 }
 

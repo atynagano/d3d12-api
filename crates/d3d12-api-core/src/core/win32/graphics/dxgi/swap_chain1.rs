@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -15,6 +15,7 @@ use crate::core::win32::system::com::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::dxgi::*;
 use crate::core::win32::graphics::dxgi::common::*;
+
 #[repr(C)]
 pub struct DxgiSwapChain1(pub(crate) DxgiSwapChain);
 
@@ -30,124 +31,136 @@ pub trait IDxgiSwapChain1: IDxgiSwapChain {
 	fn as_swap_chain1(&self) -> &DxgiSwapChain1;
 	fn into_swap_chain1(self) -> DxgiSwapChain1;
 
-	fn GetDesc1(&self, ) -> Result<(DxgiSwapChainDesc1), HResult> {
-		let vt = self.as_param();
-		let mut _desc: DxgiSwapChainDesc1 = DxgiSwapChainDesc1::zeroed();
-		let f: extern "system" fn(Param<Self>, _desc: &mut DxgiSwapChainDesc1, ) -> HResult
-			= unsafe { transmute(vt[18]) };
-		let ret = f(vt, &mut _desc, );
-		if ret.is_ok() {
-			return Ok((_desc));
+	fn GetDesc1(&self, ) -> Result<DxgiSwapChainDesc1, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_desc: MaybeUninit<DxgiSwapChainDesc1> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_desc: *mut DxgiSwapChainDesc1, ) -> HResult
+				= transmute(vt[18]);
+			let _ret_ = f(vt, _out_desc.as_mut_ptr(), );
+			Ok(_out_desc.assume_init())
 		}
-		Err(ret)
 	}
 
-	fn GetFullscreenDesc(&self, ) -> Result<(DxgiSwapChainFullScreenDesc), HResult> {
-		let vt = self.as_param();
-		let mut _desc: DxgiSwapChainFullScreenDesc = DxgiSwapChainFullScreenDesc::zeroed();
-		let f: extern "system" fn(Param<Self>, _desc: &mut DxgiSwapChainFullScreenDesc, ) -> HResult
-			= unsafe { transmute(vt[19]) };
-		let ret = f(vt, &mut _desc, );
-		if ret.is_ok() {
-			return Ok((_desc));
+	fn GetFullscreenDesc(&self, ) -> Result<DxgiSwapChainFullScreenDesc, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_desc: MaybeUninit<DxgiSwapChainFullScreenDesc> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_desc: *mut DxgiSwapChainFullScreenDesc, ) -> HResult
+				= transmute(vt[19]);
+			let _ret_ = f(vt, _out_desc.as_mut_ptr(), );
+			Ok(_out_desc.assume_init())
 		}
-		Err(ret)
 	}
 
-	fn GetHwnd(&self, ) -> Result<(HWnd), HResult> {
-		let vt = self.as_param();
-		let mut _hwnd: HWnd = HWnd::zeroed();
-		let f: extern "system" fn(Param<Self>, _hwnd: &mut HWnd, ) -> HResult
-			= unsafe { transmute(vt[20]) };
-		let ret = f(vt, &mut _hwnd, );
-		if ret.is_ok() {
-			return Ok((_hwnd));
-		}
-		Err(ret)
-	}
-
-	fn GetCoreWindow<T: IUnknown>(&self, ) -> Result<(T), HResult> {
-		let vt = self.as_param();
-		let mut _unk: Option<Unknown> = None;
-		let f: extern "system" fn(Param<Self>, refiid: &GUID, _unk: &mut Option<Unknown>, ) -> HResult
-			= unsafe { transmute(vt[21]) };
-		let ret = f(vt, T::IID, &mut _unk, );
-		if ret.is_ok() {
-			if let (Some(_unk)) = (_unk) {
-				return Ok((T::from(_unk)));
+	fn GetHwnd(&self, ) -> Result<HWnd, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_hwnd: Option<HWnd> = None;
+			let f: extern "system" fn(Param<Self>, _out_hwnd: *mut c_void, ) -> HResult
+				= transmute(vt[20]);
+			let _ret_ = f(vt, transmute(&mut _out_hwnd), );
+			if _ret_.is_ok() {
+				if let Some(_out_hwnd) = _out_hwnd {
+					return Ok(_out_hwnd);
+				}
 			}
+			Err(_ret_)
 		}
-		Err(ret)
+	}
+
+	fn GetCoreWindow<T: IUnknown>(&self, ) -> Result<T, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_unk: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, refiid: &GUID, _out_unk: *mut c_void, ) -> HResult
+				= transmute(vt[21]);
+			let _ret_ = f(vt, T::IID, transmute(&mut _out_unk), );
+			if _ret_.is_ok() {
+				if let Some(_out_unk) = _out_unk {
+					return Ok(T::from(_out_unk));
+				}
+			}
+			Err(_ret_)
+		}
 	}
 
 	fn Present1(&self, sync_interval: u32, present_flags: u32, present_parameters: &DxgiPresentParameters, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, sync_interval: u32, present_flags: u32, present_parameters: &DxgiPresentParameters, ) -> HResult
-			= unsafe { transmute(vt[22]) };
-		let ret = f(vt, sync_interval, present_flags, present_parameters, );
-		ret.ok()
-	}
-
-	fn IsTemporaryMonoSupported(&self, ) -> (bool) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> Bool
-			= unsafe { transmute(vt[23]) };
-		let ret = f(vt, );
-		return (ret.to_bool());
-	}
-
-	fn GetRestrictToOutput(&self, ) -> Result<(DxgiOutput), HResult> {
-		let vt = self.as_param();
-		let mut _restrict_to_output: Option<DxgiOutput> = None;
-		let f: extern "system" fn(Param<Self>, _restrict_to_output: &mut Option<DxgiOutput>, ) -> HResult
-			= unsafe { transmute(vt[24]) };
-		let ret = f(vt, &mut _restrict_to_output, );
-		if ret.is_ok() {
-			if let (Some(_restrict_to_output)) = (_restrict_to_output) {
-				return Ok((_restrict_to_output));
-			}
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, sync_interval: u32, present_flags: u32, present_parameters: &DxgiPresentParameters, ) -> HResult
+				= transmute(vt[22]);
+			let _ret_ = f(vt, sync_interval, present_flags, present_parameters, );
+			_ret_.ok()
 		}
-		Err(ret)
+	}
+
+	fn IsTemporaryMonoSupported(&self, ) -> bool {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> Bool
+				= transmute(vt[23]);
+			let _ret_ = f(vt, );
+			_ret_.to_bool()
+		}
+	}
+
+	fn GetRestrictToOutput(&self, ) -> Result<DxgiOutput, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_restrict_to_output: Option<DxgiOutput> = None;
+			let f: extern "system" fn(Param<Self>, restrict_to_output: *mut c_void, ) -> HResult
+				= transmute(vt[24]);
+			let _ret_ = f(vt, transmute(&mut _out_restrict_to_output), );
+			if _ret_.is_ok() {
+				if let Some(_out_restrict_to_output) = _out_restrict_to_output {
+					return Ok(_out_restrict_to_output);
+				}
+			}
+			Err(_ret_)
+		}
 	}
 
 	fn SetBackgroundColor(&self, color: &DxgiRgba, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, color: &DxgiRgba, ) -> HResult
-			= unsafe { transmute(vt[25]) };
-		let ret = f(vt, color, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, color: &DxgiRgba, ) -> HResult
+				= transmute(vt[25]);
+			let _ret_ = f(vt, color, );
+			_ret_.ok()
+		}
 	}
 
-	fn GetBackgroundColor(&self, ) -> Result<(DxgiRgba), HResult> {
-		let vt = self.as_param();
-		let mut _color: DxgiRgba = DxgiRgba::zeroed();
-		let f: extern "system" fn(Param<Self>, _color: &mut DxgiRgba, ) -> HResult
-			= unsafe { transmute(vt[26]) };
-		let ret = f(vt, &mut _color, );
-		if ret.is_ok() {
-			return Ok((_color));
+	fn GetBackgroundColor(&self, ) -> Result<DxgiRgba, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_color: MaybeUninit<DxgiRgba> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_color: *mut DxgiRgba, ) -> HResult
+				= transmute(vt[26]);
+			let _ret_ = f(vt, _out_color.as_mut_ptr(), );
+			Ok(_out_color.assume_init())
 		}
-		Err(ret)
 	}
 
 	fn SetRotation(&self, rotation: DxgiModeRotation, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, rotation: DxgiModeRotation, ) -> HResult
-			= unsafe { transmute(vt[27]) };
-		let ret = f(vt, rotation, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, rotation: DxgiModeRotation, ) -> HResult
+				= transmute(vt[27]);
+			let _ret_ = f(vt, rotation, );
+			_ret_.ok()
+		}
 	}
 
-	fn GetRotation(&self, ) -> Result<(DxgiModeRotation), HResult> {
-		let vt = self.as_param();
-		let mut _rotation: DxgiModeRotation = DxgiModeRotation::zeroed();
-		let f: extern "system" fn(Param<Self>, _rotation: &mut DxgiModeRotation, ) -> HResult
-			= unsafe { transmute(vt[28]) };
-		let ret = f(vt, &mut _rotation, );
-		if ret.is_ok() {
-			return Ok((_rotation));
+	fn GetRotation(&self, ) -> Result<DxgiModeRotation, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_rotation: MaybeUninit<DxgiModeRotation> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_rotation: *mut DxgiModeRotation, ) -> HResult
+				= transmute(vt[28]);
+			let _ret_ = f(vt, _out_rotation.as_mut_ptr(), );
+			Ok(_out_rotation.assume_init())
 		}
-		Err(ret)
 	}
 }
 

@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::direct3d::dxc::*;
+
 #[repr(C)]
 pub struct DxcPdbUtils(pub(crate) Unknown);
 
@@ -30,282 +31,316 @@ pub trait IDxcPdbUtils: IUnknown {
 	fn into_pdb_utils(self) -> DxcPdbUtils;
 
 	fn Load(&self, pdb_or_dxil: &(impl IDxcBlob + ?Sized), ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, pdb_or_dxil: VTable, ) -> HResult
-			= unsafe { transmute(vt[3]) };
-		let ret = f(vt, pdb_or_dxil.vtable(), );
-		ret.ok()
-	}
-
-	fn GetSourceCount(&self, ) -> Result<(u32), HResult> {
-		let vt = self.as_param();
-		let mut _count: u32 = u32::zeroed();
-		let f: extern "system" fn(Param<Self>, _count: &mut u32, ) -> HResult
-			= unsafe { transmute(vt[4]) };
-		let ret = f(vt, &mut _count, );
-		if ret.is_ok() {
-			return Ok((_count));
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, pdb_or_dxil: VTable, ) -> HResult
+				= transmute(vt[3]);
+			let _ret_ = f(vt, pdb_or_dxil.vtable(), );
+			_ret_.ok()
 		}
-		Err(ret)
 	}
 
-	fn GetSource(&self, index: u32, ) -> Result<(DxcBlobEncoding), HResult> {
-		let vt = self.as_param();
-		let mut _result: Option<DxcBlobEncoding> = None;
-		let f: extern "system" fn(Param<Self>, index: u32, _result: &mut Option<DxcBlobEncoding>, ) -> HResult
-			= unsafe { transmute(vt[5]) };
-		let ret = f(vt, index, &mut _result, );
-		if ret.is_ok() {
-			if let (Some(_result)) = (_result) {
-				return Ok((_result));
+	fn GetSourceCount(&self, ) -> Result<u32, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_count: MaybeUninit<u32> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_count: *mut u32, ) -> HResult
+				= transmute(vt[4]);
+			let _ret_ = f(vt, _out_count.as_mut_ptr(), );
+			Ok(_out_count.assume_init())
+		}
+	}
+
+	fn GetSource(&self, index: u32, ) -> Result<DxcBlobEncoding, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_result: Option<DxcBlobEncoding> = None;
+			let f: extern "system" fn(Param<Self>, index: u32, result: *mut c_void, ) -> HResult
+				= transmute(vt[5]);
+			let _ret_ = f(vt, index, transmute(&mut _out_result), );
+			if _ret_.is_ok() {
+				if let Some(_out_result) = _out_result {
+					return Ok(_out_result);
+				}
 			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 
-	fn GetSourceName(&self, index: u32, ) -> Result<(BStr), HResult> {
-		let vt = self.as_param();
-		let mut _result: BStr = BStr::zeroed();
-		let f: extern "system" fn(Param<Self>, index: u32, _result: &mut BStr, ) -> HResult
-			= unsafe { transmute(vt[6]) };
-		let ret = f(vt, index, &mut _result, );
-		if ret.is_ok() {
-			return Ok((_result));
-		}
-		Err(ret)
-	}
-
-	fn GetFlagCount(&self, ) -> Result<(u32), HResult> {
-		let vt = self.as_param();
-		let mut _count: u32 = u32::zeroed();
-		let f: extern "system" fn(Param<Self>, _count: &mut u32, ) -> HResult
-			= unsafe { transmute(vt[7]) };
-		let ret = f(vt, &mut _count, );
-		if ret.is_ok() {
-			return Ok((_count));
-		}
-		Err(ret)
-	}
-
-	fn GetFlag(&self, index: u32, ) -> Result<(BStr), HResult> {
-		let vt = self.as_param();
-		let mut _result: BStr = BStr::zeroed();
-		let f: extern "system" fn(Param<Self>, index: u32, _result: &mut BStr, ) -> HResult
-			= unsafe { transmute(vt[8]) };
-		let ret = f(vt, index, &mut _result, );
-		if ret.is_ok() {
-			return Ok((_result));
-		}
-		Err(ret)
-	}
-
-	fn GetArgCount(&self, ) -> Result<(u32), HResult> {
-		let vt = self.as_param();
-		let mut _count: u32 = u32::zeroed();
-		let f: extern "system" fn(Param<Self>, _count: &mut u32, ) -> HResult
-			= unsafe { transmute(vt[9]) };
-		let ret = f(vt, &mut _count, );
-		if ret.is_ok() {
-			return Ok((_count));
-		}
-		Err(ret)
-	}
-
-	fn GetArg(&self, index: u32, ) -> Result<(BStr), HResult> {
-		let vt = self.as_param();
-		let mut _result: BStr = BStr::zeroed();
-		let f: extern "system" fn(Param<Self>, index: u32, _result: &mut BStr, ) -> HResult
-			= unsafe { transmute(vt[10]) };
-		let ret = f(vt, index, &mut _result, );
-		if ret.is_ok() {
-			return Ok((_result));
-		}
-		Err(ret)
-	}
-
-	fn GetArgPairCount(&self, ) -> Result<(u32), HResult> {
-		let vt = self.as_param();
-		let mut _count: u32 = u32::zeroed();
-		let f: extern "system" fn(Param<Self>, _count: &mut u32, ) -> HResult
-			= unsafe { transmute(vt[11]) };
-		let ret = f(vt, &mut _count, );
-		if ret.is_ok() {
-			return Ok((_count));
-		}
-		Err(ret)
-	}
-
-	fn GetArgPair(&self, index: u32, ) -> Result<(BStr, BStr), HResult> {
-		let vt = self.as_param();
-		let mut _name: BStr = BStr::zeroed();
-		let mut _value: BStr = BStr::zeroed();
-		let f: extern "system" fn(Param<Self>, index: u32, _name: &mut BStr, _value: &mut BStr, ) -> HResult
-			= unsafe { transmute(vt[12]) };
-		let ret = f(vt, index, &mut _name, &mut _value, );
-		if ret.is_ok() {
-			return Ok((_name, _value));
-		}
-		Err(ret)
-	}
-
-	fn GetDefineCount(&self, ) -> Result<(u32), HResult> {
-		let vt = self.as_param();
-		let mut _count: u32 = u32::zeroed();
-		let f: extern "system" fn(Param<Self>, _count: &mut u32, ) -> HResult
-			= unsafe { transmute(vt[13]) };
-		let ret = f(vt, &mut _count, );
-		if ret.is_ok() {
-			return Ok((_count));
-		}
-		Err(ret)
-	}
-
-	fn GetDefine(&self, index: u32, ) -> Result<(BStr), HResult> {
-		let vt = self.as_param();
-		let mut _result: BStr = BStr::zeroed();
-		let f: extern "system" fn(Param<Self>, index: u32, _result: &mut BStr, ) -> HResult
-			= unsafe { transmute(vt[14]) };
-		let ret = f(vt, index, &mut _result, );
-		if ret.is_ok() {
-			return Ok((_result));
-		}
-		Err(ret)
-	}
-
-	fn GetTargetProfile(&self, ) -> Result<(BStr), HResult> {
-		let vt = self.as_param();
-		let mut _result: BStr = BStr::zeroed();
-		let f: extern "system" fn(Param<Self>, _result: &mut BStr, ) -> HResult
-			= unsafe { transmute(vt[15]) };
-		let ret = f(vt, &mut _result, );
-		if ret.is_ok() {
-			return Ok((_result));
-		}
-		Err(ret)
-	}
-
-	fn GetEntryPoint(&self, ) -> Result<(BStr), HResult> {
-		let vt = self.as_param();
-		let mut _result: BStr = BStr::zeroed();
-		let f: extern "system" fn(Param<Self>, _result: &mut BStr, ) -> HResult
-			= unsafe { transmute(vt[16]) };
-		let ret = f(vt, &mut _result, );
-		if ret.is_ok() {
-			return Ok((_result));
-		}
-		Err(ret)
-	}
-
-	fn GetMainFileName(&self, ) -> Result<(BStr), HResult> {
-		let vt = self.as_param();
-		let mut _result: BStr = BStr::zeroed();
-		let f: extern "system" fn(Param<Self>, _result: &mut BStr, ) -> HResult
-			= unsafe { transmute(vt[17]) };
-		let ret = f(vt, &mut _result, );
-		if ret.is_ok() {
-			return Ok((_result));
-		}
-		Err(ret)
-	}
-
-	fn GetHash(&self, ) -> Result<(DxcBlob), HResult> {
-		let vt = self.as_param();
-		let mut _result: Option<DxcBlob> = None;
-		let f: extern "system" fn(Param<Self>, _result: &mut Option<DxcBlob>, ) -> HResult
-			= unsafe { transmute(vt[18]) };
-		let ret = f(vt, &mut _result, );
-		if ret.is_ok() {
-			if let (Some(_result)) = (_result) {
-				return Ok((_result));
+	fn GetSourceName(&self, index: u32, ) -> Result<BStr, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_result: Option<BStr> = None;
+			let f: extern "system" fn(Param<Self>, index: u32, _out_result: *mut c_void, ) -> HResult
+				= transmute(vt[6]);
+			let _ret_ = f(vt, index, transmute(&mut _out_result), );
+			if _ret_.is_ok() {
+				if let Some(_out_result) = _out_result {
+					return Ok(_out_result);
+				}
 			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 
-	fn GetName(&self, ) -> Result<(BStr), HResult> {
-		let vt = self.as_param();
-		let mut _result: BStr = BStr::zeroed();
-		let f: extern "system" fn(Param<Self>, _result: &mut BStr, ) -> HResult
-			= unsafe { transmute(vt[19]) };
-		let ret = f(vt, &mut _result, );
-		if ret.is_ok() {
-			return Ok((_result));
+	fn GetFlagCount(&self, ) -> Result<u32, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_count: MaybeUninit<u32> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_count: *mut u32, ) -> HResult
+				= transmute(vt[7]);
+			let _ret_ = f(vt, _out_count.as_mut_ptr(), );
+			Ok(_out_count.assume_init())
 		}
-		Err(ret)
 	}
 
-	fn IsFullPDB(&self, ) -> (bool) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> Bool
-			= unsafe { transmute(vt[20]) };
-		let ret = f(vt, );
-		return (ret.to_bool());
-	}
-
-	fn GetFullPDB(&self, ) -> Result<(DxcBlob), HResult> {
-		let vt = self.as_param();
-		let mut _full_pdb: Option<DxcBlob> = None;
-		let f: extern "system" fn(Param<Self>, _full_pdb: &mut Option<DxcBlob>, ) -> HResult
-			= unsafe { transmute(vt[21]) };
-		let ret = f(vt, &mut _full_pdb, );
-		if ret.is_ok() {
-			if let (Some(_full_pdb)) = (_full_pdb) {
-				return Ok((_full_pdb));
+	fn GetFlag(&self, index: u32, ) -> Result<BStr, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_result: Option<BStr> = None;
+			let f: extern "system" fn(Param<Self>, index: u32, _out_result: *mut c_void, ) -> HResult
+				= transmute(vt[8]);
+			let _ret_ = f(vt, index, transmute(&mut _out_result), );
+			if _ret_.is_ok() {
+				if let Some(_out_result) = _out_result {
+					return Ok(_out_result);
+				}
 			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 
-	fn GetVersionInfo(&self, ) -> Result<(DxcVersionInfo), HResult> {
-		let vt = self.as_param();
-		let mut _version_info: Option<DxcVersionInfo> = None;
-		let f: extern "system" fn(Param<Self>, _version_info: &mut Option<DxcVersionInfo>, ) -> HResult
-			= unsafe { transmute(vt[22]) };
-		let ret = f(vt, &mut _version_info, );
-		if ret.is_ok() {
-			if let (Some(_version_info)) = (_version_info) {
-				return Ok((_version_info));
-			}
+	fn GetArgCount(&self, ) -> Result<u32, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_count: MaybeUninit<u32> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_count: *mut u32, ) -> HResult
+				= transmute(vt[9]);
+			let _ret_ = f(vt, _out_count.as_mut_ptr(), );
+			Ok(_out_count.assume_init())
 		}
-		Err(ret)
+	}
+
+	fn GetArg(&self, index: u32, ) -> Result<BStr, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_result: Option<BStr> = None;
+			let f: extern "system" fn(Param<Self>, index: u32, _out_result: *mut c_void, ) -> HResult
+				= transmute(vt[10]);
+			let _ret_ = f(vt, index, transmute(&mut _out_result), );
+			if _ret_.is_ok() {
+				if let Some(_out_result) = _out_result {
+					return Ok(_out_result);
+				}
+			}
+			Err(_ret_)
+		}
+	}
+
+	fn GetArgPairCount(&self, ) -> Result<u32, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_count: MaybeUninit<u32> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_count: *mut u32, ) -> HResult
+				= transmute(vt[11]);
+			let _ret_ = f(vt, _out_count.as_mut_ptr(), );
+			Ok(_out_count.assume_init())
+		}
+	}
+
+	fn GetDefineCount(&self, ) -> Result<u32, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_count: MaybeUninit<u32> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_count: *mut u32, ) -> HResult
+				= transmute(vt[13]);
+			let _ret_ = f(vt, _out_count.as_mut_ptr(), );
+			Ok(_out_count.assume_init())
+		}
+	}
+
+	fn GetDefine(&self, index: u32, ) -> Result<BStr, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_result: Option<BStr> = None;
+			let f: extern "system" fn(Param<Self>, index: u32, _out_result: *mut c_void, ) -> HResult
+				= transmute(vt[14]);
+			let _ret_ = f(vt, index, transmute(&mut _out_result), );
+			if _ret_.is_ok() {
+				if let Some(_out_result) = _out_result {
+					return Ok(_out_result);
+				}
+			}
+			Err(_ret_)
+		}
+	}
+
+	fn GetTargetProfile(&self, ) -> Result<BStr, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_result: Option<BStr> = None;
+			let f: extern "system" fn(Param<Self>, _out_result: *mut c_void, ) -> HResult
+				= transmute(vt[15]);
+			let _ret_ = f(vt, transmute(&mut _out_result), );
+			if _ret_.is_ok() {
+				if let Some(_out_result) = _out_result {
+					return Ok(_out_result);
+				}
+			}
+			Err(_ret_)
+		}
+	}
+
+	fn GetEntryPoint(&self, ) -> Result<BStr, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_result: Option<BStr> = None;
+			let f: extern "system" fn(Param<Self>, _out_result: *mut c_void, ) -> HResult
+				= transmute(vt[16]);
+			let _ret_ = f(vt, transmute(&mut _out_result), );
+			if _ret_.is_ok() {
+				if let Some(_out_result) = _out_result {
+					return Ok(_out_result);
+				}
+			}
+			Err(_ret_)
+		}
+	}
+
+	fn GetMainFileName(&self, ) -> Result<BStr, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_result: Option<BStr> = None;
+			let f: extern "system" fn(Param<Self>, _out_result: *mut c_void, ) -> HResult
+				= transmute(vt[17]);
+			let _ret_ = f(vt, transmute(&mut _out_result), );
+			if _ret_.is_ok() {
+				if let Some(_out_result) = _out_result {
+					return Ok(_out_result);
+				}
+			}
+			Err(_ret_)
+		}
+	}
+
+	fn GetHash(&self, ) -> Result<DxcBlob, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_result: Option<DxcBlob> = None;
+			let f: extern "system" fn(Param<Self>, result: *mut c_void, ) -> HResult
+				= transmute(vt[18]);
+			let _ret_ = f(vt, transmute(&mut _out_result), );
+			if _ret_.is_ok() {
+				if let Some(_out_result) = _out_result {
+					return Ok(_out_result);
+				}
+			}
+			Err(_ret_)
+		}
+	}
+
+	fn GetName(&self, ) -> Result<BStr, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_result: Option<BStr> = None;
+			let f: extern "system" fn(Param<Self>, _out_result: *mut c_void, ) -> HResult
+				= transmute(vt[19]);
+			let _ret_ = f(vt, transmute(&mut _out_result), );
+			if _ret_.is_ok() {
+				if let Some(_out_result) = _out_result {
+					return Ok(_out_result);
+				}
+			}
+			Err(_ret_)
+		}
+	}
+
+	fn IsFullPDB(&self, ) -> bool {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> Bool
+				= transmute(vt[20]);
+			let _ret_ = f(vt, );
+			_ret_.to_bool()
+		}
+	}
+
+	fn GetFullPDB(&self, ) -> Result<DxcBlob, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_full_pdb: Option<DxcBlob> = None;
+			let f: extern "system" fn(Param<Self>, full_pdb: *mut c_void, ) -> HResult
+				= transmute(vt[21]);
+			let _ret_ = f(vt, transmute(&mut _out_full_pdb), );
+			if _ret_.is_ok() {
+				if let Some(_out_full_pdb) = _out_full_pdb {
+					return Ok(_out_full_pdb);
+				}
+			}
+			Err(_ret_)
+		}
+	}
+
+	fn GetVersionInfo(&self, ) -> Result<DxcVersionInfo, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_version_info: Option<DxcVersionInfo> = None;
+			let f: extern "system" fn(Param<Self>, version_info: *mut c_void, ) -> HResult
+				= transmute(vt[22]);
+			let _ret_ = f(vt, transmute(&mut _out_version_info), );
+			if _ret_.is_ok() {
+				if let Some(_out_version_info) = _out_version_info {
+					return Ok(_out_version_info);
+				}
+			}
+			Err(_ret_)
+		}
 	}
 
 	fn SetCompiler(&self, compiler: &(impl IDxcCompiler3 + ?Sized), ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, compiler: VTable, ) -> HResult
-			= unsafe { transmute(vt[23]) };
-		let ret = f(vt, compiler.vtable(), );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, compiler: VTable, ) -> HResult
+				= transmute(vt[23]);
+			let _ret_ = f(vt, compiler.vtable(), );
+			_ret_.ok()
+		}
 	}
 
-	fn CompileForFullPDB(&self, ) -> Result<(DxcResult), HResult> {
-		let vt = self.as_param();
-		let mut _result: Option<DxcResult> = None;
-		let f: extern "system" fn(Param<Self>, _result: &mut Option<DxcResult>, ) -> HResult
-			= unsafe { transmute(vt[24]) };
-		let ret = f(vt, &mut _result, );
-		if ret.is_ok() {
-			if let (Some(_result)) = (_result) {
-				return Ok((_result));
+	fn CompileForFullPDB(&self, ) -> Result<DxcResult, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_result: Option<DxcResult> = None;
+			let f: extern "system" fn(Param<Self>, result: *mut c_void, ) -> HResult
+				= transmute(vt[24]);
+			let _ret_ = f(vt, transmute(&mut _out_result), );
+			if _ret_.is_ok() {
+				if let Some(_out_result) = _out_result {
+					return Ok(_out_result);
+				}
 			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 
 	fn OverrideArgs(&self, arg_pairs: &DxcArgPair, num_arg_pairs: u32, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, arg_pairs: &DxcArgPair, num_arg_pairs: u32, ) -> HResult
-			= unsafe { transmute(vt[25]) };
-		let ret = f(vt, arg_pairs, num_arg_pairs, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, arg_pairs: &DxcArgPair, num_arg_pairs: u32, ) -> HResult
+				= transmute(vt[25]);
+			let _ret_ = f(vt, arg_pairs, num_arg_pairs, );
+			_ret_.ok()
+		}
 	}
 
 	fn OverrideRootSignature(&self, root_signature: &str, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, root_signature: *const u16, ) -> HResult
-			= unsafe { transmute(vt[26]) };
-		let ret = f(vt, root_signature.to_utf16().as_ptr_or_null(), );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, root_signature: *const u16, ) -> HResult
+				= transmute(vt[26]);
+			let _ret_ = f(vt, root_signature.to_utf16().as_ptr_or_null(), );
+			_ret_.ok()
+		}
 	}
 }
 

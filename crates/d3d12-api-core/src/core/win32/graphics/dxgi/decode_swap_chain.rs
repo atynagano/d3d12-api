@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::dxgi::*;
+
 #[repr(C)]
 pub struct DxgiDecodeSwapChain(pub(crate) Unknown);
 
@@ -30,88 +31,100 @@ pub trait IDxgiDecodeSwapChain: IUnknown {
 	fn into_decode_swap_chain(self) -> DxgiDecodeSwapChain;
 
 	fn PresentBuffer(&self, buffer_to_present: u32, sync_interval: u32, flags: u32, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, buffer_to_present: u32, sync_interval: u32, flags: u32, ) -> HResult
-			= unsafe { transmute(vt[3]) };
-		let ret = f(vt, buffer_to_present, sync_interval, flags, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, buffer_to_present: u32, sync_interval: u32, flags: u32, ) -> HResult
+				= transmute(vt[3]);
+			let _ret_ = f(vt, buffer_to_present, sync_interval, flags, );
+			_ret_.ok()
+		}
 	}
 
 	fn SetSourceRect(&self, rect: &Rect, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, rect: &Rect, ) -> HResult
-			= unsafe { transmute(vt[4]) };
-		let ret = f(vt, rect, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, rect: &Rect, ) -> HResult
+				= transmute(vt[4]);
+			let _ret_ = f(vt, rect, );
+			_ret_.ok()
+		}
 	}
 
 	fn SetTargetRect(&self, rect: &Rect, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, rect: &Rect, ) -> HResult
-			= unsafe { transmute(vt[5]) };
-		let ret = f(vt, rect, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, rect: &Rect, ) -> HResult
+				= transmute(vt[5]);
+			let _ret_ = f(vt, rect, );
+			_ret_.ok()
+		}
 	}
 
 	fn SetDestSize(&self, width: u32, height: u32, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, width: u32, height: u32, ) -> HResult
-			= unsafe { transmute(vt[6]) };
-		let ret = f(vt, width, height, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, width: u32, height: u32, ) -> HResult
+				= transmute(vt[6]);
+			let _ret_ = f(vt, width, height, );
+			_ret_.ok()
+		}
 	}
 
-	fn GetSourceRect(&self, ) -> Result<(Rect), HResult> {
-		let vt = self.as_param();
-		let mut _rect: Rect = Rect::zeroed();
-		let f: extern "system" fn(Param<Self>, _rect: &mut Rect, ) -> HResult
-			= unsafe { transmute(vt[7]) };
-		let ret = f(vt, &mut _rect, );
-		if ret.is_ok() {
-			return Ok((_rect));
+	fn GetSourceRect(&self, ) -> Result<Rect, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_rect: MaybeUninit<Rect> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_rect: *mut Rect, ) -> HResult
+				= transmute(vt[7]);
+			let _ret_ = f(vt, _out_rect.as_mut_ptr(), );
+			Ok(_out_rect.assume_init())
 		}
-		Err(ret)
 	}
 
-	fn GetTargetRect(&self, ) -> Result<(Rect), HResult> {
-		let vt = self.as_param();
-		let mut _rect: Rect = Rect::zeroed();
-		let f: extern "system" fn(Param<Self>, _rect: &mut Rect, ) -> HResult
-			= unsafe { transmute(vt[8]) };
-		let ret = f(vt, &mut _rect, );
-		if ret.is_ok() {
-			return Ok((_rect));
+	fn GetTargetRect(&self, ) -> Result<Rect, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_rect: MaybeUninit<Rect> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_rect: *mut Rect, ) -> HResult
+				= transmute(vt[8]);
+			let _ret_ = f(vt, _out_rect.as_mut_ptr(), );
+			Ok(_out_rect.assume_init())
 		}
-		Err(ret)
 	}
 
-	fn GetDestSize(&self, ) -> Result<(u32, u32), HResult> {
-		let vt = self.as_param();
-		let mut _width: u32 = u32::zeroed();
-		let mut _height: u32 = u32::zeroed();
-		let f: extern "system" fn(Param<Self>, _width: &mut u32, _height: &mut u32, ) -> HResult
-			= unsafe { transmute(vt[9]) };
-		let ret = f(vt, &mut _width, &mut _height, );
-		if ret.is_ok() {
-			return Ok((_width, _height));
+	fn GetDestSize(&self, ) -> Result<(u32, u32, ), HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_width: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_height: MaybeUninit<u32> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_width: *mut u32, _out_height: *mut u32, ) -> HResult
+				= transmute(vt[9]);
+			let _ret_ = f(vt, _out_width.as_mut_ptr(), _out_height.as_mut_ptr(), );
+			if _ret_.is_ok() {
+				return Ok((_out_width.assume_init(), _out_height.assume_init(), ));
+			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 
 	fn SetColorSpace(&self, color_space: DxgiMultiplaneOverlayYcbcrFlags, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, color_space: DxgiMultiplaneOverlayYcbcrFlags, ) -> HResult
-			= unsafe { transmute(vt[10]) };
-		let ret = f(vt, color_space, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, color_space: DxgiMultiplaneOverlayYcbcrFlags, ) -> HResult
+				= transmute(vt[10]);
+			let _ret_ = f(vt, color_space, );
+			_ret_.ok()
+		}
 	}
 
-	fn GetColorSpace(&self, ) -> (DxgiMultiplaneOverlayYcbcrFlags) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> DxgiMultiplaneOverlayYcbcrFlags
-			= unsafe { transmute(vt[11]) };
-		let ret = f(vt, );
-		return (ret);
+	fn GetColorSpace(&self, ) -> DxgiMultiplaneOverlayYcbcrFlags {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> DxgiMultiplaneOverlayYcbcrFlags
+				= transmute(vt[11]);
+			let _ret_ = f(vt, );
+			_ret_
+		}
 	}
 }
 

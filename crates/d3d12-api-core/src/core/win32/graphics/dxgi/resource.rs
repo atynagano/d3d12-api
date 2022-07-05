@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::dxgi::*;
+
 #[repr(C)]
 pub struct DxgiResource(pub(crate) DxgiDeviceSubObject);
 
@@ -29,48 +30,52 @@ pub trait IDxgiResource: IDxgiDeviceSubObject {
 	fn as_resource(&self) -> &DxgiResource;
 	fn into_resource(self) -> DxgiResource;
 
-	fn GetSharedHandle(&self, ) -> Result<(Handle), HResult> {
-		let vt = self.as_param();
-		let mut _shared_handle: Handle = Handle::zeroed();
-		let f: extern "system" fn(Param<Self>, _shared_handle: &mut Handle, ) -> HResult
-			= unsafe { transmute(vt[8]) };
-		let ret = f(vt, &mut _shared_handle, );
-		if ret.is_ok() {
-			return Ok((_shared_handle));
+	fn GetSharedHandle(&self, ) -> Result<Handle, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_shared_handle: Option<Handle> = None;
+			let f: extern "system" fn(Param<Self>, _out_shared_handle: *mut c_void, ) -> HResult
+				= transmute(vt[8]);
+			let _ret_ = f(vt, transmute(&mut _out_shared_handle), );
+			if _ret_.is_ok() {
+				if let Some(_out_shared_handle) = _out_shared_handle {
+					return Ok(_out_shared_handle);
+				}
+			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 
-	fn GetUsage(&self, ) -> Result<(u32), HResult> {
-		let vt = self.as_param();
-		let mut _usage: u32 = u32::zeroed();
-		let f: extern "system" fn(Param<Self>, _usage: &mut u32, ) -> HResult
-			= unsafe { transmute(vt[9]) };
-		let ret = f(vt, &mut _usage, );
-		if ret.is_ok() {
-			return Ok((_usage));
+	fn GetUsage(&self, ) -> Result<u32, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_usage: MaybeUninit<u32> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_usage: *mut u32, ) -> HResult
+				= transmute(vt[9]);
+			let _ret_ = f(vt, _out_usage.as_mut_ptr(), );
+			Ok(_out_usage.assume_init())
 		}
-		Err(ret)
 	}
 
 	fn SetEvictionPriority(&self, eviction_priority: DxgiResourcePriority, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, eviction_priority: DxgiResourcePriority, ) -> HResult
-			= unsafe { transmute(vt[10]) };
-		let ret = f(vt, eviction_priority, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, eviction_priority: DxgiResourcePriority, ) -> HResult
+				= transmute(vt[10]);
+			let _ret_ = f(vt, eviction_priority, );
+			_ret_.ok()
+		}
 	}
 
-	fn GetEvictionPriority(&self, ) -> Result<(u32), HResult> {
-		let vt = self.as_param();
-		let mut _eviction_priority: u32 = u32::zeroed();
-		let f: extern "system" fn(Param<Self>, _eviction_priority: &mut u32, ) -> HResult
-			= unsafe { transmute(vt[11]) };
-		let ret = f(vt, &mut _eviction_priority, );
-		if ret.is_ok() {
-			return Ok((_eviction_priority));
+	fn GetEvictionPriority(&self, ) -> Result<u32, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_eviction_priority: MaybeUninit<u32> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_eviction_priority: *mut u32, ) -> HResult
+				= transmute(vt[11]);
+			let _ret_ = f(vt, _out_eviction_priority.as_mut_ptr(), );
+			Ok(_out_eviction_priority.assume_init())
 		}
-		Err(ret)
 	}
 }
 

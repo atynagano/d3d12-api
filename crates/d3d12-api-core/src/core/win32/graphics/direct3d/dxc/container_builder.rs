@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::direct3d::dxc::*;
+
 #[repr(C)]
 pub struct DxcContainerBuilder(pub(crate) Unknown);
 
@@ -30,41 +31,49 @@ pub trait IDxcContainerBuilder: IUnknown {
 	fn into_container_builder(self) -> DxcContainerBuilder;
 
 	fn Load(&self, dxil_container_header: &(impl IDxcBlob + ?Sized), ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, dxil_container_header: VTable, ) -> HResult
-			= unsafe { transmute(vt[3]) };
-		let ret = f(vt, dxil_container_header.vtable(), );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, dxil_container_header: VTable, ) -> HResult
+				= transmute(vt[3]);
+			let _ret_ = f(vt, dxil_container_header.vtable(), );
+			_ret_.ok()
+		}
 	}
 
 	fn AddPart(&self, four_cc: u32, source: &(impl IDxcBlob + ?Sized), ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, four_cc: u32, source: VTable, ) -> HResult
-			= unsafe { transmute(vt[4]) };
-		let ret = f(vt, four_cc, source.vtable(), );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, four_cc: u32, source: VTable, ) -> HResult
+				= transmute(vt[4]);
+			let _ret_ = f(vt, four_cc, source.vtable(), );
+			_ret_.ok()
+		}
 	}
 
 	fn RemovePart(&self, four_cc: u32, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, four_cc: u32, ) -> HResult
-			= unsafe { transmute(vt[5]) };
-		let ret = f(vt, four_cc, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, four_cc: u32, ) -> HResult
+				= transmute(vt[5]);
+			let _ret_ = f(vt, four_cc, );
+			_ret_.ok()
+		}
 	}
 
-	fn SerializeContainer(&self, ) -> Result<(DxcOperationResult), HResult> {
-		let vt = self.as_param();
-		let mut _result: Option<DxcOperationResult> = None;
-		let f: extern "system" fn(Param<Self>, _result: &mut Option<DxcOperationResult>, ) -> HResult
-			= unsafe { transmute(vt[6]) };
-		let ret = f(vt, &mut _result, );
-		if ret.is_ok() {
-			if let (Some(_result)) = (_result) {
-				return Ok((_result));
+	fn SerializeContainer(&self, ) -> Result<DxcOperationResult, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_result: Option<DxcOperationResult> = None;
+			let f: extern "system" fn(Param<Self>, result: *mut c_void, ) -> HResult
+				= transmute(vt[6]);
+			let _ret_ = f(vt, transmute(&mut _out_result), );
+			if _ret_.is_ok() {
+				if let Some(_out_result) = _out_result {
+					return Ok(_out_result);
+				}
 			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 }
 

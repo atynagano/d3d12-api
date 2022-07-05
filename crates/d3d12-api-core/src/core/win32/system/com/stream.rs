@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
+
 #[repr(C)]
 pub struct Stream(pub(crate) SequentialStream);
 
@@ -30,85 +31,100 @@ pub trait IStream: ISequentialStream {
 	fn into_stream(self) -> Stream;
 
 	fn Seek(&self, dlib_move: i64, origin: StreamSeek, plib_new_position: Option<&mut u64>, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, dlib_move: i64, origin: StreamSeek, plib_new_position: Option<&mut u64>, ) -> HResult
-			= unsafe { transmute(vt[5]) };
-		let ret = f(vt, dlib_move, origin, plib_new_position, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, dlib_move: i64, origin: StreamSeek, plib_new_position: Option<&mut u64>, ) -> HResult
+				= transmute(vt[5]);
+			let _ret_ = f(vt, dlib_move, origin, plib_new_position, );
+			_ret_.ok()
+		}
 	}
 
 	fn SetSize(&self, lib_new_size: u64, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, lib_new_size: u64, ) -> HResult
-			= unsafe { transmute(vt[6]) };
-		let ret = f(vt, lib_new_size, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, lib_new_size: u64, ) -> HResult
+				= transmute(vt[6]);
+			let _ret_ = f(vt, lib_new_size, );
+			_ret_.ok()
+		}
 	}
 
 	fn CopyTo(&self, pstm: &(impl IStream + ?Sized), cb: u64, pcb_read: Option<&mut u64>, pcb_written: Option<&mut u64>, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, pstm: VTable, cb: u64, pcb_read: Option<&mut u64>, pcb_written: Option<&mut u64>, ) -> HResult
-			= unsafe { transmute(vt[7]) };
-		let ret = f(vt, pstm.vtable(), cb, pcb_read, pcb_written, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, pstm: VTable, cb: u64, pcb_read: Option<&mut u64>, pcb_written: Option<&mut u64>, ) -> HResult
+				= transmute(vt[7]);
+			let _ret_ = f(vt, pstm.vtable(), cb, pcb_read, pcb_written, );
+			_ret_.ok()
+		}
 	}
 
 	fn Commit(&self, grf_commit_flags: StgC, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, grf_commit_flags: StgC, ) -> HResult
-			= unsafe { transmute(vt[8]) };
-		let ret = f(vt, grf_commit_flags, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, grf_commit_flags: StgC, ) -> HResult
+				= transmute(vt[8]);
+			let _ret_ = f(vt, grf_commit_flags, );
+			_ret_.ok()
+		}
 	}
 
 	fn Revert(&self, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> HResult
-			= unsafe { transmute(vt[9]) };
-		let ret = f(vt, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> HResult
+				= transmute(vt[9]);
+			let _ret_ = f(vt, );
+			_ret_.ok()
+		}
 	}
 
 	fn LockRegion(&self, lib_offset: u64, cb: u64, lock_type: u32, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, lib_offset: u64, cb: u64, lock_type: u32, ) -> HResult
-			= unsafe { transmute(vt[10]) };
-		let ret = f(vt, lib_offset, cb, lock_type, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, lib_offset: u64, cb: u64, lock_type: u32, ) -> HResult
+				= transmute(vt[10]);
+			let _ret_ = f(vt, lib_offset, cb, lock_type, );
+			_ret_.ok()
+		}
 	}
 
 	fn UnlockRegion(&self, lib_offset: u64, cb: u64, lock_type: u32, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, lib_offset: u64, cb: u64, lock_type: u32, ) -> HResult
-			= unsafe { transmute(vt[11]) };
-		let ret = f(vt, lib_offset, cb, lock_type, );
-		ret.ok()
-	}
-
-	fn Stat(&self, grf_stat_flag: u32, ) -> Result<(StatStg), HResult> {
-		let vt = self.as_param();
-		let mut _pstatstg: StatStg = StatStg::zeroed();
-		let f: extern "system" fn(Param<Self>, _pstatstg: &mut StatStg, grf_stat_flag: u32, ) -> HResult
-			= unsafe { transmute(vt[12]) };
-		let ret = f(vt, &mut _pstatstg, grf_stat_flag, );
-		if ret.is_ok() {
-			return Ok((_pstatstg));
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, lib_offset: u64, cb: u64, lock_type: u32, ) -> HResult
+				= transmute(vt[11]);
+			let _ret_ = f(vt, lib_offset, cb, lock_type, );
+			_ret_.ok()
 		}
-		Err(ret)
 	}
 
-	fn Clone(&self, ) -> Result<(Stream), HResult> {
-		let vt = self.as_param();
-		let mut _ppstm: Option<Stream> = None;
-		let f: extern "system" fn(Param<Self>, _ppstm: &mut Option<Stream>, ) -> HResult
-			= unsafe { transmute(vt[13]) };
-		let ret = f(vt, &mut _ppstm, );
-		if ret.is_ok() {
-			if let (Some(_ppstm)) = (_ppstm) {
-				return Ok((_ppstm));
+	fn Stat(&self, grf_stat_flag: u32, ) -> Result<StatStg, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_pstatstg: MaybeUninit<StatStg> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_pstatstg: *mut StatStg, grf_stat_flag: u32, ) -> HResult
+				= transmute(vt[12]);
+			let _ret_ = f(vt, _out_pstatstg.as_mut_ptr(), grf_stat_flag, );
+			Ok(_out_pstatstg.assume_init())
+		}
+	}
+
+	fn Clone(&self, ) -> Result<Stream, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_ppstm: Option<Stream> = None;
+			let f: extern "system" fn(Param<Self>, ppstm: *mut c_void, ) -> HResult
+				= transmute(vt[13]);
+			let _ret_ = f(vt, transmute(&mut _out_ppstm), );
+			if _ret_.is_ok() {
+				if let Some(_out_ppstm) = _out_ppstm {
+					return Ok(_out_ppstm);
+				}
 			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 }
 

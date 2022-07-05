@@ -2,17 +2,18 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
+
 #[repr(C)]
 pub struct DxgiFactory7(pub(crate) DxgiFactory6);
 
@@ -28,24 +29,25 @@ pub trait IDxgiFactory7: IDxgiFactory6 {
 	fn as_factory7(&self) -> &DxgiFactory7;
 	fn into_factory7(self) -> DxgiFactory7;
 
-	fn RegisterAdaptersChangedEvent(&self, event: Handle, ) -> Result<(u32), HResult> {
-		let vt = self.as_param();
-		let mut _pdw_cookie: u32 = u32::zeroed();
-		let f: extern "system" fn(Param<Self>, event: Handle, _pdw_cookie: &mut u32, ) -> HResult
-			= unsafe { transmute(vt[30]) };
-		let ret = f(vt, event, &mut _pdw_cookie, );
-		if ret.is_ok() {
-			return Ok((_pdw_cookie));
+	fn RegisterAdaptersChangedEvent(&self, event: Handle, ) -> Result<u32, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_pdw_cookie: MaybeUninit<u32> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, event: Handle, _out_pdw_cookie: *mut u32, ) -> HResult
+				= transmute(vt[30]);
+			let _ret_ = f(vt, event, _out_pdw_cookie.as_mut_ptr(), );
+			Ok(_out_pdw_cookie.assume_init())
 		}
-		Err(ret)
 	}
 
 	fn UnregisterAdaptersChangedEvent(&self, cookie: u32, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, cookie: u32, ) -> HResult
-			= unsafe { transmute(vt[31]) };
-		let ret = f(vt, cookie, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, cookie: u32, ) -> HResult
+				= transmute(vt[31]);
+			let _ret_ = f(vt, cookie, );
+			_ret_.ok()
+		}
 	}
 }
 

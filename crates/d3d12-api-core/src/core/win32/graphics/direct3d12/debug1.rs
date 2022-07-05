@@ -2,17 +2,18 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
+
 #[repr(C)]
 pub struct D3D12Debug1(pub(crate) Unknown);
 
@@ -29,24 +30,30 @@ pub trait ID3D12Debug1: IUnknown {
 	fn into_debug1(self) -> D3D12Debug1;
 
 	fn EnableDebugLayer(&self, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> ()
-			= unsafe { transmute(vt[3]) };
-		let ret = f(vt, );
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> ()
+				= transmute(vt[3]);
+			let _ret_ = f(vt, );
+		}
 	}
 
 	fn SetEnableGPUBasedValidation(&self, enable: bool, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, enable: Bool, ) -> ()
-			= unsafe { transmute(vt[4]) };
-		let ret = f(vt, enable.to_bool(), );
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, enable: Bool, ) -> ()
+				= transmute(vt[4]);
+			let _ret_ = f(vt, enable.to_bool(), );
+		}
 	}
 
 	fn SetEnableSynchronizedCommandQueueValidation(&self, enable: bool, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, enable: Bool, ) -> ()
-			= unsafe { transmute(vt[5]) };
-		let ret = f(vt, enable.to_bool(), );
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, enable: Bool, ) -> ()
+				= transmute(vt[5]);
+			let _ret_ = f(vt, enable.to_bool(), );
+		}
 	}
 }
 

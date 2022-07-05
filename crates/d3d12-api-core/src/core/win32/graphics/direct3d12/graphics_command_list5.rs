@@ -2,17 +2,18 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
 
 use crate::core::win32::graphics::direct3d12::*;
+
 #[repr(C)]
 pub struct D3D12GraphicsCommandList5(pub(crate) D3D12GraphicsCommandList4);
 
@@ -29,17 +30,21 @@ pub trait ID3D12GraphicsCommandList5: ID3D12GraphicsCommandList4 {
 	fn into_graphics_command_list5(self) -> D3D12GraphicsCommandList5;
 
 	fn RSSetShadingRate(&self, base_shading_rate: D3D12ShadingRate, combiners: Option<&D3D12ShadingRateCombiner>, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, base_shading_rate: D3D12ShadingRate, combiners: Option<&D3D12ShadingRateCombiner>, ) -> ()
-			= unsafe { transmute(vt[77]) };
-		let ret = f(vt, base_shading_rate, combiners, );
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, base_shading_rate: D3D12ShadingRate, combiners: *const c_void, ) -> ()
+				= transmute(vt[77]);
+			let _ret_ = f(vt, base_shading_rate, transmute(combiners), );
+		}
 	}
 
 	fn RSSetShadingRateImage(&self, shading_rate_image: Option<&D3D12Resource>, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, shading_rate_image: Option<VTable>, ) -> ()
-			= unsafe { transmute(vt[78]) };
-		let ret = f(vt, option_to_vtable(shading_rate_image), );
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, shading_rate_image: *const c_void, ) -> ()
+				= transmute(vt[78]);
+			let _ret_ = f(vt, option_to_vtable(shading_rate_image), );
+		}
 	}
 }
 

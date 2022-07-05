@@ -2,17 +2,18 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
+
 #[repr(C)]
 pub struct D3D12Tools(pub(crate) Unknown);
 
@@ -29,18 +30,22 @@ pub trait ID3D12Tools: IUnknown {
 	fn into_tools(self) -> D3D12Tools;
 
 	fn EnableShaderInstrumentation(&self, enable: bool, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, enable: Bool, ) -> ()
-			= unsafe { transmute(vt[3]) };
-		let ret = f(vt, enable.to_bool(), );
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, enable: Bool, ) -> ()
+				= transmute(vt[3]);
+			let _ret_ = f(vt, enable.to_bool(), );
+		}
 	}
 
-	fn ShaderInstrumentationEnabled(&self, ) -> (bool) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> Bool
-			= unsafe { transmute(vt[4]) };
-		let ret = f(vt, );
-		return (ret.to_bool());
+	fn ShaderInstrumentationEnabled(&self, ) -> bool {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> Bool
+				= transmute(vt[4]);
+			let _ret_ = f(vt, );
+			_ret_.to_bool()
+		}
 	}
 }
 

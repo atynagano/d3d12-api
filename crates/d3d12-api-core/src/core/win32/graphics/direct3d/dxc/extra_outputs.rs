@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::direct3d::dxc::*;
+
 #[repr(C)]
 pub struct DxcExtraOutputs(pub(crate) Unknown);
 
@@ -29,24 +30,28 @@ pub trait IDxcExtraOutputs: IUnknown {
 	fn as_extra_outputs(&self) -> &DxcExtraOutputs;
 	fn into_extra_outputs(self) -> DxcExtraOutputs;
 
-	fn GetOutputCount(&self, ) -> (u32) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> u32
-			= unsafe { transmute(vt[3]) };
-		let ret = f(vt, );
-		return (ret);
+	fn GetOutputCount(&self, ) -> u32 {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> u32
+				= transmute(vt[3]);
+			let _ret_ = f(vt, );
+			_ret_
+		}
 	}
 
-	fn GetOutput<T: IUnknown>(&self, index: u32, object: Option<&mut Option<T>>, mut output_type: Option<&mut Option<DxcBlobUtf16>>,mut output_name: Option<&mut Option<DxcBlobUtf16>>,) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let mut out_object: Option<Unknown> = None;
-		if let Some(ref mut output_type) = output_type { **output_type = None; }
-		if let Some(ref mut output_name) = output_name { **output_name = None; }
-		let f: extern "system" fn(Param<Self>, index: u32, iid: &GUID, object: Option<&mut Option<Unknown>>, output_type: Option<&mut Option<DxcBlobUtf16>>, output_name: Option<&mut Option<DxcBlobUtf16>>, ) -> HResult
-			= unsafe { transmute(vt[4]) };
-		let ret = f(vt, index, T::IID, if object.is_some() { Some(&mut out_object) } else { None }, output_type, output_name, );
-		if let (Some(object), Some(out_object)) = (object, out_object) { *object = Some(T::from(out_object)); }
-		ret.ok()
+	fn GetOutput<T: IUnknown>(&self, index: u32, object: Option<&mut Option<T>>, mut output_type: Option<&mut Option<DxcBlobUtf16>>, mut output_name: Option<&mut Option<DxcBlobUtf16>>, ) -> Result<(), HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_object: Option<Unknown> = None;
+			if let Some(ref mut output_type) = output_type { **output_type = None; }
+			if let Some(ref mut output_name) = output_name { **output_name = None; }
+			let f: extern "system" fn(Param<Self>, index: u32, iid: &GUID, object: *mut c_void, output_type: *mut c_void, output_name: *mut c_void, ) -> HResult
+				= transmute(vt[4]);
+			let _ret_ = f(vt, index, T::IID, transmute(if object.is_some() { Some(&mut _out_object) } else { None }), transmute(output_type), transmute(output_name), );
+			if let Some(_out_object) = _out_object { *object.unwrap_unchecked() = Some(T::from(_out_object)); }
+			_ret_.ok()
+		}
 	}
 }
 

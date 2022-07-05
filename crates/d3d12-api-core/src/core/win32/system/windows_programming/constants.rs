@@ -2,17 +2,18 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
 
 use std::ops::{BitOr, BitOrAssign};
+
 pub const WLDP_LOCKDOWN_UNDEFINED: u32 = 0x0;
 pub const WLDP_LOCKDOWN_DEFINED_FLAG: u32 = 0x80000000;
 pub const WLDP_LOCKDOWN_CONFIG_CI_FLAG: u32 = 0x1;

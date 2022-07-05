@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::direct3d::dxc::*;
+
 #[repr(C)]
 pub struct DxcCompiler3(pub(crate) Unknown);
 
@@ -29,32 +30,37 @@ pub trait IDxcCompiler3: IUnknown {
 	fn as_compiler3(&self) -> &DxcCompiler3;
 	fn into_compiler3(self) -> DxcCompiler3;
 
-	fn Compile<T: IUnknown>(&self, source: &DxcBuffer, arguments: Option<&[&str]>, include_handler: Option<&DxcIncludeHandler>, ) -> Result<(T), HResult> {
-		let vt = self.as_param();
-		let mut _result: Option<Unknown> = None;
-		let f: extern "system" fn(Param<Self>, source: &DxcBuffer, arguments: *const PWStr, arg_count: u32, include_handler: Option<VTable>, riid: &GUID, _result: &mut Option<Unknown>, ) -> HResult
-			= unsafe { transmute(vt[3]) };
-		let ret = f(vt, source, arguments.to_utf16_vec().ptr(), arguments.len() as u32, option_to_vtable(include_handler), T::IID, &mut _result, );
-		if ret.is_ok() {
-			if let (Some(_result)) = (_result) {
-				return Ok((T::from(_result)));
+	fn Compile<T: IUnknown>(&self, source: &DxcBuffer, arguments: Option<&[&str]>, include_handler: Option<&DxcIncludeHandler>, ) -> Result<T, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let (_ptr_arguments, _len_arguments) = arguments.deconstruct();
+			let mut _out_result: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, source: &DxcBuffer, arguments: *const PWStr, arg_count: u32, include_handler: *const c_void, riid: &GUID, _out_result: *mut c_void, ) -> HResult
+				= transmute(vt[3]);
+			let _ret_ = f(vt, source, arguments.to_utf16_vec().ptr(), _len_arguments as u32, option_to_vtable(include_handler), T::IID, transmute(&mut _out_result), );
+			if _ret_.is_ok() {
+				if let Some(_out_result) = _out_result {
+					return Ok(T::from(_out_result));
+				}
 			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 
-	fn Disassemble<T: IUnknown>(&self, object: &DxcBuffer, ) -> Result<(T), HResult> {
-		let vt = self.as_param();
-		let mut _result: Option<Unknown> = None;
-		let f: extern "system" fn(Param<Self>, object: &DxcBuffer, riid: &GUID, _result: &mut Option<Unknown>, ) -> HResult
-			= unsafe { transmute(vt[4]) };
-		let ret = f(vt, object, T::IID, &mut _result, );
-		if ret.is_ok() {
-			if let (Some(_result)) = (_result) {
-				return Ok((T::from(_result)));
+	fn Disassemble<T: IUnknown>(&self, object: &DxcBuffer, ) -> Result<T, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_result: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, object: &DxcBuffer, riid: &GUID, _out_result: *mut c_void, ) -> HResult
+				= transmute(vt[4]);
+			let _ret_ = f(vt, object, T::IID, transmute(&mut _out_result), );
+			if _ret_.is_ok() {
+				if let Some(_out_result) = _out_result {
+					return Ok(T::from(_out_result));
+				}
 			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 }
 

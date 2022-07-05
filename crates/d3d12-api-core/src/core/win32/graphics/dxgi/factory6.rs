@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::dxgi::*;
+
 #[repr(C)]
 pub struct DxgiFactory6(pub(crate) DxgiFactory5);
 
@@ -29,18 +30,20 @@ pub trait IDxgiFactory6: IDxgiFactory5 {
 	fn as_factory6(&self) -> &DxgiFactory6;
 	fn into_factory6(self) -> DxgiFactory6;
 
-	fn EnumAdapterByGpuPreference<T: IUnknown>(&self, adapter: u32, gpu_preference: DxgiGpuPreference, ) -> Result<(T), HResult> {
-		let vt = self.as_param();
-		let mut _adapter: Option<Unknown> = None;
-		let f: extern "system" fn(Param<Self>, adapter: u32, gpu_preference: DxgiGpuPreference, riid: &GUID, _adapter: &mut Option<Unknown>, ) -> HResult
-			= unsafe { transmute(vt[29]) };
-		let ret = f(vt, adapter, gpu_preference, T::IID, &mut _adapter, );
-		if ret.is_ok() {
-			if let (Some(_adapter)) = (_adapter) {
-				return Ok((T::from(_adapter)));
+	fn EnumAdapterByGpuPreference<T: IUnknown>(&self, adapter: u32, gpu_preference: DxgiGpuPreference, ) -> Result<T, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_adapter: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, adapter: u32, gpu_preference: DxgiGpuPreference, riid: &GUID, _out_adapter: *mut c_void, ) -> HResult
+				= transmute(vt[29]);
+			let _ret_ = f(vt, adapter, gpu_preference, T::IID, transmute(&mut _out_adapter), );
+			if _ret_.is_ok() {
+				if let Some(_out_adapter) = _out_adapter {
+					return Ok(T::from(_out_adapter));
+				}
 			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 }
 

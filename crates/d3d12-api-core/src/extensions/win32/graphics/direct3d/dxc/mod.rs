@@ -1,11 +1,8 @@
 use std::ffi::c_void;
-use std::mem::transmute;
 use std::slice;
 use crate::aliases::win32::graphics::direct3d::dxc::BlobEncoding;
 use crate::core::win32::foundation::{HResult, OkOrErr, PWStr};
-use crate::core::win32::graphics::direct3d::dxc::{DxcBlob, DxcBuffer, IDxcBlob, IDxcCompilerArgs, IDxcIncludeHandler, IDxcOperationResult};
-use crate::core::win32::system::com::{AsParam, GUID, IUnknown, option_to_vtable, Param, Unknown, VTable};
-use crate::helpers::{Len, ToUtf16Vec};
+use crate::core::win32::graphics::direct3d::dxc::{DxcBlob, IDxcBlob, IDxcCompilerArgs, IDxcOperationResult};
 
 pub trait IDxcOperationResultEx: IDxcOperationResult {
     fn get_result(&self) -> Result<DxcBlob, HResult>;

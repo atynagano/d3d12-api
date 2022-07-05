@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::dxgi::*;
+
 #[repr(C)]
 pub struct DxgiDevice4(pub(crate) DxgiDevice3);
 
@@ -30,23 +31,26 @@ pub trait IDxgiDevice4: IDxgiDevice3 {
 	fn into_device4(self) -> DxgiDevice4;
 
 	fn OfferResources1(&self, resources: &[Param<DxgiResource>], priority: DxgiOfferResourcePriority, flags: u32, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, num_resources: u32, resources: *const Param<DxgiResource>, priority: DxgiOfferResourcePriority, flags: u32, ) -> HResult
-			= unsafe { transmute(vt[18]) };
-		let ret = f(vt, resources.len() as u32, resources.as_ptr_or_null(), priority, flags, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let (_ptr_resources, _len_resources) = resources.deconstruct();
+			let f: extern "system" fn(Param<Self>, num_resources: u32, resources: *const Param<DxgiResource>, priority: DxgiOfferResourcePriority, flags: u32, ) -> HResult
+				= transmute(vt[18]);
+			let _ret_ = f(vt, _len_resources as u32, _ptr_resources, priority, flags, );
+			_ret_.ok()
+		}
 	}
 
-	fn ReclaimResources1(&self, resources: &[Param<DxgiResource>], ) -> Result<(DxgiReclaimResourceResults), HResult> {
-		let vt = self.as_param();
-		let mut _results: DxgiReclaimResourceResults = DxgiReclaimResourceResults::zeroed();
-		let f: extern "system" fn(Param<Self>, num_resources: u32, resources: *const Param<DxgiResource>, _results: &mut DxgiReclaimResourceResults, ) -> HResult
-			= unsafe { transmute(vt[19]) };
-		let ret = f(vt, resources.len() as u32, resources.as_ptr_or_null(), &mut _results, );
-		if ret.is_ok() {
-			return Ok((_results));
+	fn ReclaimResources1(&self, resources: &[Param<DxgiResource>], ) -> Result<DxgiReclaimResourceResults, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let (_ptr_resources, _len_resources) = resources.deconstruct();
+			let mut _out_results: MaybeUninit<DxgiReclaimResourceResults> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, num_resources: u32, resources: *const Param<DxgiResource>, _out_results: *mut DxgiReclaimResourceResults, ) -> HResult
+				= transmute(vt[19]);
+			let _ret_ = f(vt, _len_resources as u32, _ptr_resources, _out_results.as_mut_ptr(), );
+			Ok(_out_results.assume_init())
 		}
-		Err(ret)
 	}
 }
 

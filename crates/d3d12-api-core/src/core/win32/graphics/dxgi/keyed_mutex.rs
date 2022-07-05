@@ -2,17 +2,18 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
+
 #[repr(C)]
 pub struct DxgiKeyedMutex(pub(crate) DxgiDeviceSubObject);
 
@@ -29,19 +30,23 @@ pub trait IDxgiKeyedMutex: IDxgiDeviceSubObject {
 	fn into_keyed_mutex(self) -> DxgiKeyedMutex;
 
 	fn AcquireSync(&self, key: u64, milliseconds: u32, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, key: u64, milliseconds: u32, ) -> HResult
-			= unsafe { transmute(vt[8]) };
-		let ret = f(vt, key, milliseconds, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, key: u64, milliseconds: u32, ) -> HResult
+				= transmute(vt[8]);
+			let _ret_ = f(vt, key, milliseconds, );
+			_ret_.ok()
+		}
 	}
 
 	fn ReleaseSync(&self, key: u64, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, key: u64, ) -> HResult
-			= unsafe { transmute(vt[9]) };
-		let ret = f(vt, key, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, key: u64, ) -> HResult
+				= transmute(vt[9]);
+			let _ret_ = f(vt, key, );
+			_ret_.ok()
+		}
 	}
 }
 

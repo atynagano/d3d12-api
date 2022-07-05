@@ -1,3 +1,5 @@
+#![allow(unused_imports)]
+
 use crate::core::win32::graphics::dxgi::common::*;
 
 pub type Format = DxgiFormat;

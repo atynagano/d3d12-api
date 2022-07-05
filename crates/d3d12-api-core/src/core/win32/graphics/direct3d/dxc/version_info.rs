@@ -2,17 +2,18 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
+
 #[repr(C)]
 pub struct DxcVersionInfo(pub(crate) Unknown);
 
@@ -28,29 +29,30 @@ pub trait IDxcVersionInfo: IUnknown {
 	fn as_version_info(&self) -> &DxcVersionInfo;
 	fn into_version_info(self) -> DxcVersionInfo;
 
-	fn GetVersion(&self, ) -> Result<(u32, u32), HResult> {
-		let vt = self.as_param();
-		let mut _major: u32 = u32::zeroed();
-		let mut _minor: u32 = u32::zeroed();
-		let f: extern "system" fn(Param<Self>, _major: &mut u32, _minor: &mut u32, ) -> HResult
-			= unsafe { transmute(vt[3]) };
-		let ret = f(vt, &mut _major, &mut _minor, );
-		if ret.is_ok() {
-			return Ok((_major, _minor));
+	fn GetVersion(&self, ) -> Result<(u32, u32, ), HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_major: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_minor: MaybeUninit<u32> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_major: *mut u32, _out_minor: *mut u32, ) -> HResult
+				= transmute(vt[3]);
+			let _ret_ = f(vt, _out_major.as_mut_ptr(), _out_minor.as_mut_ptr(), );
+			if _ret_.is_ok() {
+				return Ok((_out_major.assume_init(), _out_minor.assume_init(), ));
+			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 
-	fn GetFlags(&self, ) -> Result<(u32), HResult> {
-		let vt = self.as_param();
-		let mut _flags: u32 = u32::zeroed();
-		let f: extern "system" fn(Param<Self>, _flags: &mut u32, ) -> HResult
-			= unsafe { transmute(vt[4]) };
-		let ret = f(vt, &mut _flags, );
-		if ret.is_ok() {
-			return Ok((_flags));
+	fn GetFlags(&self, ) -> Result<u32, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_flags: MaybeUninit<u32> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_flags: *mut u32, ) -> HResult
+				= transmute(vt[4]);
+			let _ret_ = f(vt, _out_flags.as_mut_ptr(), );
+			Ok(_out_flags.assume_init())
 		}
-		Err(ret)
 	}
 }
 

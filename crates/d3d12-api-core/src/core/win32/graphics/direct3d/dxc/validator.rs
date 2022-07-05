@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::direct3d::dxc::*;
+
 #[repr(C)]
 pub struct DxcValidator(pub(crate) Unknown);
 
@@ -29,18 +30,20 @@ pub trait IDxcValidator: IUnknown {
 	fn as_validator(&self) -> &DxcValidator;
 	fn into_validator(self) -> DxcValidator;
 
-	fn Validate(&self, shader: &(impl IDxcBlob + ?Sized), flags: u32, ) -> Result<(DxcOperationResult), HResult> {
-		let vt = self.as_param();
-		let mut _result: Option<DxcOperationResult> = None;
-		let f: extern "system" fn(Param<Self>, shader: VTable, flags: u32, _result: &mut Option<DxcOperationResult>, ) -> HResult
-			= unsafe { transmute(vt[3]) };
-		let ret = f(vt, shader.vtable(), flags, &mut _result, );
-		if ret.is_ok() {
-			if let (Some(_result)) = (_result) {
-				return Ok((_result));
+	fn Validate(&self, shader: &(impl IDxcBlob + ?Sized), flags: u32, ) -> Result<DxcOperationResult, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_result: Option<DxcOperationResult> = None;
+			let f: extern "system" fn(Param<Self>, shader: VTable, flags: u32, result: *mut c_void, ) -> HResult
+				= transmute(vt[3]);
+			let _ret_ = f(vt, shader.vtable(), flags, transmute(&mut _out_result), );
+			if _ret_.is_ok() {
+				if let Some(_out_result) = _out_result {
+					return Ok(_out_result);
+				}
 			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 }
 

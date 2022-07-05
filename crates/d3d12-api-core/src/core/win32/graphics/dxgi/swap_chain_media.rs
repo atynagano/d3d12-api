@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::dxgi::*;
+
 #[repr(C)]
 pub struct DxgiSwapChainMedia(pub(crate) Unknown);
 
@@ -29,37 +30,40 @@ pub trait IDxgiSwapChainMedia: IUnknown {
 	fn as_swap_chain_media(&self) -> &DxgiSwapChainMedia;
 	fn into_swap_chain_media(self) -> DxgiSwapChainMedia;
 
-	fn GetFrameStatisticsMedia(&self, ) -> Result<(DxgiFrameStatisticsMedia), HResult> {
-		let vt = self.as_param();
-		let mut _stats: DxgiFrameStatisticsMedia = DxgiFrameStatisticsMedia::zeroed();
-		let f: extern "system" fn(Param<Self>, _stats: &mut DxgiFrameStatisticsMedia, ) -> HResult
-			= unsafe { transmute(vt[3]) };
-		let ret = f(vt, &mut _stats, );
-		if ret.is_ok() {
-			return Ok((_stats));
+	fn GetFrameStatisticsMedia(&self, ) -> Result<DxgiFrameStatisticsMedia, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_stats: MaybeUninit<DxgiFrameStatisticsMedia> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_stats: *mut DxgiFrameStatisticsMedia, ) -> HResult
+				= transmute(vt[3]);
+			let _ret_ = f(vt, _out_stats.as_mut_ptr(), );
+			Ok(_out_stats.assume_init())
 		}
-		Err(ret)
 	}
 
 	fn SetPresentDuration(&self, duration: u32, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, duration: u32, ) -> HResult
-			= unsafe { transmute(vt[4]) };
-		let ret = f(vt, duration, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, duration: u32, ) -> HResult
+				= transmute(vt[4]);
+			let _ret_ = f(vt, duration, );
+			_ret_.ok()
+		}
 	}
 
-	fn CheckPresentDurationSupport(&self, desired_present_duration: u32, ) -> Result<(u32, u32), HResult> {
-		let vt = self.as_param();
-		let mut _closest_smaller_present_duration: u32 = u32::zeroed();
-		let mut _closest_larger_present_duration: u32 = u32::zeroed();
-		let f: extern "system" fn(Param<Self>, desired_present_duration: u32, _closest_smaller_present_duration: &mut u32, _closest_larger_present_duration: &mut u32, ) -> HResult
-			= unsafe { transmute(vt[5]) };
-		let ret = f(vt, desired_present_duration, &mut _closest_smaller_present_duration, &mut _closest_larger_present_duration, );
-		if ret.is_ok() {
-			return Ok((_closest_smaller_present_duration, _closest_larger_present_duration));
+	fn CheckPresentDurationSupport(&self, desired_present_duration: u32, ) -> Result<(u32, u32, ), HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_closest_smaller_present_duration: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_closest_larger_present_duration: MaybeUninit<u32> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, desired_present_duration: u32, _out_closest_smaller_present_duration: *mut u32, _out_closest_larger_present_duration: *mut u32, ) -> HResult
+				= transmute(vt[5]);
+			let _ret_ = f(vt, desired_present_duration, _out_closest_smaller_present_duration.as_mut_ptr(), _out_closest_larger_present_duration.as_mut_ptr(), );
+			if _ret_.is_ok() {
+				return Ok((_out_closest_smaller_present_duration.assume_init(), _out_closest_larger_present_duration.assume_init(), ));
+			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 }
 

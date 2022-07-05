@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::direct3d12::*;
+
 #[repr(C)]
 pub struct D3D12Resource(pub(crate) D3D12Pageable);
 
@@ -29,51 +30,63 @@ pub trait ID3D12Resource: ID3D12Pageable {
 	fn as_resource(&self) -> &D3D12Resource;
 	fn into_resource(self) -> D3D12Resource;
 
-	fn Map(&self, subresource: u32, read_range: Option<&D3D12Range>, data: Option<&mut *const c_void>, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, subresource: u32, read_range: Option<&D3D12Range>, data: Option<&mut *const c_void>, ) -> HResult
-			= unsafe { transmute(vt[8]) };
-		let ret = f(vt, subresource, read_range, data, );
-		ret.ok()
+	fn Map(&self, subresource: u32, read_range: Option<&D3D12Range>, data: Option<&mut Option<NonNull<()>>>, ) -> Result<(), HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, subresource: u32, read_range: *const c_void, data: *mut c_void, ) -> HResult
+				= transmute(vt[8]);
+			let _ret_ = f(vt, subresource, transmute(read_range), transmute(data), );
+			_ret_.ok()
+		}
 	}
 
 	fn Unmap(&self, subresource: u32, written_range: Option<&D3D12Range>, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, subresource: u32, written_range: Option<&D3D12Range>, ) -> ()
-			= unsafe { transmute(vt[9]) };
-		let ret = f(vt, subresource, written_range, );
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, subresource: u32, written_range: *const c_void, ) -> ()
+				= transmute(vt[9]);
+			let _ret_ = f(vt, subresource, transmute(written_range), );
+		}
 	}
 
-	fn GetDesc(&self, ) -> (D3D12ResourceDesc) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> D3D12ResourceDesc
-			= unsafe { transmute(vt[10]) };
-		let ret = f(vt, );
-		return (ret);
+	fn GetDesc(&self, ) -> D3D12ResourceDesc {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> D3D12ResourceDesc
+				= transmute(vt[10]);
+			let _ret_ = f(vt, );
+			_ret_
+		}
 	}
 
-	fn GetGPUVirtualAddress(&self, ) -> (u64) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> u64
-			= unsafe { transmute(vt[11]) };
-		let ret = f(vt, );
-		return (ret);
+	fn GetGPUVirtualAddress(&self, ) -> u64 {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> u64
+				= transmute(vt[11]);
+			let _ret_ = f(vt, );
+			_ret_
+		}
 	}
 
-	fn WriteToSubresource(&self, dst_subresource: u32, dst_box: Option<&D3D12Box>, src_data: *const c_void, src_row_pitch: u32, src_depth_pitch: u32, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, dst_subresource: u32, dst_box: Option<&D3D12Box>, src_data: *const c_void, src_row_pitch: u32, src_depth_pitch: u32, ) -> HResult
-			= unsafe { transmute(vt[12]) };
-		let ret = f(vt, dst_subresource, dst_box, src_data, src_row_pitch, src_depth_pitch, );
-		ret.ok()
+	fn WriteToSubresource(&self, dst_subresource: u32, dst_box: Option<&D3D12Box>, src_data: *const impl Sized, src_row_pitch: u32, src_depth_pitch: u32, ) -> Result<(), HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, dst_subresource: u32, dst_box: *const c_void, src_data: *const c_void, src_row_pitch: u32, src_depth_pitch: u32, ) -> HResult
+				= transmute(vt[12]);
+			let _ret_ = f(vt, dst_subresource, transmute(dst_box), src_data as _, src_row_pitch, src_depth_pitch, );
+			_ret_.ok()
+		}
 	}
 
 	fn GetHeapProperties(&self, heap_properties: Option<&mut D3D12HeapProperties>, heap_flags: Option<&mut D3D12HeapFlags>, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, heap_properties: Option<&mut D3D12HeapProperties>, heap_flags: Option<&mut D3D12HeapFlags>, ) -> HResult
-			= unsafe { transmute(vt[14]) };
-		let ret = f(vt, heap_properties, heap_flags, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, heap_properties: Option<&mut D3D12HeapProperties>, heap_flags: Option<&mut D3D12HeapFlags>, ) -> HResult
+				= transmute(vt[14]);
+			let _ret_ = f(vt, heap_properties, heap_flags, );
+			_ret_.ok()
+		}
 	}
 }
 

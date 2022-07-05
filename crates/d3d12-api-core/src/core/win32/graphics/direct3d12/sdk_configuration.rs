@@ -2,17 +2,18 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
+
 #[repr(C)]
 pub struct D3D12SDKConfiguration(pub(crate) Unknown);
 
@@ -29,11 +30,13 @@ pub trait ID3D12SDKConfiguration: IUnknown {
 	fn into_sdk_configuration(self) -> D3D12SDKConfiguration;
 
 	fn SetSDKVersion(&self, sdk_version: u32, sdk_path: &str, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, sdk_version: u32, sdk_path: *const u8, ) -> HResult
-			= unsafe { transmute(vt[3]) };
-		let ret = f(vt, sdk_version, sdk_path.to_null_terminated().as_ptr_or_null(), );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, sdk_version: u32, sdk_path: *const u8, ) -> HResult
+				= transmute(vt[3]);
+			let _ret_ = f(vt, sdk_version, sdk_path.to_null_terminated().as_ptr_or_null(), );
+			_ret_.ok()
+		}
 	}
 }
 

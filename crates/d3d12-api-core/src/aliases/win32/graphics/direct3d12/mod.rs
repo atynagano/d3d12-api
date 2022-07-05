@@ -1,3 +1,5 @@
+#![allow(unused_imports)]
+
 use crate::core::win32::graphics::direct3d12::*;
 
 pub type CommandListType = D3D12CommandListType;
@@ -114,7 +116,6 @@ pub type ResourceDesc1 = D3D12ResourceDesc1;
 pub type DepthStencilValue = D3D12DepthStencilValue;
 pub type ClearValueAnonymousUnion = D3D12ClearValueAnonymousUnion;
 pub type ClearValue = D3D12ClearValue;
-pub type Range = D3D12Range;
 pub type RangeUInt64 = D3D12RangeUInt64;
 pub type SubresourceRangeUInt64 = D3D12SubresourceRangeUInt64;
 pub type SubresourceInfo = D3D12SubresourceInfo;

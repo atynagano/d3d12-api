@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::dxgi::*;
+
 #[repr(C)]
 pub struct DxgiAdapter(pub(crate) DxgiObject);
 
@@ -29,42 +30,42 @@ pub trait IDxgiAdapter: IDxgiObject {
 	fn as_adapter(&self) -> &DxgiAdapter;
 	fn into_adapter(self) -> DxgiAdapter;
 
-	fn EnumOutputs(&self, output: u32, ) -> Result<(DxgiOutput), HResult> {
-		let vt = self.as_param();
-		let mut _output: Option<DxgiOutput> = None;
-		let f: extern "system" fn(Param<Self>, output: u32, _output: &mut Option<DxgiOutput>, ) -> HResult
-			= unsafe { transmute(vt[7]) };
-		let ret = f(vt, output, &mut _output, );
-		if ret.is_ok() {
-			if let (Some(_output)) = (_output) {
-				return Ok((_output));
+	fn EnumOutputs(&self, output: u32, ) -> Result<DxgiOutput, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_output: Option<DxgiOutput> = None;
+			let f: extern "system" fn(Param<Self>, output: u32, output: *mut c_void, ) -> HResult
+				= transmute(vt[7]);
+			let _ret_ = f(vt, output, transmute(&mut _out_output), );
+			if _ret_.is_ok() {
+				if let Some(_out_output) = _out_output {
+					return Ok(_out_output);
+				}
 			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 
-	fn GetDesc(&self, ) -> Result<(DxgiAdapterDesc), HResult> {
-		let vt = self.as_param();
-		let mut _desc: DxgiAdapterDesc = DxgiAdapterDesc::zeroed();
-		let f: extern "system" fn(Param<Self>, _desc: &mut DxgiAdapterDesc, ) -> HResult
-			= unsafe { transmute(vt[8]) };
-		let ret = f(vt, &mut _desc, );
-		if ret.is_ok() {
-			return Ok((_desc));
+	fn GetDesc(&self, ) -> Result<DxgiAdapterDesc, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_desc: MaybeUninit<DxgiAdapterDesc> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_desc: *mut DxgiAdapterDesc, ) -> HResult
+				= transmute(vt[8]);
+			let _ret_ = f(vt, _out_desc.as_mut_ptr(), );
+			Ok(_out_desc.assume_init())
 		}
-		Err(ret)
 	}
 
-	fn CheckInterfaceSupport(&self, interface_name: &GUID, ) -> Result<(i64), HResult> {
-		let vt = self.as_param();
-		let mut _umd_version: i64 = i64::zeroed();
-		let f: extern "system" fn(Param<Self>, interface_name: &GUID, _umd_version: &mut i64, ) -> HResult
-			= unsafe { transmute(vt[9]) };
-		let ret = f(vt, interface_name, &mut _umd_version, );
-		if ret.is_ok() {
-			return Ok((_umd_version));
+	fn CheckInterfaceSupport(&self, interface_name: &GUID, ) -> Result<i64, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_umd_version: MaybeUninit<i64> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, interface_name: &GUID, _out_umd_version: *mut i64, ) -> HResult
+				= transmute(vt[9]);
+			let _ret_ = f(vt, interface_name, _out_umd_version.as_mut_ptr(), );
+			Ok(_out_umd_version.assume_init())
 		}
-		Err(ret)
 	}
 }
 

@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::direct3d12::*;
+
 #[repr(C)]
 pub struct D3D12Device2(pub(crate) D3D12Device1);
 
@@ -29,18 +30,20 @@ pub trait ID3D12Device2: ID3D12Device1 {
 	fn as_device2(&self) -> &D3D12Device2;
 	fn into_device2(self) -> D3D12Device2;
 
-	fn CreatePipelineState<T: IUnknown>(&self, desc: &D3D12PipelineStateStreamDesc, ) -> Result<(T), HResult> {
-		let vt = self.as_param();
-		let mut _pipeline_state: Option<Unknown> = None;
-		let f: extern "system" fn(Param<Self>, desc: &D3D12PipelineStateStreamDesc, riid: &GUID, _pipeline_state: &mut Option<Unknown>, ) -> HResult
-			= unsafe { transmute(vt[47]) };
-		let ret = f(vt, desc, T::IID, &mut _pipeline_state, );
-		if ret.is_ok() {
-			if let (Some(_pipeline_state)) = (_pipeline_state) {
-				return Ok((T::from(_pipeline_state)));
+	fn CreatePipelineState<T: IUnknown>(&self, desc: &D3D12PipelineStateStreamDesc, ) -> Result<T, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_pipeline_state: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, desc: &D3D12PipelineStateStreamDesc, riid: &GUID, _out_pipeline_state: *mut c_void, ) -> HResult
+				= transmute(vt[47]);
+			let _ret_ = f(vt, desc, T::IID, transmute(&mut _out_pipeline_state), );
+			if _ret_.is_ok() {
+				if let Some(_out_pipeline_state) = _out_pipeline_state {
+					return Ok(T::from(_out_pipeline_state));
+				}
 			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 }
 

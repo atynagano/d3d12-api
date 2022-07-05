@@ -10,7 +10,7 @@ use std::fmt::{Debug, Formatter, Write};
 use std::marker::PhantomData;
 use std::mem::{MaybeUninit, transmute, transmute_copy};
 use std::ops::Index;
-use std::ptr::NonNull;
+use std::ptr::{NonNull, null};
 use crate::helpers::Zeroed;
 //use crate::Zeroed;
 use super::super::super::foundation::*;
@@ -53,11 +53,11 @@ pub trait Com: Guid {
     fn vtable(&self) -> VTable;
 }
 
-pub(crate) fn option_to_vtable(a: Option<&impl Com>) -> Option<VTable> {
+pub(crate) fn option_to_vtable(a: Option<&impl Com>) -> *const c_void {
     if let Some(o) = a {
-        Some(o.vtable())
+        unsafe { transmute(o.vtable()) }
     } else {
-        None
+        null()
     }
 }
 

@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::dxgi::*;
+
 #[repr(C)]
 pub struct DxgiDevice2(pub(crate) DxgiDevice1);
 
@@ -30,27 +31,35 @@ pub trait IDxgiDevice2: IDxgiDevice1 {
 	fn into_device2(self) -> DxgiDevice2;
 
 	fn OfferResources(&self, resources: &[Param<DxgiResource>], priority: DxgiOfferResourcePriority, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, num_resources: u32, resources: *const Param<DxgiResource>, priority: DxgiOfferResourcePriority, ) -> HResult
-			= unsafe { transmute(vt[14]) };
-		let ret = f(vt, resources.len() as u32, resources.as_ptr_or_null(), priority, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let (_ptr_resources, _len_resources) = resources.deconstruct();
+			let f: extern "system" fn(Param<Self>, num_resources: u32, resources: *const Param<DxgiResource>, priority: DxgiOfferResourcePriority, ) -> HResult
+				= transmute(vt[14]);
+			let _ret_ = f(vt, _len_resources as u32, _ptr_resources, priority, );
+			_ret_.ok()
+		}
 	}
 
 	fn ReclaimResources(&self, resources: &[Param<DxgiResource>], discarded: Option<&mut Bool>, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, num_resources: u32, resources: *const Param<DxgiResource>, discarded: Option<&mut Bool>, ) -> HResult
-			= unsafe { transmute(vt[15]) };
-		let ret = f(vt, resources.len() as u32, resources.as_ptr_or_null(), discarded, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let (_ptr_resources, _len_resources) = resources.deconstruct();
+			let f: extern "system" fn(Param<Self>, num_resources: u32, resources: *const Param<DxgiResource>, discarded: Option<&mut Bool>, ) -> HResult
+				= transmute(vt[15]);
+			let _ret_ = f(vt, _len_resources as u32, _ptr_resources, discarded, );
+			_ret_.ok()
+		}
 	}
 
 	fn EnqueueSetEvent(&self, event: Handle, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, event: Handle, ) -> HResult
-			= unsafe { transmute(vt[16]) };
-		let ret = f(vt, event, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, event: Handle, ) -> HResult
+				= transmute(vt[16]);
+			let _ret_ = f(vt, event, );
+			_ret_.ok()
+		}
 	}
 }
 

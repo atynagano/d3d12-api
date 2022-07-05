@@ -2,17 +2,18 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
+
 #[repr(C)]
 pub struct D3D12DeviceChild(pub(crate) D3D12Object);
 
@@ -29,13 +30,15 @@ pub trait ID3D12DeviceChild: ID3D12Object {
 	fn into_device_child(self) -> D3D12DeviceChild;
 
 	fn GetDevice<T: IUnknown>(&self, device: Option<&mut Option<T>>, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let mut out_device: Option<Unknown> = None;
-		let f: extern "system" fn(Param<Self>, riid: &GUID, device: Option<&mut Option<Unknown>>, ) -> HResult
-			= unsafe { transmute(vt[7]) };
-		let ret = f(vt, T::IID, if device.is_some() { Some(&mut out_device) } else { None }, );
-		if let (Some(device), Some(out_device)) = (device, out_device) { *device = Some(T::from(out_device)); }
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_device: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, riid: &GUID, device: *mut c_void, ) -> HResult
+				= transmute(vt[7]);
+			let _ret_ = f(vt, T::IID, transmute(if device.is_some() { Some(&mut _out_device) } else { None }), );
+			if let Some(_out_device) = _out_device { *device.unwrap_unchecked() = Some(T::from(_out_device)); }
+			_ret_.ok()
+		}
 	}
 }
 

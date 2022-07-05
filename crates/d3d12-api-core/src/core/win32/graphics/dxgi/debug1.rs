@@ -2,17 +2,18 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
+
 #[repr(C)]
 pub struct DxgiDebug1(pub(crate) DxgiDebug);
 
@@ -29,25 +30,31 @@ pub trait IDxgiDebug1: IDxgiDebug {
 	fn into_debug1(self) -> DxgiDebug1;
 
 	fn EnableLeakTrackingForThread(&self, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> ()
-			= unsafe { transmute(vt[4]) };
-		let ret = f(vt, );
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> ()
+				= transmute(vt[4]);
+			let _ret_ = f(vt, );
+		}
 	}
 
 	fn DisableLeakTrackingForThread(&self, ) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> ()
-			= unsafe { transmute(vt[5]) };
-		let ret = f(vt, );
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> ()
+				= transmute(vt[5]);
+			let _ret_ = f(vt, );
+		}
 	}
 
-	fn IsLeakTrackingEnabledForThread(&self, ) -> (bool) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> Bool
-			= unsafe { transmute(vt[6]) };
-		let ret = f(vt, );
-		return (ret.to_bool());
+	fn IsLeakTrackingEnabledForThread(&self, ) -> bool {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> Bool
+				= transmute(vt[6]);
+			let _ret_ = f(vt, );
+			_ret_.to_bool()
+		}
 	}
 }
 

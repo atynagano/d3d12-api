@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::direct3d12::*;
+
 #[repr(C)]
 pub struct D3D12DebugCommandList1(pub(crate) Unknown);
 
@@ -29,28 +30,14 @@ pub trait ID3D12DebugCommandList1: IUnknown {
 	fn as_debug_command_list1(&self) -> &D3D12DebugCommandList1;
 	fn into_debug_command_list1(self) -> D3D12DebugCommandList1;
 
-	fn AssertResourceState(&self, resource: &(impl ID3D12Resource + ?Sized), subresource: u32, state: u32, ) -> (bool) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, resource: VTable, subresource: u32, state: u32, ) -> Bool
-			= unsafe { transmute(vt[3]) };
-		let ret = f(vt, resource.vtable(), subresource, state, );
-		return (ret.to_bool());
-	}
-
-	fn SetDebugParameter(&self, ty: D3D12DebugCommandListParameterType, data: &[u8], ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ty: D3D12DebugCommandListParameterType, data: *const u8, data_size: u32, ) -> HResult
-			= unsafe { transmute(vt[4]) };
-		let ret = f(vt, ty, data.as_ptr_or_null(), data.len() as u32, );
-		ret.ok()
-	}
-
-	fn GetDebugParameter(&self, ty: D3D12DebugCommandListParameterType, mut data: &mut [u8], ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ty: D3D12DebugCommandListParameterType, data: *mut u8, data_size: u32, ) -> HResult
-			= unsafe { transmute(vt[5]) };
-		let ret = f(vt, ty, data.as_mut_ptr_or_null(), data.len() as u32, );
-		ret.ok()
+	fn AssertResourceState(&self, resource: &(impl ID3D12Resource + ?Sized), subresource: u32, state: u32, ) -> bool {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, resource: VTable, subresource: u32, state: u32, ) -> Bool
+				= transmute(vt[3]);
+			let _ret_ = f(vt, resource.vtable(), subresource, state, );
+			_ret_.to_bool()
+		}
 	}
 }
 

@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::direct3d12::*;
+
 #[repr(C)]
 pub struct D3D12ProtectedSession(pub(crate) D3D12DeviceChild);
 
@@ -30,21 +31,25 @@ pub trait ID3D12ProtectedSession: ID3D12DeviceChild {
 	fn into_protected_session(self) -> D3D12ProtectedSession;
 
 	fn GetStatusFence<T: IUnknown>(&self, fence: Option<&mut Option<T>>, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let mut out_fence: Option<Unknown> = None;
-		let f: extern "system" fn(Param<Self>, riid: &GUID, fence: Option<&mut Option<Unknown>>, ) -> HResult
-			= unsafe { transmute(vt[8]) };
-		let ret = f(vt, T::IID, if fence.is_some() { Some(&mut out_fence) } else { None }, );
-		if let (Some(fence), Some(out_fence)) = (fence, out_fence) { *fence = Some(T::from(out_fence)); }
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_fence: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, riid: &GUID, fence: *mut c_void, ) -> HResult
+				= transmute(vt[8]);
+			let _ret_ = f(vt, T::IID, transmute(if fence.is_some() { Some(&mut _out_fence) } else { None }), );
+			if let Some(_out_fence) = _out_fence { *fence.unwrap_unchecked() = Some(T::from(_out_fence)); }
+			_ret_.ok()
+		}
 	}
 
-	fn GetSessionStatus(&self, ) -> (D3D12ProtectedSessionStatus) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> D3D12ProtectedSessionStatus
-			= unsafe { transmute(vt[9]) };
-		let ret = f(vt, );
-		return (ret);
+	fn GetSessionStatus(&self, ) -> D3D12ProtectedSessionStatus {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> D3D12ProtectedSessionStatus
+				= transmute(vt[9]);
+			let _ret_ = f(vt, );
+			_ret_
+		}
 	}
 }
 

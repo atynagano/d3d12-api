@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::direct3d::dxc::*;
+
 #[repr(C)]
 pub struct DxcBlobEncoding(pub(crate) DxcBlob);
 
@@ -29,17 +30,19 @@ pub trait IDxcBlobEncoding: IDxcBlob {
 	fn as_blob_encoding(&self) -> &DxcBlobEncoding;
 	fn into_blob_encoding(self) -> DxcBlobEncoding;
 
-	fn GetEncoding(&self, ) -> Result<(Bool, DxcCp), HResult> {
-		let vt = self.as_param();
-		let mut _known: Bool = Bool::zeroed();
-		let mut _code_page: DxcCp = DxcCp::zeroed();
-		let f: extern "system" fn(Param<Self>, _known: &mut Bool, _code_page: &mut DxcCp, ) -> HResult
-			= unsafe { transmute(vt[5]) };
-		let ret = f(vt, &mut _known, &mut _code_page, );
-		if ret.is_ok() {
-			return Ok((_known, _code_page));
+	fn GetEncoding(&self, ) -> Result<(Bool, DxcCp, ), HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_known: MaybeUninit<Bool> = MaybeUninit::uninit();
+			let mut _out_code_page: MaybeUninit<DxcCp> = MaybeUninit::uninit();
+			let f: extern "system" fn(Param<Self>, _out_known: *mut Bool, _out_code_page: *mut DxcCp, ) -> HResult
+				= transmute(vt[5]);
+			let _ret_ = f(vt, _out_known.as_mut_ptr(), _out_code_page.as_mut_ptr(), );
+			if _ret_.is_ok() {
+				return Ok((_out_known.assume_init(), _out_code_page.assume_init(), ));
+			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 }
 

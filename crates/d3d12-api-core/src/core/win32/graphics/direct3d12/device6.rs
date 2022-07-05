@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::direct3d12::*;
+
 #[repr(C)]
 pub struct D3D12Device6(pub(crate) D3D12Device5);
 
@@ -30,11 +31,13 @@ pub trait ID3D12Device6: ID3D12Device5 {
 	fn into_device6(self) -> D3D12Device6;
 
 	fn SetBackgroundProcessingMode(&self, mode: D3D12BackgroundProcessingMode, measurements_action: D3D12MeasurementsAction, event_to_signal_upon_completion: Option<Handle>, pb_further_measurements_desired: Option<&mut Bool>, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, mode: D3D12BackgroundProcessingMode, measurements_action: D3D12MeasurementsAction, event_to_signal_upon_completion: Option<Handle>, pb_further_measurements_desired: Option<&mut Bool>, ) -> HResult
-			= unsafe { transmute(vt[65]) };
-		let ret = f(vt, mode, measurements_action, event_to_signal_upon_completion, pb_further_measurements_desired, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, mode: D3D12BackgroundProcessingMode, measurements_action: D3D12MeasurementsAction, event_to_signal_upon_completion: *const c_void, pb_further_measurements_desired: Option<&mut Bool>, ) -> HResult
+				= transmute(vt[65]);
+			let _ret_ = f(vt, mode, measurements_action, transmute(event_to_signal_upon_completion), pb_further_measurements_desired, );
+			_ret_.ok()
+		}
 	}
 }
 

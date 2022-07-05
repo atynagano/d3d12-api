@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::direct3d12::*;
+
 #[repr(C)]
 pub struct D3D12LifetimeTracker(pub(crate) D3D12DeviceChild);
 
@@ -30,11 +31,13 @@ pub trait ID3D12LifetimeTracker: ID3D12DeviceChild {
 	fn into_lifetime_tracker(self) -> D3D12LifetimeTracker;
 
 	fn DestroyOwnedObject(&self, object: &(impl ID3D12DeviceChild + ?Sized), ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, object: VTable, ) -> HResult
-			= unsafe { transmute(vt[8]) };
-		let ret = f(vt, object.vtable(), );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, object: VTable, ) -> HResult
+				= transmute(vt[8]);
+			let _ret_ = f(vt, object.vtable(), );
+			_ret_.ok()
+		}
 	}
 }
 

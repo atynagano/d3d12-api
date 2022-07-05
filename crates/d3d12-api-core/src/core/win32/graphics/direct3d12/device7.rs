@@ -2,11 +2,11 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,6 +14,7 @@ use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::direct3d12::*;
+
 #[repr(C)]
 pub struct D3D12Device7(pub(crate) D3D12Device6);
 
@@ -29,32 +30,36 @@ pub trait ID3D12Device7: ID3D12Device6 {
 	fn as_device7(&self) -> &D3D12Device7;
 	fn into_device7(self) -> D3D12Device7;
 
-	fn AddToStateObject<T: IUnknown>(&self, addition: &D3D12StateObjectDesc, state_object_to_grow_from: &(impl ID3D12StateObject + ?Sized), ) -> Result<(T), HResult> {
-		let vt = self.as_param();
-		let mut _new_state_object: Option<Unknown> = None;
-		let f: extern "system" fn(Param<Self>, addition: &D3D12StateObjectDesc, state_object_to_grow_from: VTable, riid: &GUID, _new_state_object: &mut Option<Unknown>, ) -> HResult
-			= unsafe { transmute(vt[66]) };
-		let ret = f(vt, addition, state_object_to_grow_from.vtable(), T::IID, &mut _new_state_object, );
-		if ret.is_ok() {
-			if let (Some(_new_state_object)) = (_new_state_object) {
-				return Ok((T::from(_new_state_object)));
+	fn AddToStateObject<T: IUnknown>(&self, addition: &D3D12StateObjectDesc, state_object_to_grow_from: &(impl ID3D12StateObject + ?Sized), ) -> Result<T, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_new_state_object: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, addition: &D3D12StateObjectDesc, state_object_to_grow_from: VTable, riid: &GUID, _out_new_state_object: *mut c_void, ) -> HResult
+				= transmute(vt[66]);
+			let _ret_ = f(vt, addition, state_object_to_grow_from.vtable(), T::IID, transmute(&mut _out_new_state_object), );
+			if _ret_.is_ok() {
+				if let Some(_out_new_state_object) = _out_new_state_object {
+					return Ok(T::from(_out_new_state_object));
+				}
 			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 
-	fn CreateProtectedResourceSession1<T: IUnknown>(&self, desc: &D3D12ProtectedResourceSessionDesc1, ) -> Result<(T), HResult> {
-		let vt = self.as_param();
-		let mut _session: Option<Unknown> = None;
-		let f: extern "system" fn(Param<Self>, desc: &D3D12ProtectedResourceSessionDesc1, riid: &GUID, _session: &mut Option<Unknown>, ) -> HResult
-			= unsafe { transmute(vt[67]) };
-		let ret = f(vt, desc, T::IID, &mut _session, );
-		if ret.is_ok() {
-			if let (Some(_session)) = (_session) {
-				return Ok((T::from(_session)));
+	fn CreateProtectedResourceSession1<T: IUnknown>(&self, desc: &D3D12ProtectedResourceSessionDesc1, ) -> Result<T, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_session: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, desc: &D3D12ProtectedResourceSessionDesc1, riid: &GUID, _out_session: *mut c_void, ) -> HResult
+				= transmute(vt[67]);
+			let _ret_ = f(vt, desc, T::IID, transmute(&mut _out_session), );
+			if _ret_.is_ok() {
+				if let Some(_out_session) = _out_session {
+					return Ok(T::from(_out_session));
+				}
 			}
+			Err(_ret_)
 		}
-		Err(ret)
 	}
 }
 

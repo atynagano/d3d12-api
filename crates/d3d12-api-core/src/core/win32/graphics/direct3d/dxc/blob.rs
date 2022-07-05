@@ -2,15 +2,16 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
+
 
 #[repr(C)]
 pub struct DxcBlob(pub(crate) Unknown);
@@ -27,20 +28,24 @@ pub trait IDxcBlob: IUnknown {
 	fn as_blob(&self) -> &DxcBlob;
 	fn into_blob(self) -> DxcBlob;
 
-	fn GetBufferPointer(&self, ) -> (*const c_void) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> *const c_void
-			= unsafe { transmute(vt[3]) };
-		let ret = f(vt, );
-		return (ret);
+	fn GetBufferPointer(&self, ) -> *const c_void {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> *const c_void
+				= transmute(vt[3]);
+			let _ret_ = f(vt, );
+			_ret_
+		}
 	}
 
-	fn GetBufferSize(&self, ) -> (usize) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> usize
-			= unsafe { transmute(vt[4]) };
-		let ret = f(vt, );
-		return (ret);
+	fn GetBufferSize(&self, ) -> usize {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> usize
+				= transmute(vt[4]);
+			let _ret_ = f(vt, );
+			_ret_
+		}
 	}
 }
 

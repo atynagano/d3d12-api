@@ -2,17 +2,18 @@
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
-#![allow(unused_imports, dead_code, unused_variables)]
+#![allow(unused_imports, dead_code, unused_variables, unused_unsafe)]
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
-use std::mem::{size_of_val, transmute};
+use std::mem::{MaybeUninit, size_of_val, transmute};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
 
 use crate::core::win32::foundation::*;
+
 #[repr(C)]
 pub struct D3D12Fence(pub(crate) D3D12Pageable);
 
@@ -28,28 +29,34 @@ pub trait ID3D12Fence: ID3D12Pageable {
 	fn as_fence(&self) -> &D3D12Fence;
 	fn into_fence(self) -> D3D12Fence;
 
-	fn GetCompletedValue(&self, ) -> (u64) {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, ) -> u64
-			= unsafe { transmute(vt[8]) };
-		let ret = f(vt, );
-		return (ret);
+	fn GetCompletedValue(&self, ) -> u64 {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, ) -> u64
+				= transmute(vt[8]);
+			let _ret_ = f(vt, );
+			_ret_
+		}
 	}
 
 	fn SetEventOnCompletion(&self, value: u64, event: Handle, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, value: u64, event: Handle, ) -> HResult
-			= unsafe { transmute(vt[9]) };
-		let ret = f(vt, value, event, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, value: u64, event: Handle, ) -> HResult
+				= transmute(vt[9]);
+			let _ret_ = f(vt, value, event, );
+			_ret_.ok()
+		}
 	}
 
 	fn Signal(&self, value: u64, ) -> Result<(), HResult> {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, value: u64, ) -> HResult
-			= unsafe { transmute(vt[10]) };
-		let ret = f(vt, value, );
-		ret.ok()
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, value: u64, ) -> HResult
+				= transmute(vt[10]);
+			let _ret_ = f(vt, value, );
+			_ret_.ok()
+		}
 	}
 }
 
