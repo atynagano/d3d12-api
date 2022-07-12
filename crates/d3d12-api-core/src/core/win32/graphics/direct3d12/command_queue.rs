@@ -81,7 +81,7 @@ pub trait ID3D12CommandQueue: ID3D12Pageable {
 	fn GetTimestampFrequency(&self, ) -> Result<u64, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_frequency: MaybeUninit<u64> = MaybeUninit::uninit();
+			let mut _out_frequency: MaybeUninit<u64> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_frequency: *mut u64, ) -> HResult
 				= transmute(vt[16]);
 			let _ret_ = f(vt, _out_frequency.as_mut_ptr(), );
@@ -92,8 +92,8 @@ pub trait ID3D12CommandQueue: ID3D12Pageable {
 	fn GetClockCalibration(&self, ) -> Result<(u64, u64, ), HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_gpu_timestamp: MaybeUninit<u64> = MaybeUninit::uninit();
-			let mut _out_cpu_timestamp: MaybeUninit<u64> = MaybeUninit::uninit();
+			let mut _out_gpu_timestamp: MaybeUninit<u64> = MaybeUninit::zeroed();
+			let mut _out_cpu_timestamp: MaybeUninit<u64> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_gpu_timestamp: *mut u64, _out_cpu_timestamp: *mut u64, ) -> HResult
 				= transmute(vt[17]);
 			let _ret_ = f(vt, _out_gpu_timestamp.as_mut_ptr(), _out_cpu_timestamp.as_mut_ptr(), );
@@ -107,10 +107,11 @@ pub trait ID3D12CommandQueue: ID3D12Pageable {
 	fn GetDesc(&self, ) -> D3D12CommandQueueDesc {
 		unsafe {
 			let vt = self.as_param();
-			let f: extern "system" fn(Param<Self>, ) -> D3D12CommandQueueDesc
+			let mut _out__out_desc: MaybeUninit<D3D12CommandQueueDesc> = MaybeUninit::zeroed();
+			let f: extern "system" fn(Param<Self>, _out__out_desc: *mut D3D12CommandQueueDesc, ) -> ()
 				= transmute(vt[18]);
-			let _ret_ = f(vt, );
-			_ret_
+			let _ret_ = f(vt, _out__out_desc.as_mut_ptr(), );
+			_out__out_desc.assume_init()
 		}
 	}
 }
@@ -121,18 +122,18 @@ impl ID3D12CommandQueue for D3D12CommandQueue {
 }
 
 impl ID3D12Pageable for D3D12CommandQueue {
-	fn as_pageable(&self) -> &D3D12Pageable { &self.0 }
-	fn into_pageable(self) -> D3D12Pageable { self.0 }
+	fn as_pageable(&self) -> &D3D12Pageable { &self.0.as_pageable() }
+	fn into_pageable(self) -> D3D12Pageable { self.0.into_pageable() }
 }
 
 impl ID3D12DeviceChild for D3D12CommandQueue {
-	fn as_device_child(&self) -> &D3D12DeviceChild { &self.0.0 }
-	fn into_device_child(self) -> D3D12DeviceChild { self.0.0 }
+	fn as_device_child(&self) -> &D3D12DeviceChild { &self.0.as_device_child() }
+	fn into_device_child(self) -> D3D12DeviceChild { self.0.into_device_child() }
 }
 
 impl ID3D12Object for D3D12CommandQueue {
-	fn as_object(&self) -> &D3D12Object { &self.0.0.0 }
-	fn into_object(self) -> D3D12Object { self.0.0.0 }
+	fn as_object(&self) -> &D3D12Object { &self.0.as_object() }
+	fn into_object(self) -> D3D12Object { self.0.into_object() }
 }
 
 impl From<Unknown> for D3D12CommandQueue {
@@ -142,7 +143,7 @@ impl From<Unknown> for D3D12CommandQueue {
 }
 
 impl IUnknown for D3D12CommandQueue {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

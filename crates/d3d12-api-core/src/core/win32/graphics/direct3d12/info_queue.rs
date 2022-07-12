@@ -357,7 +357,7 @@ impl From<Unknown> for D3D12InfoQueue {
 }
 
 impl IUnknown for D3D12InfoQueue {
-	fn as_unknown(&self) -> &Unknown { &self.0 }
-	fn into_unknown(self) -> Unknown { self.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

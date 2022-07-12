@@ -4,7 +4,7 @@ use std::ops::Deref;
 use std::slice;
 use crate::core::win32::foundation::HResult;
 use crate::core::win32::graphics::direct3d::dxc::*;
-use crate::core::win32::system::com::{Clsid, Com, GUID, IUnknown, Malloc, Unknown, VTable};
+use crate::core::win32::system::com::{Clsid, Com, GUID, IMalloc, IUnknown, Unknown, VTable};
 
 pub fn DxcCreateInstance<T: IUnknown + Clsid>() -> Result<T, HResult> {
     unsafe {
@@ -32,7 +32,7 @@ pub fn DxcCreateInstance<T: IUnknown + Clsid>() -> Result<T, HResult> {
 }
 
 pub fn DxcCreateInstance2<T: IUnknown + Clsid>(
-    pMalloc: &Malloc,
+    malloc: &impl IMalloc,
 ) -> Result<T, HResult> {
     unsafe {
         #[link(name = "dxcompiler")]
@@ -46,7 +46,7 @@ pub fn DxcCreateInstance2<T: IUnknown + Clsid>(
         }
         let mut out: Option<Unknown> = None;
         let ret = DxcCreateInstance2(
-            pMalloc.vtable(),
+            malloc.vtable(),
             T::CLSID,
             T::IID,
             &mut out as *mut Option<Unknown> as *mut c_void,
@@ -106,7 +106,7 @@ impl Deref for DxcBlob {
     fn deref(&self) -> &Self::Target {
         unsafe {
             slice::from_raw_parts(
-                self.GetBufferPointer() as *const c_void as *const u8,
+                self.GetBufferPointer() as *const u8,
                 self.GetBufferSize(),
             )
         }

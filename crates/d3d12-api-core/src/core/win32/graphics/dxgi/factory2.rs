@@ -76,7 +76,7 @@ pub trait IDxgiFactory2: IDxgiFactory1 {
 	fn GetSharedResourceAdapterLuid(&self, resource: Handle, ) -> Result<Luid, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_luid: MaybeUninit<Luid> = MaybeUninit::uninit();
+			let mut _out_luid: MaybeUninit<Luid> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, resource: Handle, _out_luid: *mut Luid, ) -> HResult
 				= transmute(vt[17]);
 			let _ret_ = f(vt, resource, _out_luid.as_mut_ptr(), );
@@ -87,7 +87,7 @@ pub trait IDxgiFactory2: IDxgiFactory1 {
 	fn RegisterStereoStatusWindow(&self, window_handle: HWnd, msg: u32, ) -> Result<u32, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_pdw_cookie: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_pdw_cookie: MaybeUninit<u32> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, window_handle: HWnd, msg: u32, _out_pdw_cookie: *mut u32, ) -> HResult
 				= transmute(vt[18]);
 			let _ret_ = f(vt, window_handle, msg, _out_pdw_cookie.as_mut_ptr(), );
@@ -98,7 +98,7 @@ pub trait IDxgiFactory2: IDxgiFactory1 {
 	fn RegisterStereoStatusEvent(&self, event: Handle, ) -> Result<u32, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_pdw_cookie: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_pdw_cookie: MaybeUninit<u32> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, event: Handle, _out_pdw_cookie: *mut u32, ) -> HResult
 				= transmute(vt[19]);
 			let _ret_ = f(vt, event, _out_pdw_cookie.as_mut_ptr(), );
@@ -118,7 +118,7 @@ pub trait IDxgiFactory2: IDxgiFactory1 {
 	fn RegisterOcclusionStatusWindow(&self, window_handle: HWnd, msg: u32, ) -> Result<u32, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_pdw_cookie: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_pdw_cookie: MaybeUninit<u32> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, window_handle: HWnd, msg: u32, _out_pdw_cookie: *mut u32, ) -> HResult
 				= transmute(vt[21]);
 			let _ret_ = f(vt, window_handle, msg, _out_pdw_cookie.as_mut_ptr(), );
@@ -129,7 +129,7 @@ pub trait IDxgiFactory2: IDxgiFactory1 {
 	fn RegisterOcclusionStatusEvent(&self, event: Handle, ) -> Result<u32, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_pdw_cookie: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_pdw_cookie: MaybeUninit<u32> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, event: Handle, _out_pdw_cookie: *mut u32, ) -> HResult
 				= transmute(vt[22]);
 			let _ret_ = f(vt, event, _out_pdw_cookie.as_mut_ptr(), );
@@ -169,18 +169,18 @@ impl IDxgiFactory2 for DxgiFactory2 {
 }
 
 impl IDxgiFactory1 for DxgiFactory2 {
-	fn as_factory1(&self) -> &DxgiFactory1 { &self.0 }
-	fn into_factory1(self) -> DxgiFactory1 { self.0 }
+	fn as_factory1(&self) -> &DxgiFactory1 { &self.0.as_factory1() }
+	fn into_factory1(self) -> DxgiFactory1 { self.0.into_factory1() }
 }
 
 impl IDxgiFactory for DxgiFactory2 {
-	fn as_factory(&self) -> &DxgiFactory { &self.0.0 }
-	fn into_factory(self) -> DxgiFactory { self.0.0 }
+	fn as_factory(&self) -> &DxgiFactory { &self.0.as_factory() }
+	fn into_factory(self) -> DxgiFactory { self.0.into_factory() }
 }
 
 impl IDxgiObject for DxgiFactory2 {
-	fn as_object(&self) -> &DxgiObject { &self.0.0.0 }
-	fn into_object(self) -> DxgiObject { self.0.0.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiFactory2 {
@@ -190,7 +190,7 @@ impl From<Unknown> for DxgiFactory2 {
 }
 
 impl IUnknown for DxgiFactory2 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

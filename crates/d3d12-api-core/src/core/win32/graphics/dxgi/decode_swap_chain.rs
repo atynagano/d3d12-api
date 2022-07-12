@@ -73,7 +73,7 @@ pub trait IDxgiDecodeSwapChain: IUnknown {
 	fn GetSourceRect(&self, ) -> Result<Rect, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_rect: MaybeUninit<Rect> = MaybeUninit::uninit();
+			let mut _out_rect: MaybeUninit<Rect> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_rect: *mut Rect, ) -> HResult
 				= transmute(vt[7]);
 			let _ret_ = f(vt, _out_rect.as_mut_ptr(), );
@@ -84,7 +84,7 @@ pub trait IDxgiDecodeSwapChain: IUnknown {
 	fn GetTargetRect(&self, ) -> Result<Rect, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_rect: MaybeUninit<Rect> = MaybeUninit::uninit();
+			let mut _out_rect: MaybeUninit<Rect> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_rect: *mut Rect, ) -> HResult
 				= transmute(vt[8]);
 			let _ret_ = f(vt, _out_rect.as_mut_ptr(), );
@@ -95,8 +95,8 @@ pub trait IDxgiDecodeSwapChain: IUnknown {
 	fn GetDestSize(&self, ) -> Result<(u32, u32, ), HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_width: MaybeUninit<u32> = MaybeUninit::uninit();
-			let mut _out_height: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_width: MaybeUninit<u32> = MaybeUninit::zeroed();
+			let mut _out_height: MaybeUninit<u32> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_width: *mut u32, _out_height: *mut u32, ) -> HResult
 				= transmute(vt[9]);
 			let _ret_ = f(vt, _out_width.as_mut_ptr(), _out_height.as_mut_ptr(), );
@@ -140,7 +140,7 @@ impl From<Unknown> for DxgiDecodeSwapChain {
 }
 
 impl IUnknown for DxgiDecodeSwapChain {
-	fn as_unknown(&self) -> &Unknown { &self.0 }
-	fn into_unknown(self) -> Unknown { self.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

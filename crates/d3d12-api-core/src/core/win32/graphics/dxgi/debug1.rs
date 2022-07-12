@@ -64,8 +64,8 @@ impl IDxgiDebug1 for DxgiDebug1 {
 }
 
 impl IDxgiDebug for DxgiDebug1 {
-	fn as_debug(&self) -> &DxgiDebug { &self.0 }
-	fn into_debug(self) -> DxgiDebug { self.0 }
+	fn as_debug(&self) -> &DxgiDebug { &self.0.as_debug() }
+	fn into_debug(self) -> DxgiDebug { self.0.into_debug() }
 }
 
 impl From<Unknown> for DxgiDebug1 {
@@ -75,7 +75,7 @@ impl From<Unknown> for DxgiDebug1 {
 }
 
 impl IUnknown for DxgiDebug1 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

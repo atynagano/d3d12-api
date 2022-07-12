@@ -35,18 +35,18 @@ impl ID3D12QueryHeap for D3D12QueryHeap {
 }
 
 impl ID3D12Pageable for D3D12QueryHeap {
-	fn as_pageable(&self) -> &D3D12Pageable { &self.0 }
-	fn into_pageable(self) -> D3D12Pageable { self.0 }
+	fn as_pageable(&self) -> &D3D12Pageable { &self.0.as_pageable() }
+	fn into_pageable(self) -> D3D12Pageable { self.0.into_pageable() }
 }
 
 impl ID3D12DeviceChild for D3D12QueryHeap {
-	fn as_device_child(&self) -> &D3D12DeviceChild { &self.0.0 }
-	fn into_device_child(self) -> D3D12DeviceChild { self.0.0 }
+	fn as_device_child(&self) -> &D3D12DeviceChild { &self.0.as_device_child() }
+	fn into_device_child(self) -> D3D12DeviceChild { self.0.into_device_child() }
 }
 
 impl ID3D12Object for D3D12QueryHeap {
-	fn as_object(&self) -> &D3D12Object { &self.0.0.0 }
-	fn into_object(self) -> D3D12Object { self.0.0.0 }
+	fn as_object(&self) -> &D3D12Object { &self.0.as_object() }
+	fn into_object(self) -> D3D12Object { self.0.into_object() }
 }
 
 impl From<Unknown> for D3D12QueryHeap {
@@ -56,7 +56,7 @@ impl From<Unknown> for D3D12QueryHeap {
 }
 
 impl IUnknown for D3D12QueryHeap {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

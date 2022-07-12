@@ -48,33 +48,33 @@ impl IDxgiSwapChain4 for DxgiSwapChain4 {
 }
 
 impl IDxgiSwapChain3 for DxgiSwapChain4 {
-	fn as_swap_chain3(&self) -> &DxgiSwapChain3 { &self.0 }
-	fn into_swap_chain3(self) -> DxgiSwapChain3 { self.0 }
+	fn as_swap_chain3(&self) -> &DxgiSwapChain3 { &self.0.as_swap_chain3() }
+	fn into_swap_chain3(self) -> DxgiSwapChain3 { self.0.into_swap_chain3() }
 }
 
 impl IDxgiSwapChain2 for DxgiSwapChain4 {
-	fn as_swap_chain2(&self) -> &DxgiSwapChain2 { &self.0.0 }
-	fn into_swap_chain2(self) -> DxgiSwapChain2 { self.0.0 }
+	fn as_swap_chain2(&self) -> &DxgiSwapChain2 { &self.0.as_swap_chain2() }
+	fn into_swap_chain2(self) -> DxgiSwapChain2 { self.0.into_swap_chain2() }
 }
 
 impl IDxgiSwapChain1 for DxgiSwapChain4 {
-	fn as_swap_chain1(&self) -> &DxgiSwapChain1 { &self.0.0.0 }
-	fn into_swap_chain1(self) -> DxgiSwapChain1 { self.0.0.0 }
+	fn as_swap_chain1(&self) -> &DxgiSwapChain1 { &self.0.as_swap_chain1() }
+	fn into_swap_chain1(self) -> DxgiSwapChain1 { self.0.into_swap_chain1() }
 }
 
 impl IDxgiSwapChain for DxgiSwapChain4 {
-	fn as_swap_chain(&self) -> &DxgiSwapChain { &self.0.0.0.0 }
-	fn into_swap_chain(self) -> DxgiSwapChain { self.0.0.0.0 }
+	fn as_swap_chain(&self) -> &DxgiSwapChain { &self.0.as_swap_chain() }
+	fn into_swap_chain(self) -> DxgiSwapChain { self.0.into_swap_chain() }
 }
 
 impl IDxgiDeviceSubObject for DxgiSwapChain4 {
-	fn as_device_sub_object(&self) -> &DxgiDeviceSubObject { &self.0.0.0.0.0 }
-	fn into_device_sub_object(self) -> DxgiDeviceSubObject { self.0.0.0.0.0 }
+	fn as_device_sub_object(&self) -> &DxgiDeviceSubObject { &self.0.as_device_sub_object() }
+	fn into_device_sub_object(self) -> DxgiDeviceSubObject { self.0.into_device_sub_object() }
 }
 
 impl IDxgiObject for DxgiSwapChain4 {
-	fn as_object(&self) -> &DxgiObject { &self.0.0.0.0.0.0 }
-	fn into_object(self) -> DxgiObject { self.0.0.0.0.0.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiSwapChain4 {
@@ -84,7 +84,7 @@ impl From<Unknown> for DxgiSwapChain4 {
 }
 
 impl IUnknown for DxgiSwapChain4 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

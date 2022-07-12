@@ -364,20 +364,13 @@ pub trait ID3D12GraphicsCommandList: ID3D12CommandList {
 		}
 	}
 
-	fn OMSetRenderTargets(&self, render_target_descriptors: Option<&[D3D12CpuDescriptorHandle]>, rts_single_handle_to_descriptor_range: bool, depth_stencil_descriptor: Option<&[D3D12CpuDescriptorHandle]>) -> () {
-		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, u32, *const D3D12CpuDescriptorHandle, Bool, *const D3D12CpuDescriptorHandle) -> ()
-			= unsafe { transmute(vt[46]) };
-		let (n, rt, ds) = match (render_target_descriptors, depth_stencil_descriptor) {
-			(Some(rt), Some(ds)) => {
-				assert_eq!(rt.len(), ds.len());
-				(rt.len(), rt.as_ptr_or_null(), ds.as_ptr_or_null())
-			}
-			(Some(rt), None) => (rt.len(), rt.as_ptr_or_null(), null()),
-			(None, Some(ds)) => (ds.len(), null(), ds.as_ptr_or_null()),
-			(None, None) => (0, null(), null()),
-		};
-		f(vt, n as u32, rt, rts_single_handle_to_descriptor_range.to_bool(), ds);
+	fn om_set_render_target(&self, render_target_descriptor: Option<&D3D12CpuDescriptorHandle>, depth_stencil_descriptor: Option<&D3D12CpuDescriptorHandle>) -> () {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, u32, *const D3D12CpuDescriptorHandle, Bool, *const D3D12CpuDescriptorHandle) -> ()
+				= transmute(vt[46]);
+			f(vt, if render_target_descriptor.is_some() { 1 } else { 0 }, transmute(render_target_descriptor), Bool::FALSE, transmute(depth_stencil_descriptor));
+		}
 	}
 
 	fn ClearDepthStencilView(&self, depth_stencil_view: D3D12CpuDescriptorHandle, clear_flags: D3D12ClearFlags, depth: f32, stencil: u8, rects: &[Rect], ) -> () {
@@ -392,9 +385,9 @@ pub trait ID3D12GraphicsCommandList: ID3D12CommandList {
 
 	fn ClearRenderTargetView(&self, render_target_view: D3D12CpuDescriptorHandle, color_rgba: [f32; 4], rects: Option<&[Rect]>) -> () {
 		let vt = self.as_param();
-		let f: extern "system" fn(Param<Self>, render_target_view: D3D12CpuDescriptorHandle, color_rgba: &f32, num_rects: u32, rects: *const Rect) -> ()
+		let f: extern "system" fn(Param<Self>, render_target_view: D3D12CpuDescriptorHandle, color_rgba: &[f32; 4], num_rects: u32, rects: *const Rect) -> ()
 			= unsafe { transmute(vt[48]) };
-		let ret = f(vt, render_target_view, &color_rgba[0], rects.len() as u32, rects.as_ptr_or_null());
+		let ret = f(vt, render_target_view, &color_rgba, rects.len() as u32, rects.as_ptr_or_null());
 	}
 
 	fn ClearUnorderedAccessViewUint(&self, view_gpu_handle_in_current_heap: D3D12GpuDescriptorHandle, view_cpu_handle: D3D12CpuDescriptorHandle, resource: &(impl ID3D12Resource + ?Sized), values: &u32, rects: &[Rect], ) -> () {
@@ -487,18 +480,18 @@ impl ID3D12GraphicsCommandList for D3D12GraphicsCommandList {
 }
 
 impl ID3D12CommandList for D3D12GraphicsCommandList {
-	fn as_command_list(&self) -> &D3D12CommandList { &self.0 }
-	fn into_command_list(self) -> D3D12CommandList { self.0 }
+	fn as_command_list(&self) -> &D3D12CommandList { &self.0.as_command_list() }
+	fn into_command_list(self) -> D3D12CommandList { self.0.into_command_list() }
 }
 
 impl ID3D12DeviceChild for D3D12GraphicsCommandList {
-	fn as_device_child(&self) -> &D3D12DeviceChild { &self.0.0 }
-	fn into_device_child(self) -> D3D12DeviceChild { self.0.0 }
+	fn as_device_child(&self) -> &D3D12DeviceChild { &self.0.as_device_child() }
+	fn into_device_child(self) -> D3D12DeviceChild { self.0.into_device_child() }
 }
 
 impl ID3D12Object for D3D12GraphicsCommandList {
-	fn as_object(&self) -> &D3D12Object { &self.0.0.0 }
-	fn into_object(self) -> D3D12Object { self.0.0.0 }
+	fn as_object(&self) -> &D3D12Object { &self.0.as_object() }
+	fn into_object(self) -> D3D12Object { self.0.into_object() }
 }
 
 impl From<Unknown> for D3D12GraphicsCommandList {
@@ -508,7 +501,7 @@ impl From<Unknown> for D3D12GraphicsCommandList {
 }
 
 impl IUnknown for D3D12GraphicsCommandList {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

@@ -43,7 +43,7 @@ pub trait IDxcPdbUtils: IUnknown {
 	fn GetSourceCount(&self, ) -> Result<u32, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_count: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_count: MaybeUninit<u32> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_count: *mut u32, ) -> HResult
 				= transmute(vt[4]);
 			let _ret_ = f(vt, _out_count.as_mut_ptr(), );
@@ -51,13 +51,13 @@ pub trait IDxcPdbUtils: IUnknown {
 		}
 	}
 
-	fn GetSource(&self, index: u32, ) -> Result<DxcBlobEncoding, HResult> {
+	fn GetSource(&self, u_index: u32, ) -> Result<DxcBlobEncoding, HResult> {
 		unsafe {
 			let vt = self.as_param();
 			let mut _out_result: Option<DxcBlobEncoding> = None;
-			let f: extern "system" fn(Param<Self>, index: u32, result: *mut c_void, ) -> HResult
+			let f: extern "system" fn(Param<Self>, u_index: u32, result: *mut c_void, ) -> HResult
 				= transmute(vt[5]);
-			let _ret_ = f(vt, index, transmute(&mut _out_result), );
+			let _ret_ = f(vt, u_index, transmute(&mut _out_result), );
 			if _ret_.is_ok() {
 				if let Some(_out_result) = _out_result {
 					return Ok(_out_result);
@@ -67,13 +67,13 @@ pub trait IDxcPdbUtils: IUnknown {
 		}
 	}
 
-	fn GetSourceName(&self, index: u32, ) -> Result<BStr, HResult> {
+	fn GetSourceName(&self, u_index: u32, ) -> Result<BStr, HResult> {
 		unsafe {
 			let vt = self.as_param();
 			let mut _out_result: Option<BStr> = None;
-			let f: extern "system" fn(Param<Self>, index: u32, _out_result: *mut c_void, ) -> HResult
+			let f: extern "system" fn(Param<Self>, u_index: u32, _out_result: *mut c_void, ) -> HResult
 				= transmute(vt[6]);
-			let _ret_ = f(vt, index, transmute(&mut _out_result), );
+			let _ret_ = f(vt, u_index, transmute(&mut _out_result), );
 			if _ret_.is_ok() {
 				if let Some(_out_result) = _out_result {
 					return Ok(_out_result);
@@ -86,7 +86,7 @@ pub trait IDxcPdbUtils: IUnknown {
 	fn GetFlagCount(&self, ) -> Result<u32, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_count: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_count: MaybeUninit<u32> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_count: *mut u32, ) -> HResult
 				= transmute(vt[7]);
 			let _ret_ = f(vt, _out_count.as_mut_ptr(), );
@@ -94,13 +94,13 @@ pub trait IDxcPdbUtils: IUnknown {
 		}
 	}
 
-	fn GetFlag(&self, index: u32, ) -> Result<BStr, HResult> {
+	fn GetFlag(&self, u_index: u32, ) -> Result<BStr, HResult> {
 		unsafe {
 			let vt = self.as_param();
 			let mut _out_result: Option<BStr> = None;
-			let f: extern "system" fn(Param<Self>, index: u32, _out_result: *mut c_void, ) -> HResult
+			let f: extern "system" fn(Param<Self>, u_index: u32, _out_result: *mut c_void, ) -> HResult
 				= transmute(vt[8]);
-			let _ret_ = f(vt, index, transmute(&mut _out_result), );
+			let _ret_ = f(vt, u_index, transmute(&mut _out_result), );
 			if _ret_.is_ok() {
 				if let Some(_out_result) = _out_result {
 					return Ok(_out_result);
@@ -113,7 +113,7 @@ pub trait IDxcPdbUtils: IUnknown {
 	fn GetArgCount(&self, ) -> Result<u32, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_count: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_count: MaybeUninit<u32> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_count: *mut u32, ) -> HResult
 				= transmute(vt[9]);
 			let _ret_ = f(vt, _out_count.as_mut_ptr(), );
@@ -121,13 +121,13 @@ pub trait IDxcPdbUtils: IUnknown {
 		}
 	}
 
-	fn GetArg(&self, index: u32, ) -> Result<BStr, HResult> {
+	fn GetArg(&self, u_index: u32, ) -> Result<BStr, HResult> {
 		unsafe {
 			let vt = self.as_param();
 			let mut _out_result: Option<BStr> = None;
-			let f: extern "system" fn(Param<Self>, index: u32, _out_result: *mut c_void, ) -> HResult
+			let f: extern "system" fn(Param<Self>, u_index: u32, _out_result: *mut c_void, ) -> HResult
 				= transmute(vt[10]);
-			let _ret_ = f(vt, index, transmute(&mut _out_result), );
+			let _ret_ = f(vt, u_index, transmute(&mut _out_result), );
 			if _ret_.is_ok() {
 				if let Some(_out_result) = _out_result {
 					return Ok(_out_result);
@@ -140,7 +140,7 @@ pub trait IDxcPdbUtils: IUnknown {
 	fn GetArgPairCount(&self, ) -> Result<u32, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_count: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_count: MaybeUninit<u32> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_count: *mut u32, ) -> HResult
 				= transmute(vt[11]);
 			let _ret_ = f(vt, _out_count.as_mut_ptr(), );
@@ -151,7 +151,7 @@ pub trait IDxcPdbUtils: IUnknown {
 	fn GetDefineCount(&self, ) -> Result<u32, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_count: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_count: MaybeUninit<u32> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_count: *mut u32, ) -> HResult
 				= transmute(vt[13]);
 			let _ret_ = f(vt, _out_count.as_mut_ptr(), );
@@ -159,13 +159,13 @@ pub trait IDxcPdbUtils: IUnknown {
 		}
 	}
 
-	fn GetDefine(&self, index: u32, ) -> Result<BStr, HResult> {
+	fn GetDefine(&self, u_index: u32, ) -> Result<BStr, HResult> {
 		unsafe {
 			let vt = self.as_param();
 			let mut _out_result: Option<BStr> = None;
-			let f: extern "system" fn(Param<Self>, index: u32, _out_result: *mut c_void, ) -> HResult
+			let f: extern "system" fn(Param<Self>, u_index: u32, _out_result: *mut c_void, ) -> HResult
 				= transmute(vt[14]);
-			let _ret_ = f(vt, index, transmute(&mut _out_result), );
+			let _ret_ = f(vt, u_index, transmute(&mut _out_result), );
 			if _ret_.is_ok() {
 				if let Some(_out_result) = _out_result {
 					return Ok(_out_result);
@@ -323,12 +323,12 @@ pub trait IDxcPdbUtils: IUnknown {
 		}
 	}
 
-	fn OverrideArgs(&self, arg_pairs: &DxcArgPair, num_arg_pairs: u32, ) -> Result<(), HResult> {
+	fn OverrideArgs(&self, arg_pairs: &DxcArgPair, u_num_arg_pairs: u32, ) -> Result<(), HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let f: extern "system" fn(Param<Self>, arg_pairs: &DxcArgPair, num_arg_pairs: u32, ) -> HResult
+			let f: extern "system" fn(Param<Self>, arg_pairs: &DxcArgPair, u_num_arg_pairs: u32, ) -> HResult
 				= transmute(vt[25]);
-			let _ret_ = f(vt, arg_pairs, num_arg_pairs, );
+			let _ret_ = f(vt, arg_pairs, u_num_arg_pairs, );
 			_ret_.ok()
 		}
 	}
@@ -356,7 +356,7 @@ impl From<Unknown> for DxcPdbUtils {
 }
 
 impl IUnknown for DxcPdbUtils {
-	fn as_unknown(&self) -> &Unknown { &self.0 }
-	fn into_unknown(self) -> Unknown { self.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

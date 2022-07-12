@@ -43,8 +43,8 @@ pub trait IDxgiSwapChain2: IDxgiSwapChain1 {
 	fn GetSourceSize(&self, ) -> Result<(u32, u32, ), HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_width: MaybeUninit<u32> = MaybeUninit::uninit();
-			let mut _out_height: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_width: MaybeUninit<u32> = MaybeUninit::zeroed();
+			let mut _out_height: MaybeUninit<u32> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_width: *mut u32, _out_height: *mut u32, ) -> HResult
 				= transmute(vt[30]);
 			let _ret_ = f(vt, _out_width.as_mut_ptr(), _out_height.as_mut_ptr(), );
@@ -68,7 +68,7 @@ pub trait IDxgiSwapChain2: IDxgiSwapChain1 {
 	fn GetMaximumFrameLatency(&self, ) -> Result<u32, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_max_latency: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_max_latency: MaybeUninit<u32> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_max_latency: *mut u32, ) -> HResult
 				= transmute(vt[32]);
 			let _ret_ = f(vt, _out_max_latency.as_mut_ptr(), );
@@ -76,13 +76,13 @@ pub trait IDxgiSwapChain2: IDxgiSwapChain1 {
 		}
 	}
 
-	fn GetFrameLatencyWaitableObject(&self, ) -> Handle {
+	fn GetFrameLatencyWaitableObject(&self, ) -> Option<Handle> {
 		unsafe {
 			let vt = self.as_param();
-			let f: extern "system" fn(Param<Self>, ) -> Handle
+			let f: extern "system" fn(Param<Self>, ) -> *const c_void
 				= transmute(vt[33]);
 			let _ret_ = f(vt, );
-			_ret_
+			transmute(_ret_)
 		}
 	}
 
@@ -99,7 +99,7 @@ pub trait IDxgiSwapChain2: IDxgiSwapChain1 {
 	fn GetMatrixTransform(&self, ) -> Result<DxgiMatrix3X2F, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_matrix: MaybeUninit<DxgiMatrix3X2F> = MaybeUninit::uninit();
+			let mut _out_matrix: MaybeUninit<DxgiMatrix3X2F> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_matrix: *mut DxgiMatrix3X2F, ) -> HResult
 				= transmute(vt[35]);
 			let _ret_ = f(vt, _out_matrix.as_mut_ptr(), );
@@ -114,23 +114,23 @@ impl IDxgiSwapChain2 for DxgiSwapChain2 {
 }
 
 impl IDxgiSwapChain1 for DxgiSwapChain2 {
-	fn as_swap_chain1(&self) -> &DxgiSwapChain1 { &self.0 }
-	fn into_swap_chain1(self) -> DxgiSwapChain1 { self.0 }
+	fn as_swap_chain1(&self) -> &DxgiSwapChain1 { &self.0.as_swap_chain1() }
+	fn into_swap_chain1(self) -> DxgiSwapChain1 { self.0.into_swap_chain1() }
 }
 
 impl IDxgiSwapChain for DxgiSwapChain2 {
-	fn as_swap_chain(&self) -> &DxgiSwapChain { &self.0.0 }
-	fn into_swap_chain(self) -> DxgiSwapChain { self.0.0 }
+	fn as_swap_chain(&self) -> &DxgiSwapChain { &self.0.as_swap_chain() }
+	fn into_swap_chain(self) -> DxgiSwapChain { self.0.into_swap_chain() }
 }
 
 impl IDxgiDeviceSubObject for DxgiSwapChain2 {
-	fn as_device_sub_object(&self) -> &DxgiDeviceSubObject { &self.0.0.0 }
-	fn into_device_sub_object(self) -> DxgiDeviceSubObject { self.0.0.0 }
+	fn as_device_sub_object(&self) -> &DxgiDeviceSubObject { &self.0.as_device_sub_object() }
+	fn into_device_sub_object(self) -> DxgiDeviceSubObject { self.0.into_device_sub_object() }
 }
 
 impl IDxgiObject for DxgiSwapChain2 {
-	fn as_object(&self) -> &DxgiObject { &self.0.0.0.0 }
-	fn into_object(self) -> DxgiObject { self.0.0.0.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiSwapChain2 {
@@ -140,7 +140,7 @@ impl From<Unknown> for DxgiSwapChain2 {
 }
 
 impl IUnknown for DxgiSwapChain2 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

@@ -15,14 +15,14 @@ use crate::core::win32::system::com::*;
 use crate::core::win32::foundation::*;
 
 
-pub fn GetModuleHandleA(module_name: Option<&str>, ) -> HInstance {
+pub fn GetModuleHandleA(module_name: Option<&str>, ) -> Option<HInstance> {
 	unsafe {
 		#[link(name = "KERNEL32")]
 		extern "system" {
-			fn GetModuleHandleA(module_name: *const u8, ) -> HInstance;
+			fn GetModuleHandleA(module_name: *const u8, ) -> *const c_void;
 		}
 		let _ret_ = GetModuleHandleA(module_name.map(str::to_null_terminated).as_ptr_or_null(), );
-		_ret_
+		transmute(_ret_)
 	}
 }
 

@@ -33,7 +33,7 @@ pub trait IDxcOperationResult: IUnknown {
 	fn GetStatus(&self, ) -> Result<HResult, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_status: MaybeUninit<HResult> = MaybeUninit::uninit();
+			let mut _out_status: MaybeUninit<HResult> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_status: *mut HResult, ) -> HResult
 				= transmute(vt[3]);
 			let _ret_ = f(vt, _out_status.as_mut_ptr(), );
@@ -52,6 +52,22 @@ pub trait IDxcOperationResult: IUnknown {
 		}
 	}
 
+	fn get_result(&self, ) -> Result<DxcBlob, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_result: Option<DxcBlob> = None;
+			let f: extern "system" fn(Param<Self>, result: *mut c_void, ) -> HResult
+				= transmute(vt[4]);
+			let _ret_ = f(vt, transmute(&mut _out_result), );
+			if _ret_.is_ok() {
+				if let Some(_out_result) = _out_result {
+					return Ok(_out_result);
+				}
+			}
+			Err(_ret_)
+		}
+	}
+
 	fn GetErrorBuffer(&self, mut errors: Option<&mut Option<DxcBlobEncoding>>, ) -> Result<(), HResult> {
 		unsafe {
 			let vt = self.as_param();
@@ -60,6 +76,22 @@ pub trait IDxcOperationResult: IUnknown {
 				= transmute(vt[5]);
 			let _ret_ = f(vt, transmute(errors), );
 			_ret_.ok()
+		}
+	}
+
+	fn get_error_buffer(&self, ) -> Result<DxcBlobEncoding, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_errors: Option<DxcBlobEncoding> = None;
+			let f: extern "system" fn(Param<Self>, errors: *mut c_void, ) -> HResult
+				= transmute(vt[5]);
+			let _ret_ = f(vt, transmute(&mut _out_errors), );
+			if _ret_.is_ok() {
+				if let Some(_out_errors) = _out_errors {
+					return Ok(_out_errors);
+				}
+			}
+			Err(_ret_)
 		}
 	}
 }
@@ -76,7 +108,7 @@ impl From<Unknown> for DxcOperationResult {
 }
 
 impl IUnknown for DxcOperationResult {
-	fn as_unknown(&self) -> &Unknown { &self.0 }
-	fn into_unknown(self) -> Unknown { self.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

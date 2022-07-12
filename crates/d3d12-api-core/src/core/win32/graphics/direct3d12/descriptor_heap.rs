@@ -32,16 +32,17 @@ pub trait ID3D12DescriptorHeap: ID3D12Pageable {
 	fn GetDesc(&self, ) -> D3D12DescriptorHeapDesc {
 		unsafe {
 			let vt = self.as_param();
-			let f: extern "system" fn(Param<Self>, ) -> D3D12DescriptorHeapDesc
+			let mut _out__out_desc: MaybeUninit<D3D12DescriptorHeapDesc> = MaybeUninit::zeroed();
+			let f: extern "system" fn(Param<Self>, _out__out_desc: *mut D3D12DescriptorHeapDesc, ) -> ()
 				= transmute(vt[8]);
-			let _ret_ = f(vt, );
-			_ret_
+			let _ret_ = f(vt, _out__out_desc.as_mut_ptr(), );
+			_out__out_desc.assume_init()
 		}
 	}
 
 	fn GetCPUDescriptorHandleForHeapStart(&self) -> (D3D12CpuDescriptorHandle) {
 		let vt = self.as_param();
-		let mut out = D3D12CpuDescriptorHandle::zeroed();
+		let mut out = D3D12CpuDescriptorHandle { ptr: 0 };
 		let f: extern "system" fn(Param<Self>, &mut D3D12CpuDescriptorHandle) -> *const D3D12CpuDescriptorHandle
 			= unsafe { transmute(vt[9]) };
 		let _ = f(vt, &mut out);
@@ -50,7 +51,7 @@ pub trait ID3D12DescriptorHeap: ID3D12Pageable {
 
 	fn GetGPUDescriptorHandleForHeapStart(&self) -> (D3D12CpuDescriptorHandle) {
 		let vt = self.as_param();
-		let mut out = D3D12CpuDescriptorHandle::zeroed();
+		let mut out = D3D12CpuDescriptorHandle { ptr: 0 };
 		let f: extern "system" fn(Param<Self>, &mut D3D12CpuDescriptorHandle) -> *const D3D12CpuDescriptorHandle
 			= unsafe { transmute(vt[10]) };
 		let _ = f(vt, &mut out);
@@ -64,18 +65,18 @@ impl ID3D12DescriptorHeap for D3D12DescriptorHeap {
 }
 
 impl ID3D12Pageable for D3D12DescriptorHeap {
-	fn as_pageable(&self) -> &D3D12Pageable { &self.0 }
-	fn into_pageable(self) -> D3D12Pageable { self.0 }
+	fn as_pageable(&self) -> &D3D12Pageable { &self.0.as_pageable() }
+	fn into_pageable(self) -> D3D12Pageable { self.0.into_pageable() }
 }
 
 impl ID3D12DeviceChild for D3D12DescriptorHeap {
-	fn as_device_child(&self) -> &D3D12DeviceChild { &self.0.0 }
-	fn into_device_child(self) -> D3D12DeviceChild { self.0.0 }
+	fn as_device_child(&self) -> &D3D12DeviceChild { &self.0.as_device_child() }
+	fn into_device_child(self) -> D3D12DeviceChild { self.0.into_device_child() }
 }
 
 impl ID3D12Object for D3D12DescriptorHeap {
-	fn as_object(&self) -> &D3D12Object { &self.0.0.0 }
-	fn into_object(self) -> D3D12Object { self.0.0.0 }
+	fn as_object(&self) -> &D3D12Object { &self.0.as_object() }
+	fn into_object(self) -> D3D12Object { self.0.into_object() }
 }
 
 impl From<Unknown> for D3D12DescriptorHeap {
@@ -85,7 +86,7 @@ impl From<Unknown> for D3D12DescriptorHeap {
 }
 
 impl IUnknown for D3D12DescriptorHeap {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

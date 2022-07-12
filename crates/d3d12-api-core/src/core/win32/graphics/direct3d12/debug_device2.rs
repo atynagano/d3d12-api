@@ -37,8 +37,8 @@ impl ID3D12DebugDevice2 for D3D12DebugDevice2 {
 }
 
 impl ID3D12DebugDevice for D3D12DebugDevice2 {
-	fn as_debug_device(&self) -> &D3D12DebugDevice { &self.0 }
-	fn into_debug_device(self) -> D3D12DebugDevice { self.0 }
+	fn as_debug_device(&self) -> &D3D12DebugDevice { &self.0.as_debug_device() }
+	fn into_debug_device(self) -> D3D12DebugDevice { self.0.into_debug_device() }
 }
 
 impl From<Unknown> for D3D12DebugDevice2 {
@@ -48,7 +48,7 @@ impl From<Unknown> for D3D12DebugDevice2 {
 }
 
 impl IUnknown for D3D12DebugDevice2 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

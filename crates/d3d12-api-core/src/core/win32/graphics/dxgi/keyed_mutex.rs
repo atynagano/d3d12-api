@@ -56,13 +56,13 @@ impl IDxgiKeyedMutex for DxgiKeyedMutex {
 }
 
 impl IDxgiDeviceSubObject for DxgiKeyedMutex {
-	fn as_device_sub_object(&self) -> &DxgiDeviceSubObject { &self.0 }
-	fn into_device_sub_object(self) -> DxgiDeviceSubObject { self.0 }
+	fn as_device_sub_object(&self) -> &DxgiDeviceSubObject { &self.0.as_device_sub_object() }
+	fn into_device_sub_object(self) -> DxgiDeviceSubObject { self.0.into_device_sub_object() }
 }
 
 impl IDxgiObject for DxgiKeyedMutex {
-	fn as_object(&self) -> &DxgiObject { &self.0.0 }
-	fn into_object(self) -> DxgiObject { self.0.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiKeyedMutex {
@@ -72,7 +72,7 @@ impl From<Unknown> for DxgiKeyedMutex {
 }
 
 impl IUnknown for DxgiKeyedMutex {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

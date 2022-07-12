@@ -37,8 +37,8 @@ impl ID3D12DebugCommandList2 for D3D12DebugCommandList2 {
 }
 
 impl ID3D12DebugCommandList for D3D12DebugCommandList2 {
-	fn as_debug_command_list(&self) -> &D3D12DebugCommandList { &self.0 }
-	fn into_debug_command_list(self) -> D3D12DebugCommandList { self.0 }
+	fn as_debug_command_list(&self) -> &D3D12DebugCommandList { &self.0.as_debug_command_list() }
+	fn into_debug_command_list(self) -> D3D12DebugCommandList { self.0.into_debug_command_list() }
 }
 
 impl From<Unknown> for D3D12DebugCommandList2 {
@@ -48,7 +48,7 @@ impl From<Unknown> for D3D12DebugCommandList2 {
 }
 
 impl IUnknown for D3D12DebugCommandList2 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

@@ -268,6 +268,22 @@ pub trait ID3D12Device: ID3D12Object {
 		}
 	}
 
+	fn create_committed_resource<T: IUnknown>(&self, heap_properties: &D3D12HeapProperties, heap_flags: D3D12HeapFlags, desc: &D3D12ResourceDesc, initial_resource_state: D3D12ResourceStates, optimized_clear_value: Option<&D3D12ClearValue>, ) -> Result<T, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_resource: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, heap_properties: &D3D12HeapProperties, heap_flags: D3D12HeapFlags, desc: &D3D12ResourceDesc, initial_resource_state: D3D12ResourceStates, optimized_clear_value: *const c_void, riid_resource: &GUID, _out_resource: *mut c_void, ) -> HResult
+				= transmute(vt[27]);
+			let _ret_ = f(vt, heap_properties, heap_flags, desc, initial_resource_state, transmute(optimized_clear_value), T::IID, transmute(&mut _out_resource), );
+			if _ret_.is_ok() {
+				if let Some(_out_resource) = _out_resource {
+					return Ok(T::from(_out_resource));
+				}
+			}
+			Err(_ret_)
+		}
+	}
+
 	fn CreateHeap<T: IUnknown>(&self, desc: &D3D12HeapDesc, heap: Option<&mut Option<T>>, ) -> Result<(), HResult> {
 		unsafe {
 			let vt = self.as_param();
@@ -277,6 +293,22 @@ pub trait ID3D12Device: ID3D12Object {
 			let _ret_ = f(vt, desc, T::IID, transmute(if heap.is_some() { Some(&mut _out_heap) } else { None }), );
 			if let Some(_out_heap) = _out_heap { *heap.unwrap_unchecked() = Some(T::from(_out_heap)); }
 			_ret_.ok()
+		}
+	}
+
+	fn create_heap<T: IUnknown>(&self, desc: &D3D12HeapDesc, ) -> Result<T, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_heap: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, desc: &D3D12HeapDesc, riid: &GUID, _out_heap: *mut c_void, ) -> HResult
+				= transmute(vt[28]);
+			let _ret_ = f(vt, desc, T::IID, transmute(&mut _out_heap), );
+			if _ret_.is_ok() {
+				if let Some(_out_heap) = _out_heap {
+					return Ok(T::from(_out_heap));
+				}
+			}
+			Err(_ret_)
 		}
 	}
 
@@ -292,6 +324,22 @@ pub trait ID3D12Device: ID3D12Object {
 		}
 	}
 
+	fn create_placed_resource<T: IUnknown>(&self, heap: &(impl ID3D12Heap + ?Sized), heap_offset: u64, desc: &D3D12ResourceDesc, initial_state: D3D12ResourceStates, optimized_clear_value: Option<&D3D12ClearValue>, ) -> Result<T, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_resource: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, heap: VTable, heap_offset: u64, desc: &D3D12ResourceDesc, initial_state: D3D12ResourceStates, optimized_clear_value: *const c_void, riid: &GUID, _out_resource: *mut c_void, ) -> HResult
+				= transmute(vt[29]);
+			let _ret_ = f(vt, heap.vtable(), heap_offset, desc, initial_state, transmute(optimized_clear_value), T::IID, transmute(&mut _out_resource), );
+			if _ret_.is_ok() {
+				if let Some(_out_resource) = _out_resource {
+					return Ok(T::from(_out_resource));
+				}
+			}
+			Err(_ret_)
+		}
+	}
+
 	fn CreateReservedResource<T: IUnknown>(&self, desc: &D3D12ResourceDesc, initial_state: D3D12ResourceStates, optimized_clear_value: Option<&D3D12ClearValue>, resource: Option<&mut Option<T>>, ) -> Result<(), HResult> {
 		unsafe {
 			let vt = self.as_param();
@@ -301,6 +349,22 @@ pub trait ID3D12Device: ID3D12Object {
 			let _ret_ = f(vt, desc, initial_state, transmute(optimized_clear_value), T::IID, transmute(if resource.is_some() { Some(&mut _out_resource) } else { None }), );
 			if let Some(_out_resource) = _out_resource { *resource.unwrap_unchecked() = Some(T::from(_out_resource)); }
 			_ret_.ok()
+		}
+	}
+
+	fn create_reserved_resource<T: IUnknown>(&self, desc: &D3D12ResourceDesc, initial_state: D3D12ResourceStates, optimized_clear_value: Option<&D3D12ClearValue>, ) -> Result<T, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_resource: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, desc: &D3D12ResourceDesc, initial_state: D3D12ResourceStates, optimized_clear_value: *const c_void, riid: &GUID, _out_resource: *mut c_void, ) -> HResult
+				= transmute(vt[30]);
+			let _ret_ = f(vt, desc, initial_state, transmute(optimized_clear_value), T::IID, transmute(&mut _out_resource), );
+			if _ret_.is_ok() {
+				if let Some(_out_resource) = _out_resource {
+					return Ok(T::from(_out_resource));
+				}
+			}
+			Err(_ret_)
 		}
 	}
 
@@ -329,6 +393,22 @@ pub trait ID3D12Device: ID3D12Object {
 			let _ret_ = f(vt, nt_handle, T::IID, transmute(if obj.is_some() { Some(&mut _out_obj) } else { None }), );
 			if let Some(_out_obj) = _out_obj { *obj.unwrap_unchecked() = Some(T::from(_out_obj)); }
 			_ret_.ok()
+		}
+	}
+
+	fn open_shared_handle<T: IUnknown>(&self, nt_handle: Handle, ) -> Result<T, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_obj: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, nt_handle: Handle, riid: &GUID, _out_obj: *mut c_void, ) -> HResult
+				= transmute(vt[32]);
+			let _ret_ = f(vt, nt_handle, T::IID, transmute(&mut _out_obj), );
+			if _ret_.is_ok() {
+				if let Some(_out_obj) = _out_obj {
+					return Ok(T::from(_out_obj));
+				}
+			}
+			Err(_ret_)
 		}
 	}
 
@@ -396,6 +476,35 @@ pub trait ID3D12Device: ID3D12Object {
 		}
 	}
 
+	fn GetCopyableFootprints(
+		&self,
+		resource_desc: &D3D12ResourceDesc,
+		first_subresource: u32,
+		num_subresources: u32,
+		base_offset: u64,
+		layouts: *mut D3D12PlacedSubresourceFootprint,
+		num_rows: *mut u32,
+		row_size_in_bytes: *mut u64,
+		total_bytes: *mut u64,
+	) -> () {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, &D3D12ResourceDesc, u32, u32, u64, *mut D3D12PlacedSubresourceFootprint, *mut u32, *mut u64, *mut u64) -> ()
+				= transmute(vt[38]);
+			f(vt, resource_desc, first_subresource, num_subresources, base_offset, layouts, num_rows, row_size_in_bytes, total_bytes);
+		}
+	}
+
+	fn get_copyable_footprint(&self, resource_desc: &D3D12ResourceDesc) -> D3D12CopyableFootprint {
+		unsafe {
+			let mut out = MaybeUninit::<D3D12CopyableFootprint>::zeroed();
+			let ptr = &mut *out.as_mut_ptr();
+			self.GetCopyableFootprints(resource_desc, 0, 1, 0, &mut ptr.layout, &mut ptr.num_row, &mut ptr.row_size_in_bytes, &mut ptr.total_bytes);
+			out.assume_init()
+		}
+	}
+
+
 	fn CreateQueryHeap<T: IUnknown>(&self, desc: &D3D12QueryHeapDesc, heap: Option<&mut Option<T>>, ) -> Result<(), HResult> {
 		unsafe {
 			let vt = self.as_param();
@@ -405,6 +514,22 @@ pub trait ID3D12Device: ID3D12Object {
 			let _ret_ = f(vt, desc, T::IID, transmute(if heap.is_some() { Some(&mut _out_heap) } else { None }), );
 			if let Some(_out_heap) = _out_heap { *heap.unwrap_unchecked() = Some(T::from(_out_heap)); }
 			_ret_.ok()
+		}
+	}
+
+	fn create_query_heap<T: IUnknown>(&self, desc: &D3D12QueryHeapDesc, ) -> Result<T, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_heap: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, desc: &D3D12QueryHeapDesc, riid: &GUID, _out_heap: *mut c_void, ) -> HResult
+				= transmute(vt[39]);
+			let _ret_ = f(vt, desc, T::IID, transmute(&mut _out_heap), );
+			if _ret_.is_ok() {
+				if let Some(_out_heap) = _out_heap {
+					return Ok(T::from(_out_heap));
+				}
+			}
+			Err(_ret_)
 		}
 	}
 
@@ -430,6 +555,22 @@ pub trait ID3D12Device: ID3D12Object {
 		}
 	}
 
+	fn create_command_signature<T: IUnknown>(&self, desc: &D3D12CommandSignatureDesc, root_signature: Option<&D3D12RootSignature>, ) -> Result<T, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_command_signature: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, desc: &D3D12CommandSignatureDesc, root_signature: *const c_void, riid: &GUID, _out_command_signature: *mut c_void, ) -> HResult
+				= transmute(vt[41]);
+			let _ret_ = f(vt, desc, option_to_vtable(root_signature), T::IID, transmute(&mut _out_command_signature), );
+			if _ret_.is_ok() {
+				if let Some(_out_command_signature) = _out_command_signature {
+					return Ok(T::from(_out_command_signature));
+				}
+			}
+			Err(_ret_)
+		}
+	}
+
 	fn GetAdapterLuid(&self, ) -> Luid {
 		unsafe {
 			let vt = self.as_param();
@@ -447,8 +588,8 @@ impl ID3D12Device for D3D12Device {
 }
 
 impl ID3D12Object for D3D12Device {
-	fn as_object(&self) -> &D3D12Object { &self.0 }
-	fn into_object(self) -> D3D12Object { self.0 }
+	fn as_object(&self) -> &D3D12Object { &self.0.as_object() }
+	fn into_object(self) -> D3D12Object { self.0.into_object() }
 }
 
 impl From<Unknown> for D3D12Device {
@@ -458,7 +599,7 @@ impl From<Unknown> for D3D12Device {
 }
 
 impl IUnknown for D3D12Device {
-	fn as_unknown(&self) -> &Unknown { &self.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

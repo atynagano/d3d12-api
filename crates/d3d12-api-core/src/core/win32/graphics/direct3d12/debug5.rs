@@ -45,18 +45,18 @@ impl ID3D12Debug5 for D3D12Debug5 {
 }
 
 impl ID3D12Debug4 for D3D12Debug5 {
-	fn as_debug4(&self) -> &D3D12Debug4 { &self.0 }
-	fn into_debug4(self) -> D3D12Debug4 { self.0 }
+	fn as_debug4(&self) -> &D3D12Debug4 { &self.0.as_debug4() }
+	fn into_debug4(self) -> D3D12Debug4 { self.0.into_debug4() }
 }
 
 impl ID3D12Debug3 for D3D12Debug5 {
-	fn as_debug3(&self) -> &D3D12Debug3 { &self.0.0 }
-	fn into_debug3(self) -> D3D12Debug3 { self.0.0 }
+	fn as_debug3(&self) -> &D3D12Debug3 { &self.0.as_debug3() }
+	fn into_debug3(self) -> D3D12Debug3 { self.0.into_debug3() }
 }
 
 impl ID3D12Debug for D3D12Debug5 {
-	fn as_debug(&self) -> &D3D12Debug { &self.0.0.0 }
-	fn into_debug(self) -> D3D12Debug { self.0.0.0 }
+	fn as_debug(&self) -> &D3D12Debug { &self.0.as_debug() }
+	fn into_debug(self) -> D3D12Debug { self.0.into_debug() }
 }
 
 impl From<Unknown> for D3D12Debug5 {
@@ -66,7 +66,7 @@ impl From<Unknown> for D3D12Debug5 {
 }
 
 impl IUnknown for D3D12Debug5 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

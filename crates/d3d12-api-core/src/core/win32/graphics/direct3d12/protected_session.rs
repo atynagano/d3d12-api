@@ -42,6 +42,22 @@ pub trait ID3D12ProtectedSession: ID3D12DeviceChild {
 		}
 	}
 
+	fn get_status_fence<T: IUnknown>(&self, ) -> Result<T, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_fence: Option<Unknown> = None;
+			let f: extern "system" fn(Param<Self>, riid: &GUID, _out_fence: *mut c_void, ) -> HResult
+				= transmute(vt[8]);
+			let _ret_ = f(vt, T::IID, transmute(&mut _out_fence), );
+			if _ret_.is_ok() {
+				if let Some(_out_fence) = _out_fence {
+					return Ok(T::from(_out_fence));
+				}
+			}
+			Err(_ret_)
+		}
+	}
+
 	fn GetSessionStatus(&self, ) -> D3D12ProtectedSessionStatus {
 		unsafe {
 			let vt = self.as_param();
@@ -59,13 +75,13 @@ impl ID3D12ProtectedSession for D3D12ProtectedSession {
 }
 
 impl ID3D12DeviceChild for D3D12ProtectedSession {
-	fn as_device_child(&self) -> &D3D12DeviceChild { &self.0 }
-	fn into_device_child(self) -> D3D12DeviceChild { self.0 }
+	fn as_device_child(&self) -> &D3D12DeviceChild { &self.0.as_device_child() }
+	fn into_device_child(self) -> D3D12DeviceChild { self.0.into_device_child() }
 }
 
 impl ID3D12Object for D3D12ProtectedSession {
-	fn as_object(&self) -> &D3D12Object { &self.0.0 }
-	fn into_object(self) -> D3D12Object { self.0.0 }
+	fn as_object(&self) -> &D3D12Object { &self.0.as_object() }
+	fn into_object(self) -> D3D12Object { self.0.into_object() }
 }
 
 impl From<Unknown> for D3D12ProtectedSession {
@@ -75,7 +91,7 @@ impl From<Unknown> for D3D12ProtectedSession {
 }
 
 impl IUnknown for D3D12ProtectedSession {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

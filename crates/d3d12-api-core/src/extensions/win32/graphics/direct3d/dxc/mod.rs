@@ -1,9 +1,9 @@
 use std::ffi::c_void;
 use std::slice;
-use crate::aliases::win32::graphics::direct3d::dxc::BlobEncoding;
-use crate::core::win32::foundation::{HResult, OkOrErr, PWStr};
-use crate::core::win32::graphics::direct3d::dxc::{DxcBlob, IDxcBlob, IDxcCompilerArgs, IDxcOperationResult};
+use crate::core::win32::foundation::PWStr;
+use crate::core::win32::graphics::direct3d::dxc::{IDxcBlob, IDxcCompilerArgs, IDxcOperationResult};
 
+/*
 pub trait IDxcOperationResultEx: IDxcOperationResult {
     fn get_result(&self) -> Result<DxcBlob, HResult>;
     fn get_error_buffer(&self) -> Result<BlobEncoding, HResult>;
@@ -21,7 +21,7 @@ impl<T: IDxcOperationResult> IDxcOperationResultEx for T {
         self.GetErrorBuffer(Some(&mut blob))?;
         blob.ok_or_err()
     }
-}
+}*/
 
 pub trait IDxcBlobEx {
     // fn as_str(&self) -> &str;
@@ -44,6 +44,7 @@ impl<T: IDxcBlob> IDxcBlobEx for T {
 
 
 pub trait IDxcCompilerArgsEx {
+    // todo: Vec<String>
     fn get_arguments(&self) -> &[PWStr];
 }
 

@@ -33,7 +33,7 @@ pub trait IDxgiAdapter3: IDxgiAdapter2 {
 	fn RegisterHardwareContentProtectionTeardownStatusEvent(&self, event: Handle, ) -> Result<u32, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_pdw_cookie: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_pdw_cookie: MaybeUninit<u32> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, event: Handle, _out_pdw_cookie: *mut u32, ) -> HResult
 				= transmute(vt[12]);
 			let _ret_ = f(vt, event, _out_pdw_cookie.as_mut_ptr(), );
@@ -53,7 +53,7 @@ pub trait IDxgiAdapter3: IDxgiAdapter2 {
 	fn QueryVideoMemoryInfo(&self, node_index: u32, memory_segment_group: DxgiMemorySegmentGroup, ) -> Result<DxgiQueryVideoMemoryInfo, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_video_memory_info: MaybeUninit<DxgiQueryVideoMemoryInfo> = MaybeUninit::uninit();
+			let mut _out_video_memory_info: MaybeUninit<DxgiQueryVideoMemoryInfo> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, node_index: u32, memory_segment_group: DxgiMemorySegmentGroup, _out_video_memory_info: *mut DxgiQueryVideoMemoryInfo, ) -> HResult
 				= transmute(vt[14]);
 			let _ret_ = f(vt, node_index, memory_segment_group, _out_video_memory_info.as_mut_ptr(), );
@@ -74,7 +74,7 @@ pub trait IDxgiAdapter3: IDxgiAdapter2 {
 	fn RegisterVideoMemoryBudgetChangeNotificationEvent(&self, event: Handle, ) -> Result<u32, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_pdw_cookie: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_pdw_cookie: MaybeUninit<u32> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, event: Handle, _out_pdw_cookie: *mut u32, ) -> HResult
 				= transmute(vt[16]);
 			let _ret_ = f(vt, event, _out_pdw_cookie.as_mut_ptr(), );
@@ -98,23 +98,23 @@ impl IDxgiAdapter3 for DxgiAdapter3 {
 }
 
 impl IDxgiAdapter2 for DxgiAdapter3 {
-	fn as_adapter2(&self) -> &DxgiAdapter2 { &self.0 }
-	fn into_adapter2(self) -> DxgiAdapter2 { self.0 }
+	fn as_adapter2(&self) -> &DxgiAdapter2 { &self.0.as_adapter2() }
+	fn into_adapter2(self) -> DxgiAdapter2 { self.0.into_adapter2() }
 }
 
 impl IDxgiAdapter1 for DxgiAdapter3 {
-	fn as_adapter1(&self) -> &DxgiAdapter1 { &self.0.0 }
-	fn into_adapter1(self) -> DxgiAdapter1 { self.0.0 }
+	fn as_adapter1(&self) -> &DxgiAdapter1 { &self.0.as_adapter1() }
+	fn into_adapter1(self) -> DxgiAdapter1 { self.0.into_adapter1() }
 }
 
 impl IDxgiAdapter for DxgiAdapter3 {
-	fn as_adapter(&self) -> &DxgiAdapter { &self.0.0.0 }
-	fn into_adapter(self) -> DxgiAdapter { self.0.0.0 }
+	fn as_adapter(&self) -> &DxgiAdapter { &self.0.as_adapter() }
+	fn into_adapter(self) -> DxgiAdapter { self.0.into_adapter() }
 }
 
 impl IDxgiObject for DxgiAdapter3 {
-	fn as_object(&self) -> &DxgiObject { &self.0.0.0.0 }
-	fn into_object(self) -> DxgiObject { self.0.0.0.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiAdapter3 {
@@ -124,7 +124,7 @@ impl From<Unknown> for DxgiAdapter3 {
 }
 
 impl IUnknown for DxgiAdapter3 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

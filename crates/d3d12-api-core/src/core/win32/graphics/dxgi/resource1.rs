@@ -70,18 +70,18 @@ impl IDxgiResource1 for DxgiResource1 {
 }
 
 impl IDxgiResource for DxgiResource1 {
-	fn as_resource(&self) -> &DxgiResource { &self.0 }
-	fn into_resource(self) -> DxgiResource { self.0 }
+	fn as_resource(&self) -> &DxgiResource { &self.0.as_resource() }
+	fn into_resource(self) -> DxgiResource { self.0.into_resource() }
 }
 
 impl IDxgiDeviceSubObject for DxgiResource1 {
-	fn as_device_sub_object(&self) -> &DxgiDeviceSubObject { &self.0.0 }
-	fn into_device_sub_object(self) -> DxgiDeviceSubObject { self.0.0 }
+	fn as_device_sub_object(&self) -> &DxgiDeviceSubObject { &self.0.as_device_sub_object() }
+	fn into_device_sub_object(self) -> DxgiDeviceSubObject { self.0.into_device_sub_object() }
 }
 
 impl IDxgiObject for DxgiResource1 {
-	fn as_object(&self) -> &DxgiObject { &self.0.0.0 }
-	fn into_object(self) -> DxgiObject { self.0.0.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiResource1 {
@@ -91,7 +91,7 @@ impl From<Unknown> for DxgiResource1 {
 }
 
 impl IUnknown for DxgiResource1 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

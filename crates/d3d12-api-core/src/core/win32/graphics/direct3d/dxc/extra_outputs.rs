@@ -40,15 +40,15 @@ pub trait IDxcExtraOutputs: IUnknown {
 		}
 	}
 
-	fn GetOutput<T: IUnknown>(&self, index: u32, object: Option<&mut Option<T>>, mut output_type: Option<&mut Option<DxcBlobUtf16>>, mut output_name: Option<&mut Option<DxcBlobUtf16>>, ) -> Result<(), HResult> {
+	fn GetOutput<T: IUnknown>(&self, u_index: u32, object: Option<&mut Option<T>>, mut output_type: Option<&mut Option<DxcBlobUtf16>>, mut output_name: Option<&mut Option<DxcBlobUtf16>>, ) -> Result<(), HResult> {
 		unsafe {
 			let vt = self.as_param();
 			let mut _out_object: Option<Unknown> = None;
 			if let Some(ref mut output_type) = output_type { **output_type = None; }
 			if let Some(ref mut output_name) = output_name { **output_name = None; }
-			let f: extern "system" fn(Param<Self>, index: u32, iid: &GUID, object: *mut c_void, output_type: *mut c_void, output_name: *mut c_void, ) -> HResult
+			let f: extern "system" fn(Param<Self>, u_index: u32, iid: &GUID, object: *mut c_void, output_type: *mut c_void, output_name: *mut c_void, ) -> HResult
 				= transmute(vt[4]);
-			let _ret_ = f(vt, index, T::IID, transmute(if object.is_some() { Some(&mut _out_object) } else { None }), transmute(output_type), transmute(output_name), );
+			let _ret_ = f(vt, u_index, T::IID, transmute(if object.is_some() { Some(&mut _out_object) } else { None }), transmute(output_type), transmute(output_name), );
 			if let Some(_out_object) = _out_object { *object.unwrap_unchecked() = Some(T::from(_out_object)); }
 			_ret_.ok()
 		}
@@ -67,7 +67,7 @@ impl From<Unknown> for DxcExtraOutputs {
 }
 
 impl IUnknown for DxcExtraOutputs {
-	fn as_unknown(&self) -> &Unknown { &self.0 }
-	fn into_unknown(self) -> Unknown { self.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

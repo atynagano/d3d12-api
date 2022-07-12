@@ -35,7 +35,7 @@ pub trait IDxgiOutput: IDxgiObject {
 	fn GetDesc(&self, ) -> Result<DxgiOutputDesc, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_desc: MaybeUninit<DxgiOutputDesc> = MaybeUninit::uninit();
+			let mut _out_desc: MaybeUninit<DxgiOutputDesc> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_desc: *mut DxgiOutputDesc, ) -> HResult
 				= transmute(vt[7]);
 			let _ret_ = f(vt, _out_desc.as_mut_ptr(), );
@@ -46,7 +46,7 @@ pub trait IDxgiOutput: IDxgiObject {
 	fn FindClosestMatchingMode(&self, mode_to_match: &DxgiModeDesc, concerned_device: Option<&Unknown>, ) -> Result<DxgiModeDesc, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_closest_match: MaybeUninit<DxgiModeDesc> = MaybeUninit::uninit();
+			let mut _out_closest_match: MaybeUninit<DxgiModeDesc> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, mode_to_match: &DxgiModeDesc, _out_closest_match: *mut DxgiModeDesc, concerned_device: *const c_void, ) -> HResult
 				= transmute(vt[9]);
 			let _ret_ = f(vt, mode_to_match, _out_closest_match.as_mut_ptr(), option_to_vtable(concerned_device), );
@@ -86,7 +86,7 @@ pub trait IDxgiOutput: IDxgiObject {
 	fn GetGammaControlCapabilities(&self, ) -> Result<DxgiGammaControlCapabilities, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_gamma_caps: MaybeUninit<DxgiGammaControlCapabilities> = MaybeUninit::uninit();
+			let mut _out_gamma_caps: MaybeUninit<DxgiGammaControlCapabilities> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_gamma_caps: *mut DxgiGammaControlCapabilities, ) -> HResult
 				= transmute(vt[13]);
 			let _ret_ = f(vt, _out_gamma_caps.as_mut_ptr(), );
@@ -107,7 +107,7 @@ pub trait IDxgiOutput: IDxgiObject {
 	fn GetGammaControl(&self, ) -> Result<DxgiGammaControl, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_array: MaybeUninit<DxgiGammaControl> = MaybeUninit::uninit();
+			let mut _out_array: MaybeUninit<DxgiGammaControl> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_array: *mut DxgiGammaControl, ) -> HResult
 				= transmute(vt[15]);
 			let _ret_ = f(vt, _out_array.as_mut_ptr(), );
@@ -138,7 +138,7 @@ pub trait IDxgiOutput: IDxgiObject {
 	fn GetFrameStatistics(&self, ) -> Result<DxgiFrameStatistics, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_stats: MaybeUninit<DxgiFrameStatistics> = MaybeUninit::uninit();
+			let mut _out_stats: MaybeUninit<DxgiFrameStatistics> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_stats: *mut DxgiFrameStatistics, ) -> HResult
 				= transmute(vt[18]);
 			let _ret_ = f(vt, _out_stats.as_mut_ptr(), );
@@ -153,8 +153,8 @@ impl IDxgiOutput for DxgiOutput {
 }
 
 impl IDxgiObject for DxgiOutput {
-	fn as_object(&self) -> &DxgiObject { &self.0 }
-	fn into_object(self) -> DxgiObject { self.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiOutput {
@@ -164,7 +164,7 @@ impl From<Unknown> for DxgiOutput {
 }
 
 impl IUnknown for DxgiOutput {
-	fn as_unknown(&self) -> &Unknown { &self.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

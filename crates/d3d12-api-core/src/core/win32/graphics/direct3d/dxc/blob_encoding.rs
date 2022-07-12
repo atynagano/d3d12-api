@@ -30,16 +30,16 @@ pub trait IDxcBlobEncoding: IDxcBlob {
 	fn as_blob_encoding(&self) -> &DxcBlobEncoding;
 	fn into_blob_encoding(self) -> DxcBlobEncoding;
 
-	fn GetEncoding(&self, ) -> Result<(Bool, DxcCp, ), HResult> {
+	fn GetEncoding(&self, ) -> Result<(bool, DxcCp, ), HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_known: MaybeUninit<Bool> = MaybeUninit::uninit();
-			let mut _out_code_page: MaybeUninit<DxcCp> = MaybeUninit::uninit();
-			let f: extern "system" fn(Param<Self>, _out_known: *mut Bool, _out_code_page: *mut DxcCp, ) -> HResult
+			let mut _out_known = Bool { value: 0 };
+			let mut _out_code_page: MaybeUninit<DxcCp> = MaybeUninit::zeroed();
+			let f: extern "system" fn(Param<Self>, _out_known: &mut Bool, _out_code_page: *mut DxcCp, ) -> HResult
 				= transmute(vt[5]);
-			let _ret_ = f(vt, _out_known.as_mut_ptr(), _out_code_page.as_mut_ptr(), );
+			let _ret_ = f(vt, &mut _out_known, _out_code_page.as_mut_ptr(), );
 			if _ret_.is_ok() {
-				return Ok((_out_known.assume_init(), _out_code_page.assume_init(), ));
+				return Ok((_out_known.to_bool(), _out_code_page.assume_init(), ));
 			}
 			Err(_ret_)
 		}
@@ -52,8 +52,8 @@ impl IDxcBlobEncoding for DxcBlobEncoding {
 }
 
 impl IDxcBlob for DxcBlobEncoding {
-	fn as_blob(&self) -> &DxcBlob { &self.0 }
-	fn into_blob(self) -> DxcBlob { self.0 }
+	fn as_blob(&self) -> &DxcBlob { &self.0.as_blob() }
+	fn into_blob(self) -> DxcBlob { self.0.into_blob() }
 }
 
 impl From<Unknown> for DxcBlobEncoding {
@@ -63,7 +63,7 @@ impl From<Unknown> for DxcBlobEncoding {
 }
 
 impl IUnknown for DxcBlobEncoding {
-	fn as_unknown(&self) -> &Unknown { &self.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

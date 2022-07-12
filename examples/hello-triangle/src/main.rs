@@ -1,7 +1,7 @@
 use std::mem::{MaybeUninit, size_of, size_of_val, transmute};
 use std::panic::catch_unwind;
 use std::pin::Pin;
-use std::ptr::{copy_nonoverlapping, null_mut};
+use std::ptr::{copy_nonoverlapping};
 use array_init::try_array_init;
 use d3d12_api::aliases::win32::graphics::direct3d12::{Blend, BlendDesc, BlendOp, ColorWriteEnable, CommandAllocator, CommandListType, CommandQueue, CommandQueueDesc, CpuDescriptorHandle, CullMode, Debug, DescriptorHeap, DescriptorHeapDesc, DescriptorHeapFlags, DescriptorHeapType, Device, Feature, FeatureDataRootSignature, Fence, FenceFlags, FillMode, GraphicsCommandList, GraphicsPipelineStateDesc, HeapFlags, HeapProperties, ICommandList, IDevice, InputClassification, InputElementDesc, InputLayoutDesc, IRootSignature, LogicOp, PipelineState, PrimitiveTopologyType, RasterizerDesc, RenderTargetBlendDesc, Resource, ResourceDesc, ResourceStates, RootSignature, RootSignatureVersion, ShaderByteCode, VertexBufferView, Viewport};
 use d3d12_api::aliases::win32::graphics::direct3d::FeatureLevel;
@@ -20,12 +20,6 @@ use d3d12_api::extensions::win32::graphics::direct3d12::{ID3D12CommandQueueEx, I
 use d3d12_api::extensions::win32::graphics::dxgi::IDxgiInfoQueueEx;
 use d3d12_api::helpers::FillRestWith;
 use d3d12_api::hlsl_root_sig;
-
-/*
-todo:
- GetWindowLongPtrAなどIntPtrを引数＆戻り値に取る関数を何とかする。
- mut outなポインターを渡す場合必ずOptionにする。そしてzeroed()を削除する。外部関数が戻すポインタはnullでない保証がない。
-*/
 
 fn main() -> Result<(), Err> {
     let mut window = HelloTriangleWindow::new(640, 480)?;
@@ -58,15 +52,15 @@ impl HelloTriangleWindow {
     fn new(width: u32, height: u32) -> Result<Pin<Box<Self>>, Err> {
         //
         let class_name = "hello-triangle-window\0";
-        let instance = GetModuleHandleA(None);
+        let instance = GetModuleHandleA(None).ok_or_err()?;
 
         #[allow(invalid_value)]
-        let window_class = WndClassExA {
+            let window_class = WndClassExA {
             size: size_of::<WndClassExA>() as u32,
             style: WndClassStyles::HRedraw | WndClassStyles::VRedraw,
             wnd_proc: window_procedure::<Self>,
             instance,
-            cursor: LoadCursorAById(CursorId::Arrow),
+            cursor: Some(LoadCursorAById(CursorId::Arrow)),
             class_name: class_name.as_pstr(),
             ..unsafe { MaybeUninit::zeroed().assume_init() }
         };
@@ -89,7 +83,7 @@ impl HelloTriangleWindow {
             None,
             Some(instance),
             window.as_ptr() as _,
-        );
+        ).ok_or_err()?;
 
         let (factory, _, device) = create_device()?;
         let resources = Resources::new(window_handle, width, height, &factory, &device)?;
@@ -148,20 +142,22 @@ extern "system" fn window_procedure<T: Window>(window_handle: HWnd, message: Win
         if message == WindowMessage::Create && l_param.value != 0 {
             let create_struct: &CreateStructA = unsafe { transmute(l_param) };
             SetWindowLongPtrA(window_handle, WindowLongPtrIndex::UserData, unsafe { transmute(create_struct.create_params) });
-            return LResult::from(0);
+            return LResult::new(0);
         }
 
         let user_data = GetWindowLongPtrA(window_handle, WindowLongPtrIndex::UserData);
-        if user_data.as_ptr() == null_mut() {
+        let window = if let Some(user_data) = user_data {
+            unsafe {
+                &mut *(user_data.as_ptr() as *mut T)
+            }
+        } else {
             return DefWindowProcA(window_handle, message, w_param, l_param);
-        }
-
-        let window: &mut T = unsafe { transmute(user_data) };
+        };
 
         match message {
             WindowMessage::Paint => {
                 if window.on_paint().is_ok() {
-                    return LResult::from(0);
+                    return LResult::new(0);
                 }
             }
             _ => {}
@@ -216,7 +212,7 @@ impl Frame {
         let frame_index = swap_chain.GetCurrentBackBufferIndex();
         let fence: Fence = device.CreateFence(0, FenceFlags::None)?;
         let fence_value = 0;
-        let fence_event = CreateEventA(None, false, false, None);
+        let fence_event = CreateEventA(None, false, false, None).ok_or_err()?;
 
         Ok(Self {
             command_queue,
@@ -320,7 +316,7 @@ impl Resources {
 
         let command_allocator: CommandAllocator = device.CreateCommandAllocator(CommandListType::Direct)?;
         let command_list: GraphicsCommandList =
-            device.CreateCommandList(0, CommandListType::Direct, &command_allocator, Some(&pipeline_state))?;
+            device.CreateCommandList(0, CommandListType::Direct, &command_allocator, None)?;
         command_list.Close()?;
 
         let aspect_ratio = width as f32 / height as f32;
@@ -363,7 +359,7 @@ impl Resources {
             ResourceStates::Present, ResourceStates::RenderTarget);
 
         let rtv_handle = self.rtv_handle();
-        self.command_list.OMSetRenderTargets(Some(&[rtv_handle]), false, None);
+        self.command_list.om_set_render_target(Some(&rtv_handle), None);
         self.command_list.ClearRenderTargetView(rtv_handle, [0.0, 0.2, 0.4, 1.0], None);
         self.command_list.IASetPrimitiveTopology(D3DPrimitiveTopology::TriangleList);
         self.command_list.IASetVertexBuffers(0, Some(&[self.vertex_buffer_view]));
@@ -422,7 +418,7 @@ fn get_hardware_adapter(factory: &impl IFactory1) -> Result<Adapter1, Err> {
         }
         if D3D12CreateDevice::<Device>(Some(adapter.as_unknown()), FeatureLevel::_11_0, None).is_ok() {
             let desc = adapter.GetDesc1()?;
-            println!("{:?}", desc);
+            println!("{:#?}", desc);
             return Ok(adapter);
         }
     }

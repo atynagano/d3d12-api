@@ -33,7 +33,7 @@ pub trait IDxgiOutputDuplication: IDxgiObject {
 	fn GetDesc(&self, ) -> DxgiOutDuplDesc {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_desc: MaybeUninit<DxgiOutDuplDesc> = MaybeUninit::uninit();
+			let mut _out_desc: MaybeUninit<DxgiOutDuplDesc> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_desc: *mut DxgiOutDuplDesc, ) -> ()
 				= transmute(vt[7]);
 			let _ret_ = f(vt, _out_desc.as_mut_ptr(), );
@@ -44,7 +44,7 @@ pub trait IDxgiOutputDuplication: IDxgiObject {
 	fn MapDesktopSurface(&self, ) -> Result<DxgiMappedRect, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_locked_rect: MaybeUninit<DxgiMappedRect> = MaybeUninit::uninit();
+			let mut _out_locked_rect: MaybeUninit<DxgiMappedRect> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_locked_rect: *mut DxgiMappedRect, ) -> HResult
 				= transmute(vt[12]);
 			let _ret_ = f(vt, _out_locked_rect.as_mut_ptr(), );
@@ -79,8 +79,8 @@ impl IDxgiOutputDuplication for DxgiOutputDuplication {
 }
 
 impl IDxgiObject for DxgiOutputDuplication {
-	fn as_object(&self) -> &DxgiObject { &self.0 }
-	fn into_object(self) -> DxgiObject { self.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiOutputDuplication {
@@ -90,7 +90,7 @@ impl From<Unknown> for DxgiOutputDuplication {
 }
 
 impl IUnknown for DxgiOutputDuplication {
-	fn as_unknown(&self) -> &Unknown { &self.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

@@ -32,7 +32,7 @@ pub trait IDxgiFactory7: IDxgiFactory6 {
 	fn RegisterAdaptersChangedEvent(&self, event: Handle, ) -> Result<u32, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_pdw_cookie: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_pdw_cookie: MaybeUninit<u32> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, event: Handle, _out_pdw_cookie: *mut u32, ) -> HResult
 				= transmute(vt[30]);
 			let _ret_ = f(vt, event, _out_pdw_cookie.as_mut_ptr(), );
@@ -57,43 +57,43 @@ impl IDxgiFactory7 for DxgiFactory7 {
 }
 
 impl IDxgiFactory6 for DxgiFactory7 {
-	fn as_factory6(&self) -> &DxgiFactory6 { &self.0 }
-	fn into_factory6(self) -> DxgiFactory6 { self.0 }
+	fn as_factory6(&self) -> &DxgiFactory6 { &self.0.as_factory6() }
+	fn into_factory6(self) -> DxgiFactory6 { self.0.into_factory6() }
 }
 
 impl IDxgiFactory5 for DxgiFactory7 {
-	fn as_factory5(&self) -> &DxgiFactory5 { &self.0.0 }
-	fn into_factory5(self) -> DxgiFactory5 { self.0.0 }
+	fn as_factory5(&self) -> &DxgiFactory5 { &self.0.as_factory5() }
+	fn into_factory5(self) -> DxgiFactory5 { self.0.into_factory5() }
 }
 
 impl IDxgiFactory4 for DxgiFactory7 {
-	fn as_factory4(&self) -> &DxgiFactory4 { &self.0.0.0 }
-	fn into_factory4(self) -> DxgiFactory4 { self.0.0.0 }
+	fn as_factory4(&self) -> &DxgiFactory4 { &self.0.as_factory4() }
+	fn into_factory4(self) -> DxgiFactory4 { self.0.into_factory4() }
 }
 
 impl IDxgiFactory3 for DxgiFactory7 {
-	fn as_factory3(&self) -> &DxgiFactory3 { &self.0.0.0.0 }
-	fn into_factory3(self) -> DxgiFactory3 { self.0.0.0.0 }
+	fn as_factory3(&self) -> &DxgiFactory3 { &self.0.as_factory3() }
+	fn into_factory3(self) -> DxgiFactory3 { self.0.into_factory3() }
 }
 
 impl IDxgiFactory2 for DxgiFactory7 {
-	fn as_factory2(&self) -> &DxgiFactory2 { &self.0.0.0.0.0 }
-	fn into_factory2(self) -> DxgiFactory2 { self.0.0.0.0.0 }
+	fn as_factory2(&self) -> &DxgiFactory2 { &self.0.as_factory2() }
+	fn into_factory2(self) -> DxgiFactory2 { self.0.into_factory2() }
 }
 
 impl IDxgiFactory1 for DxgiFactory7 {
-	fn as_factory1(&self) -> &DxgiFactory1 { &self.0.0.0.0.0.0 }
-	fn into_factory1(self) -> DxgiFactory1 { self.0.0.0.0.0.0 }
+	fn as_factory1(&self) -> &DxgiFactory1 { &self.0.as_factory1() }
+	fn into_factory1(self) -> DxgiFactory1 { self.0.into_factory1() }
 }
 
 impl IDxgiFactory for DxgiFactory7 {
-	fn as_factory(&self) -> &DxgiFactory { &self.0.0.0.0.0.0.0 }
-	fn into_factory(self) -> DxgiFactory { self.0.0.0.0.0.0.0 }
+	fn as_factory(&self) -> &DxgiFactory { &self.0.as_factory() }
+	fn into_factory(self) -> DxgiFactory { self.0.into_factory() }
 }
 
 impl IDxgiObject for DxgiFactory7 {
-	fn as_object(&self) -> &DxgiObject { &self.0.0.0.0.0.0.0.0 }
-	fn into_object(self) -> DxgiObject { self.0.0.0.0.0.0.0.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiFactory7 {
@@ -103,7 +103,7 @@ impl From<Unknown> for DxgiFactory7 {
 }
 
 impl IUnknown for DxgiFactory7 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0.0.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0.0.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

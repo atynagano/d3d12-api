@@ -49,7 +49,7 @@ pub trait IDxgiResource: IDxgiDeviceSubObject {
 	fn GetUsage(&self, ) -> Result<u32, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_usage: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_usage: MaybeUninit<u32> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_usage: *mut u32, ) -> HResult
 				= transmute(vt[9]);
 			let _ret_ = f(vt, _out_usage.as_mut_ptr(), );
@@ -70,7 +70,7 @@ pub trait IDxgiResource: IDxgiDeviceSubObject {
 	fn GetEvictionPriority(&self, ) -> Result<u32, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_eviction_priority: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_eviction_priority: MaybeUninit<u32> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_eviction_priority: *mut u32, ) -> HResult
 				= transmute(vt[11]);
 			let _ret_ = f(vt, _out_eviction_priority.as_mut_ptr(), );
@@ -85,13 +85,13 @@ impl IDxgiResource for DxgiResource {
 }
 
 impl IDxgiDeviceSubObject for DxgiResource {
-	fn as_device_sub_object(&self) -> &DxgiDeviceSubObject { &self.0 }
-	fn into_device_sub_object(self) -> DxgiDeviceSubObject { self.0 }
+	fn as_device_sub_object(&self) -> &DxgiDeviceSubObject { &self.0.as_device_sub_object() }
+	fn into_device_sub_object(self) -> DxgiDeviceSubObject { self.0.into_device_sub_object() }
 }
 
 impl IDxgiObject for DxgiResource {
-	fn as_object(&self) -> &DxgiObject { &self.0.0 }
-	fn into_object(self) -> DxgiObject { self.0.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiResource {
@@ -101,7 +101,7 @@ impl From<Unknown> for DxgiResource {
 }
 
 impl IUnknown for DxgiResource {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

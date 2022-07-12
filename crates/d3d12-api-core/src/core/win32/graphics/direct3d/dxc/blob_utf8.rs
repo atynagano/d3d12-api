@@ -29,10 +29,10 @@ pub trait IDxcBlobUtf8: IDxcBlobEncoding {
 	fn as_blob_utf8(&self) -> &DxcBlobUtf8;
 	fn into_blob_utf8(self) -> DxcBlobUtf8;
 
-	fn GetStringPointer(&self, ) -> PStr {
+	fn GetStringPointer(&self, ) -> *const u8 {
 		unsafe {
 			let vt = self.as_param();
-			let f: extern "system" fn(Param<Self>, ) -> PStr
+			let f: extern "system" fn(Param<Self>, ) -> *const u8
 				= transmute(vt[6]);
 			let _ret_ = f(vt, );
 			_ret_
@@ -56,13 +56,13 @@ impl IDxcBlobUtf8 for DxcBlobUtf8 {
 }
 
 impl IDxcBlobEncoding for DxcBlobUtf8 {
-	fn as_blob_encoding(&self) -> &DxcBlobEncoding { &self.0 }
-	fn into_blob_encoding(self) -> DxcBlobEncoding { self.0 }
+	fn as_blob_encoding(&self) -> &DxcBlobEncoding { &self.0.as_blob_encoding() }
+	fn into_blob_encoding(self) -> DxcBlobEncoding { self.0.into_blob_encoding() }
 }
 
 impl IDxcBlob for DxcBlobUtf8 {
-	fn as_blob(&self) -> &DxcBlob { &self.0.0 }
-	fn into_blob(self) -> DxcBlob { self.0.0 }
+	fn as_blob(&self) -> &DxcBlob { &self.0.as_blob() }
+	fn into_blob(self) -> DxcBlob { self.0.into_blob() }
 }
 
 impl From<Unknown> for DxcBlobUtf8 {
@@ -72,7 +72,7 @@ impl From<Unknown> for DxcBlobUtf8 {
 }
 
 impl IUnknown for DxcBlobUtf8 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

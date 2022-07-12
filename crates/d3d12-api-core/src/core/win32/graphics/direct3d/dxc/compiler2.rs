@@ -56,8 +56,8 @@ impl IDxcCompiler2 for DxcCompiler2 {
 }
 
 impl IDxcCompiler for DxcCompiler2 {
-	fn as_compiler(&self) -> &DxcCompiler { &self.0 }
-	fn into_compiler(self) -> DxcCompiler { self.0 }
+	fn as_compiler(&self) -> &DxcCompiler { &self.0.as_compiler() }
+	fn into_compiler(self) -> DxcCompiler { self.0.into_compiler() }
 }
 
 impl From<Unknown> for DxcCompiler2 {
@@ -67,7 +67,7 @@ impl From<Unknown> for DxcCompiler2 {
 }
 
 impl IUnknown for DxcCompiler2 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

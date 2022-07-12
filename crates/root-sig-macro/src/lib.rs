@@ -105,8 +105,7 @@ impl DescriptorArgs {
             };
             let first = chars.next().unwrap();
             if first != expect {
-                // todo: expected 変じゃね？
-                return Err(Error::new(id.span(), format!("expected {}, but get {}", expect, first)));
+                return Err(Error::new(id.span(), format!("{} expected, but got {}", expect, first)));
             }
         }
 
@@ -196,19 +195,18 @@ impl DescRangeArgs {
             };
             let first = chars.next().unwrap();
             if first != expect {
-                // todo: expected 変じゃね？
-                return Err(Error::new(id.span(), format!("expected {}, but get {}", expect, first)));
+                return Err(Error::new(id.span(), format!("{} expected, but got {}", expect, first)));
             }
         }
 
-        let shader_register_str = id_str.get(1..).expect("expected register number");
+        let shader_register_str = id_str.get(1..).expect("register number expected");
         result.raw.base_shader_register = shader_register_str.parse().expect("expected register number");
 
         while !input.is_empty() {
             if input.peek(Token![,]) {
                 input.parse::<Token![,]>()?;
             } else if !input.is_empty() {
-                return Err(input.error("expected a delimiter \",\""));
+                return Err(input.error("a delimiter \",\" expected"));
             }
 
             let id = input.parse::<Ident>()?;
@@ -311,7 +309,7 @@ impl Parse for DescTableArgs {
                 input.parse::<Token![,]>()?;
                 continue;
             } else if !input.is_empty() {
-                return Err(input.error("expected a delimiter \",\""));
+                return Err(input.error("a delimiter \",\" expected"));
             }
         }
 
@@ -423,7 +421,7 @@ fn parse_visibility(input: ParseStream) -> Result<ShaderVisibility> {
         "Amplification" => ShaderVisibility::Amplification,
         "Mesh" => ShaderVisibility::Mesh,
         _ => {
-            return Err(Error::new(id.span(), "unknown shader visibility"));
+            return Err(Error::new(id.span(), "Unknown shader visibility"));
         }
     };
     Ok(visibility)

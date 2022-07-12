@@ -18,8 +18,8 @@ use crate::core::win32::system::com::*;
 
 
 pub type DxcCreateInstanceProc 
-	= unsafe extern "system" fn(rclsid: &GUID, riid: &GUID, ppv: &mut *const c_void, ) -> HResult;
+	= unsafe extern "system" fn(rclsid: &GUID, riid: &GUID, ppv: &mut &(), ) -> HResult;
 
 pub type DxcCreateInstance2Proc 
-	= unsafe extern "system" fn(malloc: Malloc, rclsid: &GUID, riid: &GUID, ppv: &mut *const c_void, ) -> HResult;
+	= unsafe extern "system" fn(malloc: Malloc, rclsid: &GUID, riid: &GUID, ppv: &mut &(), ) -> HResult;
 

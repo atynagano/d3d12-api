@@ -33,7 +33,7 @@ pub trait ID3D12DeviceRemovedExtendedData: IUnknown {
 	fn GetPageFaultAllocationOutput(&self, ) -> Result<D3D12DredPageFaultOutput, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_output: MaybeUninit<D3D12DredPageFaultOutput> = MaybeUninit::uninit();
+			let mut _out_output: MaybeUninit<D3D12DredPageFaultOutput> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_output: *mut D3D12DredPageFaultOutput, ) -> HResult
 				= transmute(vt[4]);
 			let _ret_ = f(vt, _out_output.as_mut_ptr(), );
@@ -54,7 +54,7 @@ impl From<Unknown> for D3D12DeviceRemovedExtendedData {
 }
 
 impl IUnknown for D3D12DeviceRemovedExtendedData {
-	fn as_unknown(&self) -> &Unknown { &self.0 }
-	fn into_unknown(self) -> Unknown { self.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

@@ -81,7 +81,7 @@ pub trait IDxgiSwapChain: IDxgiDeviceSubObject {
 	fn GetDesc(&self, ) -> Result<DxgiSwapChainDesc, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_desc: MaybeUninit<DxgiSwapChainDesc> = MaybeUninit::uninit();
+			let mut _out_desc: MaybeUninit<DxgiSwapChainDesc> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_desc: *mut DxgiSwapChainDesc, ) -> HResult
 				= transmute(vt[12]);
 			let _ret_ = f(vt, _out_desc.as_mut_ptr(), );
@@ -128,7 +128,7 @@ pub trait IDxgiSwapChain: IDxgiDeviceSubObject {
 	fn GetFrameStatistics(&self, ) -> Result<DxgiFrameStatistics, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_stats: MaybeUninit<DxgiFrameStatistics> = MaybeUninit::uninit();
+			let mut _out_stats: MaybeUninit<DxgiFrameStatistics> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_stats: *mut DxgiFrameStatistics, ) -> HResult
 				= transmute(vt[16]);
 			let _ret_ = f(vt, _out_stats.as_mut_ptr(), );
@@ -139,7 +139,7 @@ pub trait IDxgiSwapChain: IDxgiDeviceSubObject {
 	fn GetLastPresentCount(&self, ) -> Result<u32, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_last_present_count: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_last_present_count: MaybeUninit<u32> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_last_present_count: *mut u32, ) -> HResult
 				= transmute(vt[17]);
 			let _ret_ = f(vt, _out_last_present_count.as_mut_ptr(), );
@@ -154,13 +154,13 @@ impl IDxgiSwapChain for DxgiSwapChain {
 }
 
 impl IDxgiDeviceSubObject for DxgiSwapChain {
-	fn as_device_sub_object(&self) -> &DxgiDeviceSubObject { &self.0 }
-	fn into_device_sub_object(self) -> DxgiDeviceSubObject { self.0 }
+	fn as_device_sub_object(&self) -> &DxgiDeviceSubObject { &self.0.as_device_sub_object() }
+	fn into_device_sub_object(self) -> DxgiDeviceSubObject { self.0.into_device_sub_object() }
 }
 
 impl IDxgiObject for DxgiSwapChain {
-	fn as_object(&self) -> &DxgiObject { &self.0.0 }
-	fn into_object(self) -> DxgiObject { self.0.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiSwapChain {
@@ -170,7 +170,7 @@ impl From<Unknown> for DxgiSwapChain {
 }
 
 impl IUnknown for DxgiSwapChain {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

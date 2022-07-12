@@ -53,8 +53,8 @@ impl IDxcValidator2 for DxcValidator2 {
 }
 
 impl IDxcValidator for DxcValidator2 {
-	fn as_validator(&self) -> &DxcValidator { &self.0 }
-	fn into_validator(self) -> DxcValidator { self.0 }
+	fn as_validator(&self) -> &DxcValidator { &self.0.as_validator() }
+	fn into_validator(self) -> DxcValidator { self.0.into_validator() }
 }
 
 impl From<Unknown> for DxcValidator2 {
@@ -64,7 +64,7 @@ impl From<Unknown> for DxcValidator2 {
 }
 
 impl IUnknown for DxcValidator2 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

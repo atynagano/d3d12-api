@@ -33,7 +33,7 @@ pub trait ID3D12DeviceRemovedExtendedData2: ID3D12DeviceRemovedExtendedData1 {
 	fn GetPageFaultAllocationOutput2(&self, ) -> Result<D3D12DredPageFaultOutput2, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_output: MaybeUninit<D3D12DredPageFaultOutput2> = MaybeUninit::uninit();
+			let mut _out_output: MaybeUninit<D3D12DredPageFaultOutput2> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_output: *mut D3D12DredPageFaultOutput2, ) -> HResult
 				= transmute(vt[7]);
 			let _ret_ = f(vt, _out_output.as_mut_ptr(), );
@@ -58,13 +58,13 @@ impl ID3D12DeviceRemovedExtendedData2 for D3D12DeviceRemovedExtendedData2 {
 }
 
 impl ID3D12DeviceRemovedExtendedData1 for D3D12DeviceRemovedExtendedData2 {
-	fn as_device_removed_extended_data1(&self) -> &D3D12DeviceRemovedExtendedData1 { &self.0 }
-	fn into_device_removed_extended_data1(self) -> D3D12DeviceRemovedExtendedData1 { self.0 }
+	fn as_device_removed_extended_data1(&self) -> &D3D12DeviceRemovedExtendedData1 { &self.0.as_device_removed_extended_data1() }
+	fn into_device_removed_extended_data1(self) -> D3D12DeviceRemovedExtendedData1 { self.0.into_device_removed_extended_data1() }
 }
 
 impl ID3D12DeviceRemovedExtendedData for D3D12DeviceRemovedExtendedData2 {
-	fn as_device_removed_extended_data(&self) -> &D3D12DeviceRemovedExtendedData { &self.0.0 }
-	fn into_device_removed_extended_data(self) -> D3D12DeviceRemovedExtendedData { self.0.0 }
+	fn as_device_removed_extended_data(&self) -> &D3D12DeviceRemovedExtendedData { &self.0.as_device_removed_extended_data() }
+	fn into_device_removed_extended_data(self) -> D3D12DeviceRemovedExtendedData { self.0.into_device_removed_extended_data() }
 }
 
 impl From<Unknown> for D3D12DeviceRemovedExtendedData2 {
@@ -74,7 +74,7 @@ impl From<Unknown> for D3D12DeviceRemovedExtendedData2 {
 }
 
 impl IUnknown for D3D12DeviceRemovedExtendedData2 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

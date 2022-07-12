@@ -45,7 +45,7 @@ pub trait IDxgiDevice4: IDxgiDevice3 {
 		unsafe {
 			let vt = self.as_param();
 			let (_ptr_resources, _len_resources) = resources.deconstruct();
-			let mut _out_results: MaybeUninit<DxgiReclaimResourceResults> = MaybeUninit::uninit();
+			let mut _out_results: MaybeUninit<DxgiReclaimResourceResults> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, num_resources: u32, resources: *const Param<DxgiResource>, _out_results: *mut DxgiReclaimResourceResults, ) -> HResult
 				= transmute(vt[19]);
 			let _ret_ = f(vt, _len_resources as u32, _ptr_resources, _out_results.as_mut_ptr(), );
@@ -60,28 +60,28 @@ impl IDxgiDevice4 for DxgiDevice4 {
 }
 
 impl IDxgiDevice3 for DxgiDevice4 {
-	fn as_device3(&self) -> &DxgiDevice3 { &self.0 }
-	fn into_device3(self) -> DxgiDevice3 { self.0 }
+	fn as_device3(&self) -> &DxgiDevice3 { &self.0.as_device3() }
+	fn into_device3(self) -> DxgiDevice3 { self.0.into_device3() }
 }
 
 impl IDxgiDevice2 for DxgiDevice4 {
-	fn as_device2(&self) -> &DxgiDevice2 { &self.0.0 }
-	fn into_device2(self) -> DxgiDevice2 { self.0.0 }
+	fn as_device2(&self) -> &DxgiDevice2 { &self.0.as_device2() }
+	fn into_device2(self) -> DxgiDevice2 { self.0.into_device2() }
 }
 
 impl IDxgiDevice1 for DxgiDevice4 {
-	fn as_device1(&self) -> &DxgiDevice1 { &self.0.0.0 }
-	fn into_device1(self) -> DxgiDevice1 { self.0.0.0 }
+	fn as_device1(&self) -> &DxgiDevice1 { &self.0.as_device1() }
+	fn into_device1(self) -> DxgiDevice1 { self.0.into_device1() }
 }
 
 impl IDxgiDevice for DxgiDevice4 {
-	fn as_device(&self) -> &DxgiDevice { &self.0.0.0.0 }
-	fn into_device(self) -> DxgiDevice { self.0.0.0.0 }
+	fn as_device(&self) -> &DxgiDevice { &self.0.as_device() }
+	fn into_device(self) -> DxgiDevice { self.0.into_device() }
 }
 
 impl IDxgiObject for DxgiDevice4 {
-	fn as_object(&self) -> &DxgiObject { &self.0.0.0.0.0 }
-	fn into_object(self) -> DxgiObject { self.0.0.0.0.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiDevice4 {
@@ -91,7 +91,7 @@ impl From<Unknown> for DxgiDevice4 {
 }
 
 impl IUnknown for DxgiDevice4 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

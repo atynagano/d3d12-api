@@ -1,33 +1,9 @@
 use std::borrow::Cow;
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::{Debug, Display, Formatter, Write};
 use std::mem::{MaybeUninit, transmute};
 use std::ops::Deref;
 use std::ptr::{null, null_mut};
 use crate::core::win32::foundation::{AsPStr, AsPWStr, PStr, PWStr};
-
-pub(crate) trait Zeroed {
-    fn zeroed() -> Self;
-}
-
-impl<T> Zeroed for T {
-    fn zeroed() -> Self {
-        unsafe {
-            MaybeUninit::zeroed().assume_init()
-        }
-    }
-}
-
-pub(crate) trait Uninit {
-    fn uninit() -> Self;
-}
-
-impl<T> Uninit for T {
-    fn uninit() -> Self {
-        unsafe {
-            MaybeUninit::uninit().assume_init()
-        }
-    }
-}
 
 pub(crate) trait Len {
     fn len(&self) -> usize;
@@ -80,7 +56,7 @@ impl<T> Deconstruct<(*const T, usize)> for Option<&[T]> {
 }
 
 pub(crate) enum Utf16Vec {
-    Some(Vec<Utf16>, Vec<PWStr<'static>>),
+    Some(Vec<Utf16<'static>>, Vec<PWStr<'static>>),
     None,
 }
 
@@ -103,6 +79,7 @@ impl ToUtf16Vec for [&str] {
             let a = self.into_iter().map(|v| v.to_utf16()).collect::<Vec<_>>();
             let b = a.iter().map(|w| w.as_pwstr()).collect::<Vec<_>>();
             let b = unsafe { transmute(b) };
+            let a = unsafe { transmute(a) };
             Utf16Vec::Some(a, b)
         } else {
             Utf16Vec::None
@@ -117,6 +94,7 @@ impl ToUtf16Vec for Option<&[&str]> {
                 let a = x.into_iter().map(|v| v.to_utf16()).collect::<Vec<_>>();
                 let b = a.iter().map(|w| w.as_pwstr()).collect::<Vec<_>>();
                 let b = unsafe { transmute(b) };
+                let a = unsafe { transmute(a) };
                 return Utf16Vec::Some(a, b);
             }
         }
@@ -253,7 +231,7 @@ impl AsPtrOrNull<u8> for Option<NullTerminated<'_>> {
     }
 }
 
-impl AsPtrOrNull<u16> for Option<Utf16> {
+impl AsPtrOrNull<u16> for Option<Utf16<'_>> {
     fn as_ptr_or_null(&self) -> *const u16 {
         if let Some(v) = self {
             if let Some(w) = v.first() {
@@ -264,7 +242,7 @@ impl AsPtrOrNull<u16> for Option<Utf16> {
     }
 }
 
-impl AsPtrOrNull<u16> for Option<&Utf16> {
+impl AsPtrOrNull<u16> for Option<&Utf16<'_>> {
     fn as_ptr_or_null(&self) -> *const u16 {
         if let Some(v) = self {
             if let Some(w) = v.first() {
@@ -299,9 +277,7 @@ impl<T> AsMutPtrOrNull<T> for &mut [T] {
     }
 }
 
-pub struct NullTerminated<'a> {
-    cow: Cow<'a, str>,
-}
+pub struct NullTerminated<'a>(Cow<'a, str>);
 
 /*
 impl NullTerminated<'_> {
@@ -314,20 +290,19 @@ impl Deref for NullTerminated<'_> {
     type Target = str;
 
     fn deref(&self) -> &Self::Target {
-        self.cow.deref()
+        self.0.deref()
     }
 }
 
 impl Debug for NullTerminated<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        // todo: strlen?
-        <Cow<str> as Debug>::fmt(&self.cow, f)
+        <Self as Display>::fmt(self, f)
     }
 }
 
 impl Display for NullTerminated<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        <Cow<str> as Display>::fmt(&self.cow, f)
+        write!(f, "{}", self.0.deref().as_pstr())
     }
 }
 
@@ -339,19 +314,15 @@ impl ToNullTerminated for str {
     fn to_null_terminated(&self) -> NullTerminated {
         if let Some(&ter) = self.as_bytes().last() {
             if ter == 0 {
-                return NullTerminated { cow: Cow::from(self) };
+                return NullTerminated(Cow::Borrowed(self));
             }
         }
 
-        NullTerminated {
-            cow: format!("{}\0", self).into()
-        }
+        NullTerminated(format!("{}\0", self).into())
     }
 }
 
-pub struct Utf16 {
-    vec: Vec<u16>,
-}
+pub struct Utf16<'a>(Cow<'a, [u16]>);
 
 /*
 impl Utf16 {
@@ -360,51 +331,60 @@ impl Utf16 {
     }
 }*/
 
-impl Deref for Utf16 {
+impl Deref for Utf16<'_> {
     type Target = [u16];
 
     fn deref(&self) -> &Self::Target {
-        &*self.vec
+        self.0.deref()
     }
 }
 
-impl Debug for Utf16 {
+impl Debug for Utf16<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         <Self as Display>::fmt(self, f)
     }
 }
 
-impl Display for Utf16 {
+impl Display for Utf16<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let s = String::from_utf16_lossy(self.vec.as_slice());
-        write!(f, "{}", s)
+        write!(f, "{}", self.0.deref().as_pwstr())
     }
 }
 
-pub trait ToUtf16 {
-    fn to_utf16(&self) -> Utf16;
+pub trait ToUtf16<'a, 'b> {
+    fn to_utf16(&'a self) -> Utf16<'b>;
 }
 
-impl ToUtf16 for str {
-    fn to_utf16(&self) -> Utf16 {
-        Utf16 {
-            vec: self.encode_utf16().chain([0u16]).collect::<Vec<u16>>()
+impl<'a> ToUtf16<'a, 'static> for str {
+    fn to_utf16(&'a self) -> Utf16<'static> {
+        Utf16(Cow::Owned(self.encode_utf16().chain([0u16]).collect::<Vec<u16>>()))
+    }
+}
+
+impl<'a> ToUtf16<'a, 'a> for [u16] {
+    fn to_utf16(&'a self) -> Utf16<'a> {
+        if let Some(&ter) = self.last() {
+            if ter == 0 {
+                return Utf16(Cow::Borrowed(self));
+            }
         }
+
+        Utf16(Cow::Owned([self, &[0u16]].concat()))
     }
 }
 
-pub trait FillWithDefault<T> {
-    fn fill_with_default<const N: usize>(&self) -> [T; N];
+pub trait FillRestWithDefault<T: Default + Copy> {
+    fn fill_rest_with_default<const N: usize>(&self) -> [T; N];
 }
 
-impl<T: Default + Copy> FillWithDefault<T> for [T] {
-    fn fill_with_default<const N: usize>(&self) -> [T; N] {
-        fill_array_with_default(self)
+impl<T: Default + Copy> FillRestWithDefault<T> for [T] {
+    fn fill_rest_with_default<const N: usize>(&self) -> [T; N] {
+        fill_array_rest_with_default(self)
     }
 }
 
 // note: Copy and Drop cannot be implemented at the same time
-pub fn fill_array_with_default<T: Default + Copy, const N: usize>(head: &[T]) -> [T; N] {
+pub fn fill_array_rest_with_default<T: Default + Copy, const N: usize>(head: &[T]) -> [T; N] {
     let len = head.len();
     assert!(N >= len);
     let mut result = MaybeUninit::<[T; N]>::uninit();
@@ -419,32 +399,6 @@ pub fn fill_array_with_default<T: Default + Copy, const N: usize>(head: &[T]) ->
         result.assume_init()
     }
 }
-/*
-pub trait FillWithZero<T> {
-    fn fill_with_zero<const N: usize>(&self) -> [T; N];
-}
-
-impl<T: Copy> FillWithZero<T> for [T] {
-    fn fill_with_zero<const N: usize>(&self) -> [T; N] {
-        fill_array_with_zero(self)
-    }
-}
-
-pub fn fill_array_with_zero<T: Copy, const N: usize>(head: &[T]) -> [T; N] {
-    let len = head.len();
-    assert!(N >= len);
-    let mut result = MaybeUninit::<[T; N]>::uninit();
-    let mut ptr = unsafe { &mut *result.as_mut_ptr() };
-    for i in 0..len {
-        ptr[i] = head[i];
-    }
-    for i in len..N {
-        ptr[i] = unsafe { MaybeUninit::<T>::zeroed().assume_init() };
-    }
-    unsafe {
-        result.assume_init()
-    }
-}*/
 
 pub trait FillRestWith<T> {
     fn fill_rest_with<const N: usize>(&self, value: T) -> [T; N];
@@ -469,5 +423,44 @@ pub fn fill_array_rest_with<T: Copy, const N: usize>(head: &[T], value: T) -> [T
     }
     unsafe {
         result.assume_init()
+    }
+}
+
+pub(crate) struct DebugWithSuffix<'a, T: Debug> {
+    value: &'a T,
+    suffix: &'a str,
+}
+
+impl<'a, T: Debug> DebugWithSuffix<'a, T> {
+    pub(crate) fn new(value: &'a T, unit: &'a str) -> Self {
+        Self {
+            value,
+            suffix: unit,
+        }
+    }
+}
+
+impl<T: Debug> Debug for DebugWithSuffix<'_, T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        self.value.fmt(f)?;
+        f.write_str(self.suffix)
+    }
+}
+
+pub(crate) struct DebugStringWithoutQuot<'a> {
+    value: &'a str,
+}
+
+impl<'a> DebugStringWithoutQuot<'a> {
+    pub(crate) fn new(value: &'a str) -> Self {
+        Self {
+            value,
+        }
+    }
+}
+
+impl Debug for DebugStringWithoutQuot<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.value)
     }
 }

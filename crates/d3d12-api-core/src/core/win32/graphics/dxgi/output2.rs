@@ -46,18 +46,18 @@ impl IDxgiOutput2 for DxgiOutput2 {
 }
 
 impl IDxgiOutput1 for DxgiOutput2 {
-	fn as_output1(&self) -> &DxgiOutput1 { &self.0 }
-	fn into_output1(self) -> DxgiOutput1 { self.0 }
+	fn as_output1(&self) -> &DxgiOutput1 { &self.0.as_output1() }
+	fn into_output1(self) -> DxgiOutput1 { self.0.into_output1() }
 }
 
 impl IDxgiOutput for DxgiOutput2 {
-	fn as_output(&self) -> &DxgiOutput { &self.0.0 }
-	fn into_output(self) -> DxgiOutput { self.0.0 }
+	fn as_output(&self) -> &DxgiOutput { &self.0.as_output() }
+	fn into_output(self) -> DxgiOutput { self.0.into_output() }
 }
 
 impl IDxgiObject for DxgiOutput2 {
-	fn as_object(&self) -> &DxgiObject { &self.0.0.0 }
-	fn into_object(self) -> DxgiObject { self.0.0.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiOutput2 {
@@ -67,7 +67,7 @@ impl From<Unknown> for DxgiOutput2 {
 }
 
 impl IUnknown for DxgiOutput2 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

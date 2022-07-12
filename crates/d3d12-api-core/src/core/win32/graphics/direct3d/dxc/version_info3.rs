@@ -42,7 +42,7 @@ impl From<Unknown> for DxcVersionInfo3 {
 }
 
 impl IUnknown for DxcVersionInfo3 {
-	fn as_unknown(&self) -> &Unknown { &self.0 }
-	fn into_unknown(self) -> Unknown { self.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

@@ -34,13 +34,13 @@ pub struct CreateStructA<'a> {
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct HMenu {
-	pub value: NonNull<c_void>,
+	pub value: NonNull<()>,
 }
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct Msg {
-	pub hwnd: HWnd,
+	pub hwnd: Option<HWnd>,
 	pub message: WindowMessage,
 	pub w_param: WParam,
 	pub l_param: LParam,
@@ -56,23 +56,23 @@ pub struct WndClassExA<'a> {
 	pub cls_extra: i32,
 	pub wnd_extra: i32,
 	pub instance: HInstance,
-	pub icon: HIcon,
-	pub cursor: HCursor,
-	pub hbr_background: HBrush,
-	pub menu_name: PStr<'a>,
+	pub icon: Option<HIcon>,
+	pub cursor: Option<HCursor>,
+	pub hbr_background: Option<HBrush>,
+	pub menu_name: Option<PStr<'a>>,
 	pub class_name: PStr<'a>,
-	pub icon_sm: HIcon,
+	pub icon_sm: Option<HIcon>,
 }
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct HIcon {
-	pub value: NonNull<c_void>,
+	pub value: NonNull<()>,
 }
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct HCursor {
-	pub value: NonNull<c_void>,
+	pub value: NonNull<()>,
 }
 

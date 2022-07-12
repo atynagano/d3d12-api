@@ -45,23 +45,23 @@ impl IDxgiFactory3 for DxgiFactory3 {
 }
 
 impl IDxgiFactory2 for DxgiFactory3 {
-	fn as_factory2(&self) -> &DxgiFactory2 { &self.0 }
-	fn into_factory2(self) -> DxgiFactory2 { self.0 }
+	fn as_factory2(&self) -> &DxgiFactory2 { &self.0.as_factory2() }
+	fn into_factory2(self) -> DxgiFactory2 { self.0.into_factory2() }
 }
 
 impl IDxgiFactory1 for DxgiFactory3 {
-	fn as_factory1(&self) -> &DxgiFactory1 { &self.0.0 }
-	fn into_factory1(self) -> DxgiFactory1 { self.0.0 }
+	fn as_factory1(&self) -> &DxgiFactory1 { &self.0.as_factory1() }
+	fn into_factory1(self) -> DxgiFactory1 { self.0.into_factory1() }
 }
 
 impl IDxgiFactory for DxgiFactory3 {
-	fn as_factory(&self) -> &DxgiFactory { &self.0.0.0 }
-	fn into_factory(self) -> DxgiFactory { self.0.0.0 }
+	fn as_factory(&self) -> &DxgiFactory { &self.0.as_factory() }
+	fn into_factory(self) -> DxgiFactory { self.0.into_factory() }
 }
 
 impl IDxgiObject for DxgiFactory3 {
-	fn as_object(&self) -> &DxgiObject { &self.0.0.0.0 }
-	fn into_object(self) -> DxgiObject { self.0.0.0.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiFactory3 {
@@ -71,7 +71,7 @@ impl From<Unknown> for DxgiFactory3 {
 }
 
 impl IUnknown for DxgiFactory3 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

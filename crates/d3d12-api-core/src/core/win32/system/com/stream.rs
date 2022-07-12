@@ -40,6 +40,17 @@ pub trait IStream: ISequentialStream {
 		}
 	}
 
+	fn seek(&self, dlib_move: i64, origin: StreamSeek, ) -> Result<u64, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_plib_new_position: MaybeUninit<u64> = MaybeUninit::zeroed();
+			let f: extern "system" fn(Param<Self>, dlib_move: i64, origin: StreamSeek, _out_plib_new_position: *mut u64, ) -> HResult
+				= transmute(vt[5]);
+			let _ret_ = f(vt, dlib_move, origin, _out_plib_new_position.as_mut_ptr(), );
+			Ok(_out_plib_new_position.assume_init())
+		}
+	}
+
 	fn SetSize(&self, lib_new_size: u64, ) -> Result<(), HResult> {
 		unsafe {
 			let vt = self.as_param();
@@ -103,7 +114,7 @@ pub trait IStream: ISequentialStream {
 	fn Stat(&self, grf_stat_flag: u32, ) -> Result<StatStg, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_pstatstg: MaybeUninit<StatStg> = MaybeUninit::uninit();
+			let mut _out_pstatstg: MaybeUninit<StatStg> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_pstatstg: *mut StatStg, grf_stat_flag: u32, ) -> HResult
 				= transmute(vt[12]);
 			let _ret_ = f(vt, _out_pstatstg.as_mut_ptr(), grf_stat_flag, );
@@ -134,8 +145,8 @@ impl IStream for Stream {
 }
 
 impl ISequentialStream for Stream {
-	fn as_sequential_stream(&self) -> &SequentialStream { &self.0 }
-	fn into_sequential_stream(self) -> SequentialStream { self.0 }
+	fn as_sequential_stream(&self) -> &SequentialStream { &self.0.as_sequential_stream() }
+	fn into_sequential_stream(self) -> SequentialStream { self.0.into_sequential_stream() }
 }
 
 impl From<Unknown> for Stream {
@@ -145,7 +156,7 @@ impl From<Unknown> for Stream {
 }
 
 impl IUnknown for Stream {
-	fn as_unknown(&self) -> &Unknown { &self.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

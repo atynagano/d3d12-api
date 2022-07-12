@@ -33,7 +33,7 @@ pub trait IDxgiAdapter4: IDxgiAdapter3 {
 	fn GetDesc3(&self, ) -> Result<DxgiAdapterDesc3, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_desc: MaybeUninit<DxgiAdapterDesc3> = MaybeUninit::uninit();
+			let mut _out_desc: MaybeUninit<DxgiAdapterDesc3> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_desc: *mut DxgiAdapterDesc3, ) -> HResult
 				= transmute(vt[18]);
 			let _ret_ = f(vt, _out_desc.as_mut_ptr(), );
@@ -48,28 +48,28 @@ impl IDxgiAdapter4 for DxgiAdapter4 {
 }
 
 impl IDxgiAdapter3 for DxgiAdapter4 {
-	fn as_adapter3(&self) -> &DxgiAdapter3 { &self.0 }
-	fn into_adapter3(self) -> DxgiAdapter3 { self.0 }
+	fn as_adapter3(&self) -> &DxgiAdapter3 { &self.0.as_adapter3() }
+	fn into_adapter3(self) -> DxgiAdapter3 { self.0.into_adapter3() }
 }
 
 impl IDxgiAdapter2 for DxgiAdapter4 {
-	fn as_adapter2(&self) -> &DxgiAdapter2 { &self.0.0 }
-	fn into_adapter2(self) -> DxgiAdapter2 { self.0.0 }
+	fn as_adapter2(&self) -> &DxgiAdapter2 { &self.0.as_adapter2() }
+	fn into_adapter2(self) -> DxgiAdapter2 { self.0.into_adapter2() }
 }
 
 impl IDxgiAdapter1 for DxgiAdapter4 {
-	fn as_adapter1(&self) -> &DxgiAdapter1 { &self.0.0.0 }
-	fn into_adapter1(self) -> DxgiAdapter1 { self.0.0.0 }
+	fn as_adapter1(&self) -> &DxgiAdapter1 { &self.0.as_adapter1() }
+	fn into_adapter1(self) -> DxgiAdapter1 { self.0.into_adapter1() }
 }
 
 impl IDxgiAdapter for DxgiAdapter4 {
-	fn as_adapter(&self) -> &DxgiAdapter { &self.0.0.0.0 }
-	fn into_adapter(self) -> DxgiAdapter { self.0.0.0.0 }
+	fn as_adapter(&self) -> &DxgiAdapter { &self.0.as_adapter() }
+	fn into_adapter(self) -> DxgiAdapter { self.0.into_adapter() }
 }
 
 impl IDxgiObject for DxgiAdapter4 {
-	fn as_object(&self) -> &DxgiObject { &self.0.0.0.0.0 }
-	fn into_object(self) -> DxgiObject { self.0.0.0.0.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiAdapter4 {
@@ -79,7 +79,7 @@ impl From<Unknown> for DxgiAdapter4 {
 }
 
 impl IUnknown for DxgiAdapter4 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

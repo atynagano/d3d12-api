@@ -57,8 +57,8 @@ impl ID3D12InfoQueue1 for D3D12InfoQueue1 {
 }
 
 impl ID3D12InfoQueue for D3D12InfoQueue1 {
-	fn as_info_queue(&self) -> &D3D12InfoQueue { &self.0 }
-	fn into_info_queue(self) -> D3D12InfoQueue { self.0 }
+	fn as_info_queue(&self) -> &D3D12InfoQueue { &self.0.as_info_queue() }
+	fn into_info_queue(self) -> D3D12InfoQueue { self.0.into_info_queue() }
 }
 
 impl From<Unknown> for D3D12InfoQueue1 {
@@ -68,7 +68,7 @@ impl From<Unknown> for D3D12InfoQueue1 {
 }
 
 impl IUnknown for D3D12InfoQueue1 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

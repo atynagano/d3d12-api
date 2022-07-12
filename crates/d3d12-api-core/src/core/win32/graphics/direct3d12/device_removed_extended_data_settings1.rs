@@ -45,8 +45,8 @@ impl ID3D12DeviceRemovedExtendedDataSettings1 for D3D12DeviceRemovedExtendedData
 }
 
 impl ID3D12DeviceRemovedExtendedDataSettings for D3D12DeviceRemovedExtendedDataSettings1 {
-	fn as_device_removed_extended_data_settings(&self) -> &D3D12DeviceRemovedExtendedDataSettings { &self.0 }
-	fn into_device_removed_extended_data_settings(self) -> D3D12DeviceRemovedExtendedDataSettings { self.0 }
+	fn as_device_removed_extended_data_settings(&self) -> &D3D12DeviceRemovedExtendedDataSettings { &self.0.as_device_removed_extended_data_settings() }
+	fn into_device_removed_extended_data_settings(self) -> D3D12DeviceRemovedExtendedDataSettings { self.0.into_device_removed_extended_data_settings() }
 }
 
 impl From<Unknown> for D3D12DeviceRemovedExtendedDataSettings1 {
@@ -56,7 +56,7 @@ impl From<Unknown> for D3D12DeviceRemovedExtendedDataSettings1 {
 }
 
 impl IUnknown for D3D12DeviceRemovedExtendedDataSettings1 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

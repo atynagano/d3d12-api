@@ -884,6 +884,7 @@ impl D3D12TileCopyFlags {
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum D3D12ResourceStates
 {
+	Common               = 0x0u32,
 	VertexAndConstantBuffer = 0x1u32,
 	IndexBuffer          = 0x2u32,
 	RenderTarget         = 0x4u32,
@@ -902,7 +903,6 @@ pub enum D3D12ResourceStates
 	ShadingRateSource    = 0x1000000u32,
 	GenericRead          = 0xAC3u32,
 	AllShaderResource    = 0xC0u32,
-	Present              = 0x0u32,
 	VideoDecodeRead      = 0x10000u32,
 	VideoDecodeWrite     = 0x20000u32,
 	VideoProcessRead     = 0x40000u32,
@@ -912,6 +912,7 @@ pub enum D3D12ResourceStates
 }
 
 impl D3D12ResourceStates {
+	pub const Present             : Self = unsafe { transmute(0x0u32) };
 	pub const Predication         : Self = unsafe { transmute(0x200u32) };
 }
 

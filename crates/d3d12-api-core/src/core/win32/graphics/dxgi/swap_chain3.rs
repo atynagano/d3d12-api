@@ -44,7 +44,7 @@ pub trait IDxgiSwapChain3: IDxgiSwapChain2 {
 	fn CheckColorSpaceSupport(&self, color_space: DxgiColorSpaceType, ) -> Result<u32, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_color_space_support: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_color_space_support: MaybeUninit<u32> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, color_space: DxgiColorSpaceType, _out_color_space_support: *mut u32, ) -> HResult
 				= transmute(vt[37]);
 			let _ret_ = f(vt, color_space, _out_color_space_support.as_mut_ptr(), );
@@ -69,28 +69,28 @@ impl IDxgiSwapChain3 for DxgiSwapChain3 {
 }
 
 impl IDxgiSwapChain2 for DxgiSwapChain3 {
-	fn as_swap_chain2(&self) -> &DxgiSwapChain2 { &self.0 }
-	fn into_swap_chain2(self) -> DxgiSwapChain2 { self.0 }
+	fn as_swap_chain2(&self) -> &DxgiSwapChain2 { &self.0.as_swap_chain2() }
+	fn into_swap_chain2(self) -> DxgiSwapChain2 { self.0.into_swap_chain2() }
 }
 
 impl IDxgiSwapChain1 for DxgiSwapChain3 {
-	fn as_swap_chain1(&self) -> &DxgiSwapChain1 { &self.0.0 }
-	fn into_swap_chain1(self) -> DxgiSwapChain1 { self.0.0 }
+	fn as_swap_chain1(&self) -> &DxgiSwapChain1 { &self.0.as_swap_chain1() }
+	fn into_swap_chain1(self) -> DxgiSwapChain1 { self.0.into_swap_chain1() }
 }
 
 impl IDxgiSwapChain for DxgiSwapChain3 {
-	fn as_swap_chain(&self) -> &DxgiSwapChain { &self.0.0.0 }
-	fn into_swap_chain(self) -> DxgiSwapChain { self.0.0.0 }
+	fn as_swap_chain(&self) -> &DxgiSwapChain { &self.0.as_swap_chain() }
+	fn into_swap_chain(self) -> DxgiSwapChain { self.0.into_swap_chain() }
 }
 
 impl IDxgiDeviceSubObject for DxgiSwapChain3 {
-	fn as_device_sub_object(&self) -> &DxgiDeviceSubObject { &self.0.0.0.0 }
-	fn into_device_sub_object(self) -> DxgiDeviceSubObject { self.0.0.0.0 }
+	fn as_device_sub_object(&self) -> &DxgiDeviceSubObject { &self.0.as_device_sub_object() }
+	fn into_device_sub_object(self) -> DxgiDeviceSubObject { self.0.into_device_sub_object() }
 }
 
 impl IDxgiObject for DxgiSwapChain3 {
-	fn as_object(&self) -> &DxgiObject { &self.0.0.0.0.0 }
-	fn into_object(self) -> DxgiObject { self.0.0.0.0.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiSwapChain3 {
@@ -100,7 +100,7 @@ impl From<Unknown> for DxgiSwapChain3 {
 }
 
 impl IUnknown for DxgiSwapChain3 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

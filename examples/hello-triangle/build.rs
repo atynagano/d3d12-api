@@ -4,7 +4,7 @@ use std::io::Write;
 use d3d12_api::aliases::win32::graphics::direct3d::dxc::{Buffer, Compiler3, ICompiler3, OperationResult};
 use d3d12_api::core::win32::foundation::{HResult, OkOrErr};
 use d3d12_api::core::win32::graphics::direct3d::dxc::IDxcOperationResult;
-use d3d12_api::extensions::win32::graphics::direct3d::dxc::{IDxcBlobEx, IDxcOperationResultEx};
+use d3d12_api::extensions::win32::graphics::direct3d::dxc::{IDxcBlobEx};
 
 fn main() {
     let path = concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/hello-triangle.hlsl");

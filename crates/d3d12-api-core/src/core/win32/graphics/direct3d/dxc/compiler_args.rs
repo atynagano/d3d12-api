@@ -30,13 +30,13 @@ pub trait IDxcCompilerArgs: IUnknown {
 	fn as_compiler_args(&self) -> &DxcCompilerArgs;
 	fn into_compiler_args(self) -> DxcCompilerArgs;
 
-	fn GetArguments(&self, ) -> &PWStr {
+	fn GetArguments(&self, ) -> *const () {
 		unsafe {
 			let vt = self.as_param();
-			let f: extern "system" fn(Param<Self>, ) -> &PWStr
+			let f: extern "system" fn(Param<Self>, ) -> *const c_void
 				= transmute(vt[3]);
 			let _ret_ = f(vt, );
-			_ret_
+			_ret_ as _
 		}
 	}
 
@@ -96,7 +96,7 @@ impl From<Unknown> for DxcCompilerArgs {
 }
 
 impl IUnknown for DxcCompilerArgs {
-	fn as_unknown(&self) -> &Unknown { &self.0 }
-	fn into_unknown(self) -> Unknown { self.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

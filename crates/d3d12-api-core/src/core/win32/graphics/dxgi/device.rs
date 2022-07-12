@@ -60,7 +60,7 @@ pub trait IDxgiDevice: IDxgiObject {
 	fn GetGPUThreadPriority(&self, ) -> Result<i32, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_priority: MaybeUninit<i32> = MaybeUninit::uninit();
+			let mut _out_priority: MaybeUninit<i32> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_priority: *mut i32, ) -> HResult
 				= transmute(vt[11]);
 			let _ret_ = f(vt, _out_priority.as_mut_ptr(), );
@@ -75,8 +75,8 @@ impl IDxgiDevice for DxgiDevice {
 }
 
 impl IDxgiObject for DxgiDevice {
-	fn as_object(&self) -> &DxgiObject { &self.0 }
-	fn into_object(self) -> DxgiObject { self.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiDevice {
@@ -86,7 +86,7 @@ impl From<Unknown> for DxgiDevice {
 }
 
 impl IUnknown for DxgiDevice {
-	fn as_unknown(&self) -> &Unknown { &self.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

@@ -29,13 +29,13 @@ pub trait ID3D12StateObjectProperties: IUnknown {
 	fn as_state_object_properties(&self) -> &D3D12StateObjectProperties;
 	fn into_state_object_properties(self) -> D3D12StateObjectProperties;
 
-	fn GetShaderIdentifier(&self, export_name: &str, ) -> *const c_void {
+	fn GetShaderIdentifier(&self, export_name: &str, ) -> *const () {
 		unsafe {
 			let vt = self.as_param();
 			let f: extern "system" fn(Param<Self>, export_name: *const u16, ) -> *const c_void
 				= transmute(vt[3]);
 			let _ret_ = f(vt, export_name.to_utf16().as_ptr_or_null(), );
-			_ret_
+			_ret_ as _
 		}
 	}
 
@@ -81,7 +81,7 @@ impl From<Unknown> for D3D12StateObjectProperties {
 }
 
 impl IUnknown for D3D12StateObjectProperties {
-	fn as_unknown(&self) -> &Unknown { &self.0 }
-	fn into_unknown(self) -> Unknown { self.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

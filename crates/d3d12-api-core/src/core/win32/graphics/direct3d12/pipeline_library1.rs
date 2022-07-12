@@ -53,18 +53,18 @@ impl ID3D12PipelineLibrary1 for D3D12PipelineLibrary1 {
 }
 
 impl ID3D12PipelineLibrary for D3D12PipelineLibrary1 {
-	fn as_pipeline_library(&self) -> &D3D12PipelineLibrary { &self.0 }
-	fn into_pipeline_library(self) -> D3D12PipelineLibrary { self.0 }
+	fn as_pipeline_library(&self) -> &D3D12PipelineLibrary { &self.0.as_pipeline_library() }
+	fn into_pipeline_library(self) -> D3D12PipelineLibrary { self.0.into_pipeline_library() }
 }
 
 impl ID3D12DeviceChild for D3D12PipelineLibrary1 {
-	fn as_device_child(&self) -> &D3D12DeviceChild { &self.0.0 }
-	fn into_device_child(self) -> D3D12DeviceChild { self.0.0 }
+	fn as_device_child(&self) -> &D3D12DeviceChild { &self.0.as_device_child() }
+	fn into_device_child(self) -> D3D12DeviceChild { self.0.into_device_child() }
 }
 
 impl ID3D12Object for D3D12PipelineLibrary1 {
-	fn as_object(&self) -> &D3D12Object { &self.0.0.0 }
-	fn into_object(self) -> D3D12Object { self.0.0.0 }
+	fn as_object(&self) -> &D3D12Object { &self.0.as_object() }
+	fn into_object(self) -> D3D12Object { self.0.into_object() }
 }
 
 impl From<Unknown> for D3D12PipelineLibrary1 {
@@ -74,7 +74,7 @@ impl From<Unknown> for D3D12PipelineLibrary1 {
 }
 
 impl IUnknown for D3D12PipelineLibrary1 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

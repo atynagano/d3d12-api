@@ -34,7 +34,7 @@ pub trait IDxgiSwapChain1: IDxgiSwapChain {
 	fn GetDesc1(&self, ) -> Result<DxgiSwapChainDesc1, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_desc: MaybeUninit<DxgiSwapChainDesc1> = MaybeUninit::uninit();
+			let mut _out_desc: MaybeUninit<DxgiSwapChainDesc1> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_desc: *mut DxgiSwapChainDesc1, ) -> HResult
 				= transmute(vt[18]);
 			let _ret_ = f(vt, _out_desc.as_mut_ptr(), );
@@ -45,7 +45,7 @@ pub trait IDxgiSwapChain1: IDxgiSwapChain {
 	fn GetFullscreenDesc(&self, ) -> Result<DxgiSwapChainFullScreenDesc, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_desc: MaybeUninit<DxgiSwapChainFullScreenDesc> = MaybeUninit::uninit();
+			let mut _out_desc: MaybeUninit<DxgiSwapChainFullScreenDesc> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_desc: *mut DxgiSwapChainFullScreenDesc, ) -> HResult
 				= transmute(vt[19]);
 			let _ret_ = f(vt, _out_desc.as_mut_ptr(), );
@@ -134,7 +134,7 @@ pub trait IDxgiSwapChain1: IDxgiSwapChain {
 	fn GetBackgroundColor(&self, ) -> Result<DxgiRgba, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_color: MaybeUninit<DxgiRgba> = MaybeUninit::uninit();
+			let mut _out_color: MaybeUninit<DxgiRgba> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_color: *mut DxgiRgba, ) -> HResult
 				= transmute(vt[26]);
 			let _ret_ = f(vt, _out_color.as_mut_ptr(), );
@@ -155,7 +155,7 @@ pub trait IDxgiSwapChain1: IDxgiSwapChain {
 	fn GetRotation(&self, ) -> Result<DxgiModeRotation, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_rotation: MaybeUninit<DxgiModeRotation> = MaybeUninit::uninit();
+			let mut _out_rotation: MaybeUninit<DxgiModeRotation> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_rotation: *mut DxgiModeRotation, ) -> HResult
 				= transmute(vt[28]);
 			let _ret_ = f(vt, _out_rotation.as_mut_ptr(), );
@@ -170,18 +170,18 @@ impl IDxgiSwapChain1 for DxgiSwapChain1 {
 }
 
 impl IDxgiSwapChain for DxgiSwapChain1 {
-	fn as_swap_chain(&self) -> &DxgiSwapChain { &self.0 }
-	fn into_swap_chain(self) -> DxgiSwapChain { self.0 }
+	fn as_swap_chain(&self) -> &DxgiSwapChain { &self.0.as_swap_chain() }
+	fn into_swap_chain(self) -> DxgiSwapChain { self.0.into_swap_chain() }
 }
 
 impl IDxgiDeviceSubObject for DxgiSwapChain1 {
-	fn as_device_sub_object(&self) -> &DxgiDeviceSubObject { &self.0.0 }
-	fn into_device_sub_object(self) -> DxgiDeviceSubObject { self.0.0 }
+	fn as_device_sub_object(&self) -> &DxgiDeviceSubObject { &self.0.as_device_sub_object() }
+	fn into_device_sub_object(self) -> DxgiDeviceSubObject { self.0.into_device_sub_object() }
 }
 
 impl IDxgiObject for DxgiSwapChain1 {
-	fn as_object(&self) -> &DxgiObject { &self.0.0.0 }
-	fn into_object(self) -> DxgiObject { self.0.0.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiSwapChain1 {
@@ -191,7 +191,7 @@ impl From<Unknown> for DxgiSwapChain1 {
 }
 
 impl IUnknown for DxgiSwapChain1 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

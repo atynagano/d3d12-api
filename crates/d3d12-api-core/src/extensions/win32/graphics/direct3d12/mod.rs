@@ -21,13 +21,13 @@ use crate::core::win32::system::com::{AsParam, Param};
 // impl<T:  ID3D12Heap> ID3D12HeapEx for T {}
 
 pub trait ID3D12ResourceEx: ID3D12Resource {
-    fn map(&self, subresource: u32, read_range: std::ops::Range<usize>) -> Result<NonNull<()>, HResult>;
+    fn map(&self, subresource: u32, read_range: Option<&D3D12Range>) -> Result<NonNull<()>, HResult>;
 }
 
 impl<T: ID3D12Resource> ID3D12ResourceEx for T {
-    fn map(&self, subresource: u32, read_range: std::ops::Range<usize>) -> Result<NonNull<()>, HResult> {
+    fn map(&self, subresource: u32, read_range: Option<&D3D12Range>) -> Result<NonNull<()>, HResult> {
         let mut out: Option<NonNull<()>> = None;
-        <Self as ID3D12Resource>::Map(self, subresource, Some(&read_range), Some(&mut out))?;
+        self.Map(subresource, read_range, Some(&mut out))?;
         if let Some(out) = out {
             return Ok(out);
         }
@@ -58,6 +58,7 @@ pub trait ID3D12GraphicsCommandListEx: ID3D12GraphicsCommandList {
         before: D3D12ResourceStates,
         after: D3D12ResourceStates,
     );
+    // todo: fn resource_barrier_aliasing(&self);
     fn resource_barrier_uav(&self, resource: &impl ID3D12Resource);
 }
 
@@ -71,6 +72,7 @@ impl<T: ID3D12GraphicsCommandList> ID3D12GraphicsCommandListEx for T {
         self.ResourceBarrier(&[
             D3D12ResourceBarrier::Transition(resource, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, before, after)])
     }
+
     fn resource_barrier_uav(&self, resource: &impl ID3D12Resource) {
         self.ResourceBarrier(&[D3D12ResourceBarrier::Uav(resource)])
     }
@@ -100,7 +102,8 @@ pub trait ID3D12DeviceEx: ID3D12Device {
     fn create_desc_heap_cbv_srv_uav<T: ID3D12DescriptorHeap>(&self, count: u32) -> Result<T, HResult>;
 }
 
-impl<T: ID3D12Device> ID3D12DeviceEx for T {
+// todo: ?Sized
+impl<T: ID3D12Device + ?Sized> ID3D12DeviceEx for T {
     fn create_root_sig(&self, blob: &[u8]) -> Result<D3D12RootSignature, HResult> {
         self.CreateRootSignature(0, blob)
     }
@@ -156,11 +159,11 @@ impl<T: ID3D12Device> ID3D12DeviceEx for T {
 // impl<T:  ID3D12StateObject> ID3D12StateObjectEx for T {}
 
 pub trait ID3D12StateObjectPropertiesEx {
-    fn get_shader_identifier(&self, export_name: &str) -> &[u8; D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES as usize];
+    fn get_shader_identifier(&self, export_name: &str) -> Option<&[u8; D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES as usize]>;
 }
 
 impl<T: ID3D12StateObjectProperties> ID3D12StateObjectPropertiesEx for T {
-    fn get_shader_identifier(&self, export_name: &str) -> &[u8; D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES as usize] {
+    fn get_shader_identifier(&self, export_name: &str) -> Option<&[u8; D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES as usize]> {
         unsafe { transmute(self.GetShaderIdentifier(export_name)) }
     }
 }

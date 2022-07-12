@@ -39,36 +39,36 @@ pub fn WaitForSingleObjectEx(handle: Handle, milliseconds: u32, alertable: bool,
 	}
 }
 
-pub fn CreateEventA(event_attributes: Option<&SecurityAttributes>, manual_reset: bool, initial_state: bool, name: Option<&str>, ) -> Handle {
+pub fn CreateEventA(event_attributes: Option<&SecurityAttributes>, manual_reset: bool, initial_state: bool, name: Option<&str>, ) -> Option<Handle> {
 	unsafe {
 		#[link(name = "KERNEL32")]
 		extern "system" {
-			fn CreateEventA(event_attributes: *const c_void, manual_reset: Bool, initial_state: Bool, name: *const u8, ) -> Handle;
+			fn CreateEventA(event_attributes: *const c_void, manual_reset: Bool, initial_state: Bool, name: *const u8, ) -> *const c_void;
 		}
 		let _ret_ = CreateEventA(transmute(event_attributes), manual_reset.to_bool(), initial_state.to_bool(), name.map(str::to_null_terminated).as_ptr_or_null(), );
-		_ret_
+		transmute(_ret_)
 	}
 }
 
-pub fn OpenEventA(desired_access: u32, inherit_handle: bool, name: &str, ) -> Handle {
+pub fn OpenEventA(desired_access: u32, inherit_handle: bool, name: &str, ) -> Option<Handle> {
 	unsafe {
 		#[link(name = "KERNEL32")]
 		extern "system" {
-			fn OpenEventA(desired_access: u32, inherit_handle: Bool, name: *const u8, ) -> Handle;
+			fn OpenEventA(desired_access: u32, inherit_handle: Bool, name: *const u8, ) -> *const c_void;
 		}
 		let _ret_ = OpenEventA(desired_access, inherit_handle.to_bool(), name.to_null_terminated().as_ptr_or_null(), );
-		_ret_
+		transmute(_ret_)
 	}
 }
 
-pub fn CreateEventExA(event_attributes: Option<&SecurityAttributes>, name: Option<&str>, flags: CreateEvent, desired_access: u32, ) -> Handle {
+pub fn CreateEventExA(event_attributes: Option<&SecurityAttributes>, name: Option<&str>, flags: CreateEvent, desired_access: u32, ) -> Option<Handle> {
 	unsafe {
 		#[link(name = "KERNEL32")]
 		extern "system" {
-			fn CreateEventExA(event_attributes: *const c_void, name: *const u8, flags: CreateEvent, desired_access: u32, ) -> Handle;
+			fn CreateEventExA(event_attributes: *const c_void, name: *const u8, flags: CreateEvent, desired_access: u32, ) -> *const c_void;
 		}
 		let _ret_ = CreateEventExA(transmute(event_attributes), name.map(str::to_null_terminated).as_ptr_or_null(), flags, desired_access, );
-		_ret_
+		transmute(_ret_)
 	}
 }
 

@@ -56,33 +56,33 @@ impl IDxgiOutput5 for DxgiOutput5 {
 }
 
 impl IDxgiOutput4 for DxgiOutput5 {
-	fn as_output4(&self) -> &DxgiOutput4 { &self.0 }
-	fn into_output4(self) -> DxgiOutput4 { self.0 }
+	fn as_output4(&self) -> &DxgiOutput4 { &self.0.as_output4() }
+	fn into_output4(self) -> DxgiOutput4 { self.0.into_output4() }
 }
 
 impl IDxgiOutput3 for DxgiOutput5 {
-	fn as_output3(&self) -> &DxgiOutput3 { &self.0.0 }
-	fn into_output3(self) -> DxgiOutput3 { self.0.0 }
+	fn as_output3(&self) -> &DxgiOutput3 { &self.0.as_output3() }
+	fn into_output3(self) -> DxgiOutput3 { self.0.into_output3() }
 }
 
 impl IDxgiOutput2 for DxgiOutput5 {
-	fn as_output2(&self) -> &DxgiOutput2 { &self.0.0.0 }
-	fn into_output2(self) -> DxgiOutput2 { self.0.0.0 }
+	fn as_output2(&self) -> &DxgiOutput2 { &self.0.as_output2() }
+	fn into_output2(self) -> DxgiOutput2 { self.0.into_output2() }
 }
 
 impl IDxgiOutput1 for DxgiOutput5 {
-	fn as_output1(&self) -> &DxgiOutput1 { &self.0.0.0.0 }
-	fn into_output1(self) -> DxgiOutput1 { self.0.0.0.0 }
+	fn as_output1(&self) -> &DxgiOutput1 { &self.0.as_output1() }
+	fn into_output1(self) -> DxgiOutput1 { self.0.into_output1() }
 }
 
 impl IDxgiOutput for DxgiOutput5 {
-	fn as_output(&self) -> &DxgiOutput { &self.0.0.0.0.0 }
-	fn into_output(self) -> DxgiOutput { self.0.0.0.0.0 }
+	fn as_output(&self) -> &DxgiOutput { &self.0.as_output() }
+	fn into_output(self) -> DxgiOutput { self.0.into_output() }
 }
 
 impl IDxgiObject for DxgiOutput5 {
-	fn as_object(&self) -> &DxgiObject { &self.0.0.0.0.0.0 }
-	fn into_object(self) -> DxgiObject { self.0.0.0.0.0.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiOutput5 {
@@ -92,7 +92,7 @@ impl From<Unknown> for DxgiOutput5 {
 }
 
 impl IUnknown for DxgiOutput5 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

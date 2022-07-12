@@ -74,23 +74,23 @@ impl ID3D12GraphicsCommandList1 for D3D12GraphicsCommandList1 {
 }
 
 impl ID3D12GraphicsCommandList for D3D12GraphicsCommandList1 {
-	fn as_graphics_command_list(&self) -> &D3D12GraphicsCommandList { &self.0 }
-	fn into_graphics_command_list(self) -> D3D12GraphicsCommandList { self.0 }
+	fn as_graphics_command_list(&self) -> &D3D12GraphicsCommandList { &self.0.as_graphics_command_list() }
+	fn into_graphics_command_list(self) -> D3D12GraphicsCommandList { self.0.into_graphics_command_list() }
 }
 
 impl ID3D12CommandList for D3D12GraphicsCommandList1 {
-	fn as_command_list(&self) -> &D3D12CommandList { &self.0.0 }
-	fn into_command_list(self) -> D3D12CommandList { self.0.0 }
+	fn as_command_list(&self) -> &D3D12CommandList { &self.0.as_command_list() }
+	fn into_command_list(self) -> D3D12CommandList { self.0.into_command_list() }
 }
 
 impl ID3D12DeviceChild for D3D12GraphicsCommandList1 {
-	fn as_device_child(&self) -> &D3D12DeviceChild { &self.0.0.0 }
-	fn into_device_child(self) -> D3D12DeviceChild { self.0.0.0 }
+	fn as_device_child(&self) -> &D3D12DeviceChild { &self.0.as_device_child() }
+	fn into_device_child(self) -> D3D12DeviceChild { self.0.into_device_child() }
 }
 
 impl ID3D12Object for D3D12GraphicsCommandList1 {
-	fn as_object(&self) -> &D3D12Object { &self.0.0.0.0 }
-	fn into_object(self) -> D3D12Object { self.0.0.0.0 }
+	fn as_object(&self) -> &D3D12Object { &self.0.as_object() }
+	fn into_object(self) -> D3D12Object { self.0.into_object() }
 }
 
 impl From<Unknown> for D3D12GraphicsCommandList1 {
@@ -100,7 +100,7 @@ impl From<Unknown> for D3D12GraphicsCommandList1 {
 }
 
 impl IUnknown for D3D12GraphicsCommandList1 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

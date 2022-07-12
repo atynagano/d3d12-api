@@ -34,7 +34,7 @@ pub trait IDxgiOutput4: IDxgiOutput3 {
 	fn CheckOverlayColorSpaceSupport(&self, format: DxgiFormat, color_space: DxgiColorSpaceType, concerned_device: &(impl IUnknown + ?Sized), ) -> Result<u32, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_flags: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_flags: MaybeUninit<u32> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, format: DxgiFormat, color_space: DxgiColorSpaceType, concerned_device: VTable, _out_flags: *mut u32, ) -> HResult
 				= transmute(vt[25]);
 			let _ret_ = f(vt, format, color_space, concerned_device.vtable(), _out_flags.as_mut_ptr(), );
@@ -49,28 +49,28 @@ impl IDxgiOutput4 for DxgiOutput4 {
 }
 
 impl IDxgiOutput3 for DxgiOutput4 {
-	fn as_output3(&self) -> &DxgiOutput3 { &self.0 }
-	fn into_output3(self) -> DxgiOutput3 { self.0 }
+	fn as_output3(&self) -> &DxgiOutput3 { &self.0.as_output3() }
+	fn into_output3(self) -> DxgiOutput3 { self.0.into_output3() }
 }
 
 impl IDxgiOutput2 for DxgiOutput4 {
-	fn as_output2(&self) -> &DxgiOutput2 { &self.0.0 }
-	fn into_output2(self) -> DxgiOutput2 { self.0.0 }
+	fn as_output2(&self) -> &DxgiOutput2 { &self.0.as_output2() }
+	fn into_output2(self) -> DxgiOutput2 { self.0.into_output2() }
 }
 
 impl IDxgiOutput1 for DxgiOutput4 {
-	fn as_output1(&self) -> &DxgiOutput1 { &self.0.0.0 }
-	fn into_output1(self) -> DxgiOutput1 { self.0.0.0 }
+	fn as_output1(&self) -> &DxgiOutput1 { &self.0.as_output1() }
+	fn into_output1(self) -> DxgiOutput1 { self.0.into_output1() }
 }
 
 impl IDxgiOutput for DxgiOutput4 {
-	fn as_output(&self) -> &DxgiOutput { &self.0.0.0.0 }
-	fn into_output(self) -> DxgiOutput { self.0.0.0.0 }
+	fn as_output(&self) -> &DxgiOutput { &self.0.as_output() }
+	fn into_output(self) -> DxgiOutput { self.0.into_output() }
 }
 
 impl IDxgiObject for DxgiOutput4 {
-	fn as_object(&self) -> &DxgiObject { &self.0.0.0.0.0 }
-	fn into_object(self) -> DxgiObject { self.0.0.0.0.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiOutput4 {
@@ -80,7 +80,7 @@ impl From<Unknown> for DxgiOutput4 {
 }
 
 impl IUnknown for DxgiOutput4 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

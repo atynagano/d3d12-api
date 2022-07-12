@@ -33,7 +33,7 @@ pub trait IDxgiSurface: IDxgiDeviceSubObject {
 	fn GetDesc(&self, ) -> Result<DxgiSurfaceDesc, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_desc: MaybeUninit<DxgiSurfaceDesc> = MaybeUninit::uninit();
+			let mut _out_desc: MaybeUninit<DxgiSurfaceDesc> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_desc: *mut DxgiSurfaceDesc, ) -> HResult
 				= transmute(vt[8]);
 			let _ret_ = f(vt, _out_desc.as_mut_ptr(), );
@@ -44,7 +44,7 @@ pub trait IDxgiSurface: IDxgiDeviceSubObject {
 	fn Map(&self, map_flags: u32, ) -> Result<DxgiMappedRect, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_locked_rect: MaybeUninit<DxgiMappedRect> = MaybeUninit::uninit();
+			let mut _out_locked_rect: MaybeUninit<DxgiMappedRect> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_locked_rect: *mut DxgiMappedRect, map_flags: u32, ) -> HResult
 				= transmute(vt[9]);
 			let _ret_ = f(vt, _out_locked_rect.as_mut_ptr(), map_flags, );
@@ -69,13 +69,13 @@ impl IDxgiSurface for DxgiSurface {
 }
 
 impl IDxgiDeviceSubObject for DxgiSurface {
-	fn as_device_sub_object(&self) -> &DxgiDeviceSubObject { &self.0 }
-	fn into_device_sub_object(self) -> DxgiDeviceSubObject { self.0 }
+	fn as_device_sub_object(&self) -> &DxgiDeviceSubObject { &self.0.as_device_sub_object() }
+	fn into_device_sub_object(self) -> DxgiDeviceSubObject { self.0.into_device_sub_object() }
 }
 
 impl IDxgiObject for DxgiSurface {
-	fn as_object(&self) -> &DxgiObject { &self.0.0 }
-	fn into_object(self) -> DxgiObject { self.0.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiSurface {
@@ -85,7 +85,7 @@ impl From<Unknown> for DxgiSurface {
 }
 
 impl IUnknown for DxgiSurface {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

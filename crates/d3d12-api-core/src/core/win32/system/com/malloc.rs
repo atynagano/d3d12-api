@@ -28,13 +28,13 @@ pub trait IMalloc: IUnknown {
 	fn as_malloc(&self) -> &Malloc;
 	fn into_malloc(self) -> Malloc;
 
-	fn Alloc(&self, cb: usize, ) -> *const c_void {
+	fn Alloc(&self, cb: usize, ) -> Option<NonNull<()>> {
 		unsafe {
 			let vt = self.as_param();
-			let f: extern "system" fn(Param<Self>, cb: usize, ) -> *const c_void
+			let f: extern "system" fn(Param<Self>, cb: usize, ) -> *mut c_void
 				= transmute(vt[3]);
 			let _ret_ = f(vt, cb, );
-			_ret_
+			transmute(_ret_)
 		}
 	}
 
@@ -89,7 +89,7 @@ impl From<Unknown> for Malloc {
 }
 
 impl IUnknown for Malloc {
-	fn as_unknown(&self) -> &Unknown { &self.0 }
-	fn into_unknown(self) -> Unknown { self.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

@@ -35,7 +35,7 @@ pub trait IDxgiOutput1: IDxgiOutput {
 	fn FindClosestMatchingMode1(&self, mode_to_match: &DxgiModeDesc1, concerned_device: Option<&Unknown>, ) -> Result<DxgiModeDesc1, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_closest_match: MaybeUninit<DxgiModeDesc1> = MaybeUninit::uninit();
+			let mut _out_closest_match: MaybeUninit<DxgiModeDesc1> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, mode_to_match: &DxgiModeDesc1, _out_closest_match: *mut DxgiModeDesc1, concerned_device: *const c_void, ) -> HResult
 				= transmute(vt[20]);
 			let _ret_ = f(vt, mode_to_match, _out_closest_match.as_mut_ptr(), option_to_vtable(concerned_device), );
@@ -76,13 +76,13 @@ impl IDxgiOutput1 for DxgiOutput1 {
 }
 
 impl IDxgiOutput for DxgiOutput1 {
-	fn as_output(&self) -> &DxgiOutput { &self.0 }
-	fn into_output(self) -> DxgiOutput { self.0 }
+	fn as_output(&self) -> &DxgiOutput { &self.0.as_output() }
+	fn into_output(self) -> DxgiOutput { self.0.into_output() }
 }
 
 impl IDxgiObject for DxgiOutput1 {
-	fn as_object(&self) -> &DxgiObject { &self.0.0 }
-	fn into_object(self) -> DxgiObject { self.0.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiOutput1 {
@@ -92,7 +92,7 @@ impl From<Unknown> for DxgiOutput1 {
 }
 
 impl IUnknown for DxgiOutput1 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

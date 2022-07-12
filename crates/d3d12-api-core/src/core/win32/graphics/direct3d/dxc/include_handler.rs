@@ -40,6 +40,22 @@ pub trait IDxcIncludeHandler: IUnknown {
 			_ret_.ok()
 		}
 	}
+
+	fn load_source(&self, filename: &str, ) -> Result<DxcBlob, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_include_source: Option<DxcBlob> = None;
+			let f: extern "system" fn(Param<Self>, filename: *const u16, include_source: *mut c_void, ) -> HResult
+				= transmute(vt[3]);
+			let _ret_ = f(vt, filename.to_utf16().as_ptr_or_null(), transmute(&mut _out_include_source), );
+			if _ret_.is_ok() {
+				if let Some(_out_include_source) = _out_include_source {
+					return Ok(_out_include_source);
+				}
+			}
+			Err(_ret_)
+		}
+	}
 }
 
 impl IDxcIncludeHandler for DxcIncludeHandler {
@@ -54,7 +70,7 @@ impl From<Unknown> for DxcIncludeHandler {
 }
 
 impl IUnknown for DxcIncludeHandler {
-	fn as_unknown(&self) -> &Unknown { &self.0 }
-	fn into_unknown(self) -> Unknown { self.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

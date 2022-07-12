@@ -63,18 +63,18 @@ impl IDxgiSurface1 for DxgiSurface1 {
 }
 
 impl IDxgiSurface for DxgiSurface1 {
-	fn as_surface(&self) -> &DxgiSurface { &self.0 }
-	fn into_surface(self) -> DxgiSurface { self.0 }
+	fn as_surface(&self) -> &DxgiSurface { &self.0.as_surface() }
+	fn into_surface(self) -> DxgiSurface { self.0.into_surface() }
 }
 
 impl IDxgiDeviceSubObject for DxgiSurface1 {
-	fn as_device_sub_object(&self) -> &DxgiDeviceSubObject { &self.0.0 }
-	fn into_device_sub_object(self) -> DxgiDeviceSubObject { self.0.0 }
+	fn as_device_sub_object(&self) -> &DxgiDeviceSubObject { &self.0.as_device_sub_object() }
+	fn into_device_sub_object(self) -> DxgiDeviceSubObject { self.0.into_device_sub_object() }
 }
 
 impl IDxgiObject for DxgiSurface1 {
-	fn as_object(&self) -> &DxgiObject { &self.0.0.0 }
-	fn into_object(self) -> DxgiObject { self.0.0.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiSurface1 {
@@ -84,7 +84,7 @@ impl From<Unknown> for DxgiSurface1 {
 }
 
 impl IUnknown for DxgiSurface1 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

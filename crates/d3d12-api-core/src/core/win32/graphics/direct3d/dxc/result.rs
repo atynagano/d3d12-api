@@ -95,8 +95,8 @@ impl IDxcResult for DxcResult {
 }
 
 impl IDxcOperationResult for DxcResult {
-	fn as_operation_result(&self) -> &DxcOperationResult { &self.0 }
-	fn into_operation_result(self) -> DxcOperationResult { self.0 }
+	fn as_operation_result(&self) -> &DxcOperationResult { &self.0.as_operation_result() }
+	fn into_operation_result(self) -> DxcOperationResult { self.0.into_operation_result() }
 }
 
 impl From<Unknown> for DxcResult {
@@ -106,7 +106,7 @@ impl From<Unknown> for DxcResult {
 }
 
 impl IUnknown for DxcResult {
-	fn as_unknown(&self) -> &Unknown { &self.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

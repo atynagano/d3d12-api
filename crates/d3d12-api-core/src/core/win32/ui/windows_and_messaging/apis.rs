@@ -16,25 +16,13 @@ use crate::core::win32::foundation::*;
 use crate::core::win32::ui::windows_and_messaging::*;
 
 
-pub fn GetMessageA(wnd: Option<HWnd>, msg_filter_min: u32, msg_filter_max: u32, ) -> (bool, Msg, ) {
-	unsafe {
-		#[link(name = "USER32")]
-		extern "system" {
-			fn GetMessageA(_out_msg: *mut Msg, wnd: *const c_void, msg_filter_min: u32, msg_filter_max: u32, ) -> Bool;
-		}
-		let mut _out_msg: MaybeUninit<Msg> = MaybeUninit::uninit();
-		let _ret_ = GetMessageA(_out_msg.as_mut_ptr(), transmute(wnd), msg_filter_min, msg_filter_max, );
-		(_ret_.to_bool(), _out_msg.assume_init(), )
-	}
-}
-
 pub fn TranslateMessage(msg: &Msg, ) -> bool {
 	unsafe {
 		#[link(name = "USER32")]
 		extern "system" {
-			fn TranslateMessage(msg: &Msg, ) -> Bool;
+			fn TranslateMessage(msg: *const c_void, ) -> Bool;
 		}
-		let _ret_ = TranslateMessage(msg, );
+		let _ret_ = TranslateMessage(transmute(msg), );
 		_ret_.to_bool()
 	}
 }
@@ -43,9 +31,9 @@ pub fn DispatchMessageA(msg: &Msg, ) -> LResult {
 	unsafe {
 		#[link(name = "USER32")]
 		extern "system" {
-			fn DispatchMessageA(msg: &Msg, ) -> LResult;
+			fn DispatchMessageA(msg: *const c_void, ) -> LResult;
 		}
-		let _ret_ = DispatchMessageA(msg, );
+		let _ret_ = DispatchMessageA(transmute(msg), );
 		_ret_
 	}
 }
@@ -75,21 +63,21 @@ pub fn RegisterClassExA(param0: &WndClassExA, ) -> u16 {
 	unsafe {
 		#[link(name = "USER32")]
 		extern "system" {
-			fn RegisterClassExA(param0: &WndClassExA, ) -> u16;
+			fn RegisterClassExA(param0: *const c_void, ) -> u16;
 		}
-		let _ret_ = RegisterClassExA(param0, );
+		let _ret_ = RegisterClassExA(transmute(param0), );
 		_ret_
 	}
 }
 
-pub fn CreateWindowExA(ex_style: WindowExStyle, class_name: Option<&str>, window_name: Option<&str>, style: WindowStyle, x: i32, y: i32, width: i32, height: i32, wnd_parent: Option<HWnd>, menu: Option<HMenu>, instance: Option<HInstance>, param: *const (), ) -> HWnd {
+pub fn CreateWindowExA(ex_style: WindowExStyle, class_name: Option<&str>, window_name: Option<&str>, style: WindowStyle, x: i32, y: i32, width: i32, height: i32, wnd_parent: Option<HWnd>, menu: Option<HMenu>, instance: Option<HInstance>, param: *const (), ) -> Option<HWnd> {
 	unsafe {
 		#[link(name = "USER32")]
 		extern "system" {
-			fn CreateWindowExA(ex_style: WindowExStyle, class_name: *const u8, window_name: *const u8, style: WindowStyle, x: i32, y: i32, width: i32, height: i32, wnd_parent: *const c_void, menu: *const c_void, instance: *const c_void, param: *const c_void, ) -> HWnd;
+			fn CreateWindowExA(ex_style: WindowExStyle, class_name: *const u8, window_name: *const u8, style: WindowStyle, x: i32, y: i32, width: i32, height: i32, wnd_parent: *const c_void, menu: *const c_void, instance: *const c_void, param: *const c_void, ) -> *const c_void;
 		}
 		let _ret_ = CreateWindowExA(ex_style, class_name.map(str::to_null_terminated).as_ptr_or_null(), window_name.map(str::to_null_terminated).as_ptr_or_null(), style, x, y, width, height, transmute(wnd_parent), transmute(menu), transmute(instance), param as _, );
-		_ret_
+		transmute(_ret_)
 	}
 }
 
@@ -126,36 +114,36 @@ pub fn AdjustWindowRectEx(rect: &mut Rect, style: WindowStyle, menu: bool, ex_st
 	}
 }
 
-pub fn GetWindowLongPtrA(wnd: HWnd, index: WindowLongPtrIndex, ) -> NonNull<c_void> {
+pub fn GetWindowLongPtrA(wnd: HWnd, index: WindowLongPtrIndex, ) -> Option<NonNull<()>> {
 	unsafe {
 		#[link(name = "USER32")]
 		extern "system" {
-			fn GetWindowLongPtrA(wnd: HWnd, index: WindowLongPtrIndex, ) -> NonNull<c_void>;
+			fn GetWindowLongPtrA(wnd: HWnd, index: WindowLongPtrIndex, ) -> Option<NonNull<()>>;
 		}
 		let _ret_ = GetWindowLongPtrA(wnd, index, );
 		_ret_
 	}
 }
 
-pub fn SetWindowLongPtrA(wnd: HWnd, index: WindowLongPtrIndex, new_long: NonNull<c_void>, ) -> NonNull<c_void> {
+pub fn SetWindowLongPtrA(wnd: HWnd, index: WindowLongPtrIndex, new_long: NonNull<()>, ) -> Option<NonNull<()>> {
 	unsafe {
 		#[link(name = "USER32")]
 		extern "system" {
-			fn SetWindowLongPtrA(wnd: HWnd, index: WindowLongPtrIndex, new_long: NonNull<c_void>, ) -> NonNull<c_void>;
+			fn SetWindowLongPtrA(wnd: HWnd, index: WindowLongPtrIndex, new_long: NonNull<()>, ) -> Option<NonNull<()>>;
 		}
 		let _ret_ = SetWindowLongPtrA(wnd, index, new_long, );
 		_ret_
 	}
 }
 
-pub fn LoadCursorA(instance: Option<HInstance>, cursor_name: &str, ) -> HCursor {
+pub fn LoadCursorA(instance: Option<HInstance>, cursor_name: &str, ) -> Option<HCursor> {
 	unsafe {
 		#[link(name = "USER32")]
 		extern "system" {
-			fn LoadCursorA(instance: *const c_void, cursor_name: *const u8, ) -> HCursor;
+			fn LoadCursorA(instance: *const c_void, cursor_name: *const u8, ) -> *const c_void;
 		}
 		let _ret_ = LoadCursorA(transmute(instance), cursor_name.to_null_terminated().as_ptr_or_null(), );
-		_ret_
+		transmute(_ret_)
 	}
 }
 

@@ -33,7 +33,7 @@ pub trait IDxgiAdapter1: IDxgiAdapter {
 	fn GetDesc1(&self, ) -> Result<DxgiAdapterDesc1, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_desc: MaybeUninit<DxgiAdapterDesc1> = MaybeUninit::uninit();
+			let mut _out_desc: MaybeUninit<DxgiAdapterDesc1> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_desc: *mut DxgiAdapterDesc1, ) -> HResult
 				= transmute(vt[10]);
 			let _ret_ = f(vt, _out_desc.as_mut_ptr(), );
@@ -48,13 +48,13 @@ impl IDxgiAdapter1 for DxgiAdapter1 {
 }
 
 impl IDxgiAdapter for DxgiAdapter1 {
-	fn as_adapter(&self) -> &DxgiAdapter { &self.0 }
-	fn into_adapter(self) -> DxgiAdapter { self.0 }
+	fn as_adapter(&self) -> &DxgiAdapter { &self.0.as_adapter() }
+	fn into_adapter(self) -> DxgiAdapter { self.0.into_adapter() }
 }
 
 impl IDxgiObject for DxgiAdapter1 {
-	fn as_object(&self) -> &DxgiObject { &self.0.0 }
-	fn into_object(self) -> DxgiObject { self.0.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiAdapter1 {
@@ -64,7 +64,7 @@ impl From<Unknown> for DxgiAdapter1 {
 }
 
 impl IUnknown for DxgiAdapter1 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

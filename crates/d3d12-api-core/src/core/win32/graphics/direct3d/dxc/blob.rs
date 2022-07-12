@@ -28,13 +28,13 @@ pub trait IDxcBlob: IUnknown {
 	fn as_blob(&self) -> &DxcBlob;
 	fn into_blob(self) -> DxcBlob;
 
-	fn GetBufferPointer(&self, ) -> *const c_void {
+	fn GetBufferPointer(&self, ) -> *const () {
 		unsafe {
 			let vt = self.as_param();
 			let f: extern "system" fn(Param<Self>, ) -> *const c_void
 				= transmute(vt[3]);
 			let _ret_ = f(vt, );
-			_ret_
+			_ret_ as _
 		}
 	}
 
@@ -61,7 +61,7 @@ impl From<Unknown> for DxcBlob {
 }
 
 impl IUnknown for DxcBlob {
-	fn as_unknown(&self) -> &Unknown { &self.0 }
-	fn into_unknown(self) -> Unknown { self.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

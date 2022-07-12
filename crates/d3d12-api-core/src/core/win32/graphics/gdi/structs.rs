@@ -14,18 +14,18 @@ use crate::core::win32::system::com::*;
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct HMonitor {
-	pub value: NonNull<c_void>,
+	pub value: NonNull<()>,
 }
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct HBrush {
-	pub value: NonNull<c_void>,
+	pub value: NonNull<()>,
 }
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct HDc {
-	pub value: NonNull<c_void>,
+	pub value: NonNull<()>,
 }
 

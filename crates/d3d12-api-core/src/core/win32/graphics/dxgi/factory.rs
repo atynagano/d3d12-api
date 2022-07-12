@@ -112,8 +112,8 @@ impl IDxgiFactory for DxgiFactory {
 }
 
 impl IDxgiObject for DxgiFactory {
-	fn as_object(&self) -> &DxgiObject { &self.0 }
-	fn into_object(self) -> DxgiObject { self.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiFactory {
@@ -123,7 +123,7 @@ impl From<Unknown> for DxgiFactory {
 }
 
 impl IUnknown for DxgiFactory {
-	fn as_unknown(&self) -> &Unknown { &self.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

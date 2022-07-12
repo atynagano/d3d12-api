@@ -32,8 +32,8 @@ pub trait IDxcVersionInfo: IUnknown {
 	fn GetVersion(&self, ) -> Result<(u32, u32, ), HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_major: MaybeUninit<u32> = MaybeUninit::uninit();
-			let mut _out_minor: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_major: MaybeUninit<u32> = MaybeUninit::zeroed();
+			let mut _out_minor: MaybeUninit<u32> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_major: *mut u32, _out_minor: *mut u32, ) -> HResult
 				= transmute(vt[3]);
 			let _ret_ = f(vt, _out_major.as_mut_ptr(), _out_minor.as_mut_ptr(), );
@@ -47,7 +47,7 @@ pub trait IDxcVersionInfo: IUnknown {
 	fn GetFlags(&self, ) -> Result<u32, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_flags: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_flags: MaybeUninit<u32> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_flags: *mut u32, ) -> HResult
 				= transmute(vt[4]);
 			let _ret_ = f(vt, _out_flags.as_mut_ptr(), );
@@ -68,7 +68,7 @@ impl From<Unknown> for DxcVersionInfo {
 }
 
 impl IUnknown for DxcVersionInfo {
-	fn as_unknown(&self) -> &Unknown { &self.0 }
-	fn into_unknown(self) -> Unknown { self.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

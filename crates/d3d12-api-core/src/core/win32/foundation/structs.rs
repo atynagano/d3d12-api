@@ -30,13 +30,13 @@ pub struct Luid {
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct Handle {
-	pub value: NonNull<c_void>,
+	pub value: NonNull<()>,
 }
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct HWnd {
-	pub value: NonNull<c_void>,
+	pub value: NonNull<()>,
 }
 
 #[repr(C)]
@@ -56,7 +56,7 @@ pub struct FileTime {
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct HInstance {
-	pub value: NonNull<c_void>,
+	pub value: NonNull<()>,
 }
 
 #[repr(C)]

@@ -44,23 +44,23 @@ impl IDxgiDevice3 for DxgiDevice3 {
 }
 
 impl IDxgiDevice2 for DxgiDevice3 {
-	fn as_device2(&self) -> &DxgiDevice2 { &self.0 }
-	fn into_device2(self) -> DxgiDevice2 { self.0 }
+	fn as_device2(&self) -> &DxgiDevice2 { &self.0.as_device2() }
+	fn into_device2(self) -> DxgiDevice2 { self.0.into_device2() }
 }
 
 impl IDxgiDevice1 for DxgiDevice3 {
-	fn as_device1(&self) -> &DxgiDevice1 { &self.0.0 }
-	fn into_device1(self) -> DxgiDevice1 { self.0.0 }
+	fn as_device1(&self) -> &DxgiDevice1 { &self.0.as_device1() }
+	fn into_device1(self) -> DxgiDevice1 { self.0.into_device1() }
 }
 
 impl IDxgiDevice for DxgiDevice3 {
-	fn as_device(&self) -> &DxgiDevice { &self.0.0.0 }
-	fn into_device(self) -> DxgiDevice { self.0.0.0 }
+	fn as_device(&self) -> &DxgiDevice { &self.0.as_device() }
+	fn into_device(self) -> DxgiDevice { self.0.into_device() }
 }
 
 impl IDxgiObject for DxgiDevice3 {
-	fn as_object(&self) -> &DxgiObject { &self.0.0.0.0 }
-	fn into_object(self) -> DxgiObject { self.0.0.0.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiDevice3 {
@@ -70,7 +70,7 @@ impl From<Unknown> for DxgiDevice3 {
 }
 
 impl IUnknown for DxgiDevice3 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

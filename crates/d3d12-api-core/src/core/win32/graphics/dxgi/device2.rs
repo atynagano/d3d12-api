@@ -52,6 +52,18 @@ pub trait IDxgiDevice2: IDxgiDevice1 {
 		}
 	}
 
+	fn reclaim_resources(&self, resources: &[Param<DxgiResource>], ) -> Result<bool, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let (_ptr_resources, _len_resources) = resources.deconstruct();
+			let mut _out_discarded = Bool { value: 0 };
+			let f: extern "system" fn(Param<Self>, num_resources: u32, resources: *const Param<DxgiResource>, _out_discarded: &mut Bool, ) -> HResult
+				= transmute(vt[15]);
+			let _ret_ = f(vt, _len_resources as u32, _ptr_resources, &mut _out_discarded, );
+			Ok(_out_discarded.to_bool())
+		}
+	}
+
 	fn EnqueueSetEvent(&self, event: Handle, ) -> Result<(), HResult> {
 		unsafe {
 			let vt = self.as_param();
@@ -69,18 +81,18 @@ impl IDxgiDevice2 for DxgiDevice2 {
 }
 
 impl IDxgiDevice1 for DxgiDevice2 {
-	fn as_device1(&self) -> &DxgiDevice1 { &self.0 }
-	fn into_device1(self) -> DxgiDevice1 { self.0 }
+	fn as_device1(&self) -> &DxgiDevice1 { &self.0.as_device1() }
+	fn into_device1(self) -> DxgiDevice1 { self.0.into_device1() }
 }
 
 impl IDxgiDevice for DxgiDevice2 {
-	fn as_device(&self) -> &DxgiDevice { &self.0.0 }
-	fn into_device(self) -> DxgiDevice { self.0.0 }
+	fn as_device(&self) -> &DxgiDevice { &self.0.as_device() }
+	fn into_device(self) -> DxgiDevice { self.0.into_device() }
 }
 
 impl IDxgiObject for DxgiDevice2 {
-	fn as_object(&self) -> &DxgiObject { &self.0.0.0 }
-	fn into_object(self) -> DxgiObject { self.0.0.0 }
+	fn as_object(&self) -> &DxgiObject { &self.0.as_object() }
+	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
 impl From<Unknown> for DxgiDevice2 {
@@ -90,7 +102,7 @@ impl From<Unknown> for DxgiDevice2 {
 }
 
 impl IUnknown for DxgiDevice2 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

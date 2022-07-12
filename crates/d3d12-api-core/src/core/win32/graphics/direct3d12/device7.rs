@@ -69,43 +69,43 @@ impl ID3D12Device7 for D3D12Device7 {
 }
 
 impl ID3D12Device6 for D3D12Device7 {
-	fn as_device6(&self) -> &D3D12Device6 { &self.0 }
-	fn into_device6(self) -> D3D12Device6 { self.0 }
+	fn as_device6(&self) -> &D3D12Device6 { &self.0.as_device6() }
+	fn into_device6(self) -> D3D12Device6 { self.0.into_device6() }
 }
 
 impl ID3D12Device5 for D3D12Device7 {
-	fn as_device5(&self) -> &D3D12Device5 { &self.0.0 }
-	fn into_device5(self) -> D3D12Device5 { self.0.0 }
+	fn as_device5(&self) -> &D3D12Device5 { &self.0.as_device5() }
+	fn into_device5(self) -> D3D12Device5 { self.0.into_device5() }
 }
 
 impl ID3D12Device4 for D3D12Device7 {
-	fn as_device4(&self) -> &D3D12Device4 { &self.0.0.0 }
-	fn into_device4(self) -> D3D12Device4 { self.0.0.0 }
+	fn as_device4(&self) -> &D3D12Device4 { &self.0.as_device4() }
+	fn into_device4(self) -> D3D12Device4 { self.0.into_device4() }
 }
 
 impl ID3D12Device3 for D3D12Device7 {
-	fn as_device3(&self) -> &D3D12Device3 { &self.0.0.0.0 }
-	fn into_device3(self) -> D3D12Device3 { self.0.0.0.0 }
+	fn as_device3(&self) -> &D3D12Device3 { &self.0.as_device3() }
+	fn into_device3(self) -> D3D12Device3 { self.0.into_device3() }
 }
 
 impl ID3D12Device2 for D3D12Device7 {
-	fn as_device2(&self) -> &D3D12Device2 { &self.0.0.0.0.0 }
-	fn into_device2(self) -> D3D12Device2 { self.0.0.0.0.0 }
+	fn as_device2(&self) -> &D3D12Device2 { &self.0.as_device2() }
+	fn into_device2(self) -> D3D12Device2 { self.0.into_device2() }
 }
 
 impl ID3D12Device1 for D3D12Device7 {
-	fn as_device1(&self) -> &D3D12Device1 { &self.0.0.0.0.0.0 }
-	fn into_device1(self) -> D3D12Device1 { self.0.0.0.0.0.0 }
+	fn as_device1(&self) -> &D3D12Device1 { &self.0.as_device1() }
+	fn into_device1(self) -> D3D12Device1 { self.0.into_device1() }
 }
 
 impl ID3D12Device for D3D12Device7 {
-	fn as_device(&self) -> &D3D12Device { &self.0.0.0.0.0.0.0 }
-	fn into_device(self) -> D3D12Device { self.0.0.0.0.0.0.0 }
+	fn as_device(&self) -> &D3D12Device { &self.0.as_device() }
+	fn into_device(self) -> D3D12Device { self.0.into_device() }
 }
 
 impl ID3D12Object for D3D12Device7 {
-	fn as_object(&self) -> &D3D12Object { &self.0.0.0.0.0.0.0.0 }
-	fn into_object(self) -> D3D12Object { self.0.0.0.0.0.0.0.0 }
+	fn as_object(&self) -> &D3D12Object { &self.0.as_object() }
+	fn into_object(self) -> D3D12Object { self.0.into_object() }
 }
 
 impl From<Unknown> for D3D12Device7 {
@@ -115,7 +115,7 @@ impl From<Unknown> for D3D12Device7 {
 }
 
 impl IUnknown for D3D12Device7 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0.0.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0.0.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

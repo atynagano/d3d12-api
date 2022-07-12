@@ -36,8 +36,8 @@ impl IDxcVersionInfo2 for DxcVersionInfo2 {
 }
 
 impl IDxcVersionInfo for DxcVersionInfo2 {
-	fn as_version_info(&self) -> &DxcVersionInfo { &self.0 }
-	fn into_version_info(self) -> DxcVersionInfo { self.0 }
+	fn as_version_info(&self) -> &DxcVersionInfo { &self.0.as_version_info() }
+	fn into_version_info(self) -> DxcVersionInfo { self.0.into_version_info() }
 }
 
 impl From<Unknown> for DxcVersionInfo2 {
@@ -47,7 +47,7 @@ impl From<Unknown> for DxcVersionInfo2 {
 }
 
 impl IUnknown for DxcVersionInfo2 {
-	fn as_unknown(&self) -> &Unknown { &self.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

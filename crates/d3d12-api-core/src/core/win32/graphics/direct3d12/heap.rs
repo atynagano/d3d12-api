@@ -32,10 +32,11 @@ pub trait ID3D12Heap: ID3D12Pageable {
 	fn GetDesc(&self, ) -> D3D12HeapDesc {
 		unsafe {
 			let vt = self.as_param();
-			let f: extern "system" fn(Param<Self>, ) -> D3D12HeapDesc
+			let mut _out__out_desc: MaybeUninit<D3D12HeapDesc> = MaybeUninit::zeroed();
+			let f: extern "system" fn(Param<Self>, _out__out_desc: *mut D3D12HeapDesc, ) -> ()
 				= transmute(vt[8]);
-			let _ret_ = f(vt, );
-			_ret_
+			let _ret_ = f(vt, _out__out_desc.as_mut_ptr(), );
+			_out__out_desc.assume_init()
 		}
 	}
 }
@@ -46,18 +47,18 @@ impl ID3D12Heap for D3D12Heap {
 }
 
 impl ID3D12Pageable for D3D12Heap {
-	fn as_pageable(&self) -> &D3D12Pageable { &self.0 }
-	fn into_pageable(self) -> D3D12Pageable { self.0 }
+	fn as_pageable(&self) -> &D3D12Pageable { &self.0.as_pageable() }
+	fn into_pageable(self) -> D3D12Pageable { self.0.into_pageable() }
 }
 
 impl ID3D12DeviceChild for D3D12Heap {
-	fn as_device_child(&self) -> &D3D12DeviceChild { &self.0.0 }
-	fn into_device_child(self) -> D3D12DeviceChild { self.0.0 }
+	fn as_device_child(&self) -> &D3D12DeviceChild { &self.0.as_device_child() }
+	fn into_device_child(self) -> D3D12DeviceChild { self.0.into_device_child() }
 }
 
 impl ID3D12Object for D3D12Heap {
-	fn as_object(&self) -> &D3D12Object { &self.0.0.0 }
-	fn into_object(self) -> D3D12Object { self.0.0.0 }
+	fn as_object(&self) -> &D3D12Object { &self.0.as_object() }
+	fn into_object(self) -> D3D12Object { self.0.into_object() }
 }
 
 impl From<Unknown> for D3D12Heap {
@@ -67,7 +68,7 @@ impl From<Unknown> for D3D12Heap {
 }
 
 impl IUnknown for D3D12Heap {
-	fn as_unknown(&self) -> &Unknown { &self.0.0.0.0 }
-	fn into_unknown(self) -> Unknown { self.0.0.0.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

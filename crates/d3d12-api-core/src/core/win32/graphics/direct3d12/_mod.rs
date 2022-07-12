@@ -3,7 +3,6 @@ use std::ops::Add;
 use crate::core::win32::foundation::PWStr;
 use crate::core::win32::graphics::dxgi::common::{DxgiFormat, DxgiSampleDesc};
 use crate::core::win32::system::com::AsParam;
-use crate::helpers::{Zeroed};
 use super::*;
 
 #[repr(C)]
@@ -109,7 +108,17 @@ impl D3D12Viewport {
 impl Default for D3D12DepthWriteMask { fn default() -> Self { Self::Zero } }
 
 // impl Default for D3D12StencilOp { fn default() -> Self { Zeroed::zeroed() } }
-impl Default for D3D12DepthStencilOpDesc { fn default() -> Self { Zeroed::zeroed() } }
+/*
+impl Default for D3D12DepthStencilOpDesc {
+    fn default() -> Self {
+        Self {
+            stencil_fail_op: D3D12StencilOp::Keep,
+            stencil_depth_fail_op: D3D12StencilOp::Keep,
+            stencil_pass_op: D3D12StencilOp::Keep,
+            stencil_func: D3D12ComparisonFunc::Never,
+        }
+    }
+}*/
 
 // impl Default for D3D12DepthStencilDesc { fn default() -> Self { Zeroed::zeroed() } }
 // impl Default for D3D12DepthStencilDesc1 { fn default() -> Self { Zeroed::zeroed() } }
@@ -451,13 +460,30 @@ impl D3D12ResourceDesc {
     }
 }
 
-impl D3D12ResourceDesc1 {}
+impl D3D12ResourceDesc1 {
+    //
+}
 
 impl D3D12DepthStencilValue {}
 
 impl D3D12ClearValueAnonymousUnion {}
 
-impl D3D12ClearValue {}
+impl D3D12ClearValue {
+    pub const fn Color(format: DxgiFormat, color: [f32; 4]) -> Self {
+        Self {
+            format,
+            anonymous: D3D12ClearValueAnonymousUnion { color },
+        }
+    }
+    pub const fn DepthStencil(format: DxgiFormat, depth: f32, stencil: u8) -> Self {
+        Self {
+            format,
+            anonymous: D3D12ClearValueAnonymousUnion {
+                depth_stencil: D3D12DepthStencilValue { depth, stencil }
+            },
+        }
+    }
+}
 
 pub type D3D12Range = std::ops::Range<usize>;
 
@@ -554,7 +580,26 @@ impl D3D12TextureCopyType {}
 
 impl D3D12TextureCopyLocationAnonymousUnion {}
 
-impl D3D12TextureCopyLocation<'_> {}
+impl<'a> D3D12TextureCopyLocation<'a> {
+    pub fn SubresourceIndex(resource: &'a (impl ID3D12Resource + ?Sized), index: u32) -> Self {
+        Self {
+            resource: resource.as_resource().as_param(),
+            ty: D3D12TextureCopyType::SubresourceIndex,
+            anonymous: D3D12TextureCopyLocationAnonymousUnion {
+                subresource_index: index
+            },
+        }
+    }
+    pub fn PlacedFootprint(resource: &'a (impl ID3D12Resource + ?Sized), footprint: D3D12PlacedSubresourceFootprint) -> Self {
+        Self {
+            resource: resource.as_resource().as_param(),
+            ty: D3D12TextureCopyType::PlacedFootprint,
+            anonymous: D3D12TextureCopyLocationAnonymousUnion {
+                placed_footprint: footprint
+            },
+        }
+    }
+}
 
 impl D3D12ResolveMode {}
 
@@ -682,45 +727,45 @@ impl D3D12DescriptorHeapFlags {}
 
 impl D3D12DescriptorHeapDesc {
     // todo: ShaderVisibleかNoneか
-    pub const fn Rtv(count: u32) -> Self {
+    pub const fn Rtv(num_descs: u32) -> Self {
         Self {
             ty: D3D12DescriptorHeapType::Rtv,
-            num_descriptors: count,
+            num_descriptors: num_descs,
             flags: D3D12DescriptorHeapFlags::None,
             node_mask: 0,
         }
     }
-    pub const fn CbvSrvUav(count: u32) -> Self {
+    pub const fn CbvSrvUav(num_descs: u32) -> Self {
         Self {
             ty: D3D12DescriptorHeapType::CbvSrvUav,
-            num_descriptors: count,
+            num_descriptors: num_descs,
             flags: D3D12DescriptorHeapFlags::ShaderVisible,
             node_mask: 0,
         }
     }
-    pub const fn NumTypes(count: u32) -> Self {
+    pub const fn NumTypes(num_descs: u32) -> Self {
         todo!();
         Self {
             ty: D3D12DescriptorHeapType::NumTypes,
-            num_descriptors: count,
+            num_descriptors: num_descs,
             flags: D3D12DescriptorHeapFlags::None,
             node_mask: 0,
         }
     }
-    pub const fn Sampler(count: u32) -> Self {
+    pub const fn Sampler(num_descs: u32) -> Self {
         todo!();
         Self {
             ty: D3D12DescriptorHeapType::Sampler,
-            num_descriptors: count,
+            num_descriptors: num_descs,
             flags: D3D12DescriptorHeapFlags::None,
             node_mask: 0,
         }
     }
-    pub const fn Dsv(count: u32) -> Self {
+    pub const fn Dsv(num_descs: u32) -> Self {
         todo!();
         Self {
             ty: D3D12DescriptorHeapType::Dsv,
-            num_descriptors: count,
+            num_descriptors: num_descs,
             flags: D3D12DescriptorHeapFlags::None,
             node_mask: 0,
         }
@@ -731,6 +776,10 @@ impl D3D12DescriptorHeapDesc {
         } else {
             D3D12DescriptorHeapFlags::None
         };
+        self
+    }
+    pub const fn with_node_mask(mut self, value: u32) -> Self {
+        self.node_mask = value;
         self
     }
 }
@@ -1126,3 +1175,379 @@ impl D3D12LibraryDesc<'_> {}
 impl D3D12FunctionDesc<'_> {}
 
 impl D3D12ParameterDesc<'_> {}
+
+pub const fn D3D12CalcSubresource(mip_slice: u32, array_slice: u32, plane_slice: u32, mip_levels: u32, array_size: u32) -> u32 {
+    mip_slice + array_slice * mip_levels + plane_slice * mip_levels * array_size
+}
+
+/* todo
+
+
+//------------------------------------------------------------------------------------------------
+template <typename T, typename U, typename V>
+inline void D3D12DecomposeSubresource( UINT Subresource, UINT MipLevels, UINT ArraySize, _Out_ T& MipSlice, _Out_ U& ArraySlice, _Out_ V& PlaneSlice ) noexcept
+{
+    MipSlice = static_cast<T>(Subresource % MipLevels);
+    ArraySlice = static_cast<U>((Subresource / MipLevels) % ArraySize);
+    PlaneSlice = static_cast<V>(Subresource / (MipLevels * ArraySize));
+}
+
+//------------------------------------------------------------------------------------------------
+inline UINT8 D3D12GetFormatPlaneCount(
+    _In_ ID3D12Device* pDevice,
+    DXGI_FORMAT Format
+    ) noexcept
+{
+    D3D12_FEATURE_DATA_FORMAT_INFO formatInfo = { Format, 0 };
+    if (FAILED(pDevice->CheckFeatureSupport(D3D12_FEATURE_FORMAT_INFO, &formatInfo, sizeof(formatInfo))))
+    {
+        return 0;
+    }
+    return formatInfo.PlaneCount;
+}
+
+
+//------------------------------------------------------------------------------------------------
+// Row-by-row memcpy
+inline void MemcpySubresource(
+    _In_ const D3D12_MEMCPY_DEST* pDest,
+    _In_ const D3D12_SUBRESOURCE_DATA* pSrc,
+    SIZE_T RowSizeInBytes,
+    UINT NumRows,
+    UINT NumSlices) noexcept
+{
+    for (UINT z = 0; z < NumSlices; ++z)
+    {
+        auto pDestSlice = static_cast<BYTE*>(pDest->pData) + pDest->SlicePitch * z;
+        auto pSrcSlice = static_cast<const BYTE*>(pSrc->pData) + pSrc->SlicePitch * LONG_PTR(z);
+        for (UINT y = 0; y < NumRows; ++y)
+        {
+            memcpy(pDestSlice + pDest->RowPitch * y,
+                   pSrcSlice + pSrc->RowPitch * LONG_PTR(y),
+                   RowSizeInBytes);
+        }
+    }
+}
+
+//------------------------------------------------------------------------------------------------
+// Row-by-row memcpy
+inline void MemcpySubresource(
+    _In_ const D3D12_MEMCPY_DEST* pDest,
+    _In_ const void* pResourceData,
+    _In_ const D3D12_SUBRESOURCE_INFO* pSrc,
+    SIZE_T RowSizeInBytes,
+    UINT NumRows,
+    UINT NumSlices) noexcept
+{
+    for (UINT z = 0; z < NumSlices; ++z)
+    {
+        auto pDestSlice = static_cast<BYTE*>(pDest->pData) + pDest->SlicePitch * z;
+        auto pSrcSlice = (static_cast<const BYTE*>(pResourceData) + pSrc->Offset) + pSrc->DepthPitch * ULONG_PTR(z);
+        for (UINT y = 0; y < NumRows; ++y)
+        {
+            memcpy(pDestSlice + pDest->RowPitch * y,
+                pSrcSlice + pSrc->RowPitch * ULONG_PTR(y),
+                RowSizeInBytes);
+        }
+    }
+}
+
+//------------------------------------------------------------------------------------------------
+// Returns required size of a buffer to be used for data upload
+inline UINT64 GetRequiredIntermediateSize(
+    _In_ ID3D12Resource* pDestinationResource,
+    _In_range_(0,D3D12_REQ_SUBRESOURCES) UINT FirstSubresource,
+    _In_range_(0,D3D12_REQ_SUBRESOURCES-FirstSubresource) UINT NumSubresources) noexcept
+{
+    const auto Desc = pDestinationResource->GetDesc();
+    UINT64 RequiredSize = 0;
+
+    ID3D12Device* pDevice = nullptr;
+    pDestinationResource->GetDevice(IID_ID3D12Device, reinterpret_cast<void**>(&pDevice));
+    pDevice->GetCopyableFootprints(&Desc, FirstSubresource, NumSubresources, 0, nullptr, nullptr, nullptr, &RequiredSize);
+    pDevice->Release();
+
+    return RequiredSize;
+}
+
+//------------------------------------------------------------------------------------------------
+// All arrays must be populated (e.g. by calling GetCopyableFootprints)
+inline UINT64 UpdateSubresources(
+    _In_ ID3D12GraphicsCommandList* pCmdList,
+    _In_ ID3D12Resource* pDestinationResource,
+    _In_ ID3D12Resource* pIntermediate,
+    _In_range_(0,D3D12_REQ_SUBRESOURCES) UINT FirstSubresource,
+    _In_range_(0,D3D12_REQ_SUBRESOURCES-FirstSubresource) UINT NumSubresources,
+    UINT64 RequiredSize,
+    _In_reads_(NumSubresources) const D3D12_PLACED_SUBRESOURCE_FOOTPRINT* pLayouts,
+    _In_reads_(NumSubresources) const UINT* pNumRows,
+    _In_reads_(NumSubresources) const UINT64* pRowSizesInBytes,
+    _In_reads_(NumSubresources) const D3D12_SUBRESOURCE_DATA* pSrcData) noexcept
+{
+    // Minor validation
+    const auto IntermediateDesc = pIntermediate->GetDesc();
+    const auto DestinationDesc = pDestinationResource->GetDesc();
+    if (IntermediateDesc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER ||
+        IntermediateDesc.Width < RequiredSize + pLayouts[0].Offset ||
+        RequiredSize > SIZE_T(-1) ||
+        (DestinationDesc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER &&
+            (FirstSubresource != 0 || NumSubresources != 1)))
+    {
+        return 0;
+    }
+
+    BYTE* pData;
+    HRESULT hr = pIntermediate->Map(0, nullptr, reinterpret_cast<void**>(&pData));
+    if (FAILED(hr))
+    {
+        return 0;
+    }
+
+    for (UINT i = 0; i < NumSubresources; ++i)
+    {
+        if (pRowSizesInBytes[i] > SIZE_T(-1)) return 0;
+        D3D12_MEMCPY_DEST DestData = { pData + pLayouts[i].Offset, pLayouts[i].Footprint.RowPitch, SIZE_T(pLayouts[i].Footprint.RowPitch) * SIZE_T(pNumRows[i]) };
+        MemcpySubresource(&DestData, &pSrcData[i], static_cast<SIZE_T>(pRowSizesInBytes[i]), pNumRows[i], pLayouts[i].Footprint.Depth);
+    }
+    pIntermediate->Unmap(0, nullptr);
+
+    if (DestinationDesc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
+    {
+        pCmdList->CopyBufferRegion(
+            pDestinationResource, 0, pIntermediate, pLayouts[0].Offset, pLayouts[0].Footprint.Width);
+    }
+    else
+    {
+        for (UINT i = 0; i < NumSubresources; ++i)
+        {
+            const CD3DX12_TEXTURE_COPY_LOCATION Dst(pDestinationResource, i + FirstSubresource);
+            const CD3DX12_TEXTURE_COPY_LOCATION Src(pIntermediate, pLayouts[i]);
+            pCmdList->CopyTextureRegion(&Dst, 0, 0, 0, &Src, nullptr);
+        }
+    }
+    return RequiredSize;
+}
+
+//------------------------------------------------------------------------------------------------
+// All arrays must be populated (e.g. by calling GetCopyableFootprints)
+inline UINT64 UpdateSubresources(
+    _In_ ID3D12GraphicsCommandList* pCmdList,
+    _In_ ID3D12Resource* pDestinationResource,
+    _In_ ID3D12Resource* pIntermediate,
+    _In_range_(0,D3D12_REQ_SUBRESOURCES) UINT FirstSubresource,
+    _In_range_(0,D3D12_REQ_SUBRESOURCES-FirstSubresource) UINT NumSubresources,
+    UINT64 RequiredSize,
+    _In_reads_(NumSubresources) const D3D12_PLACED_SUBRESOURCE_FOOTPRINT* pLayouts,
+    _In_reads_(NumSubresources) const UINT* pNumRows,
+    _In_reads_(NumSubresources) const UINT64* pRowSizesInBytes,
+    _In_ const void* pResourceData,
+    _In_reads_(NumSubresources) const D3D12_SUBRESOURCE_INFO* pSrcData) noexcept
+{
+    // Minor validation
+    const auto IntermediateDesc = pIntermediate->GetDesc();
+    const auto DestinationDesc = pDestinationResource->GetDesc();
+    if (IntermediateDesc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER ||
+        IntermediateDesc.Width < RequiredSize + pLayouts[0].Offset ||
+        RequiredSize > SIZE_T(-1) ||
+        (DestinationDesc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER &&
+            (FirstSubresource != 0 || NumSubresources != 1)))
+    {
+        return 0;
+    }
+
+    BYTE* pData;
+    HRESULT hr = pIntermediate->Map(0, nullptr, reinterpret_cast<void**>(&pData));
+    if (FAILED(hr))
+    {
+        return 0;
+    }
+
+    for (UINT i = 0; i < NumSubresources; ++i)
+    {
+        if (pRowSizesInBytes[i] > SIZE_T(-1)) return 0;
+        D3D12_MEMCPY_DEST DestData = { pData + pLayouts[i].Offset, pLayouts[i].Footprint.RowPitch, SIZE_T(pLayouts[i].Footprint.RowPitch) * SIZE_T(pNumRows[i]) };
+        MemcpySubresource(&DestData, pResourceData, &pSrcData[i], static_cast<SIZE_T>(pRowSizesInBytes[i]), pNumRows[i], pLayouts[i].Footprint.Depth);
+    }
+    pIntermediate->Unmap(0, nullptr);
+
+    if (DestinationDesc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
+    {
+        pCmdList->CopyBufferRegion(
+            pDestinationResource, 0, pIntermediate, pLayouts[0].Offset, pLayouts[0].Footprint.Width);
+    }
+    else
+    {
+        for (UINT i = 0; i < NumSubresources; ++i)
+        {
+            const CD3DX12_TEXTURE_COPY_LOCATION Dst(pDestinationResource, i + FirstSubresource);
+            const CD3DX12_TEXTURE_COPY_LOCATION Src(pIntermediate, pLayouts[i]);
+            pCmdList->CopyTextureRegion(&Dst, 0, 0, 0, &Src, nullptr);
+        }
+    }
+    return RequiredSize;
+}
+
+//------------------------------------------------------------------------------------------------
+// Heap-allocating UpdateSubresources implementation
+inline UINT64 UpdateSubresources(
+    _In_ ID3D12GraphicsCommandList* pCmdList,
+    _In_ ID3D12Resource* pDestinationResource,
+    _In_ ID3D12Resource* pIntermediate,
+    UINT64 IntermediateOffset,
+    _In_range_(0,D3D12_REQ_SUBRESOURCES) UINT FirstSubresource,
+    _In_range_(0,D3D12_REQ_SUBRESOURCES-FirstSubresource) UINT NumSubresources,
+    _In_reads_(NumSubresources) const D3D12_SUBRESOURCE_DATA* pSrcData) noexcept
+{
+    UINT64 RequiredSize = 0;
+    const auto MemToAlloc = static_cast<UINT64>(sizeof(D3D12_PLACED_SUBRESOURCE_FOOTPRINT) + sizeof(UINT) + sizeof(UINT64)) * NumSubresources;
+    if (MemToAlloc > SIZE_MAX)
+    {
+       return 0;
+    }
+    void* pMem = HeapAlloc(GetProcessHeap(), 0, static_cast<SIZE_T>(MemToAlloc));
+    if (pMem == nullptr)
+    {
+       return 0;
+    }
+    auto pLayouts = static_cast<D3D12_PLACED_SUBRESOURCE_FOOTPRINT*>(pMem);
+    auto pRowSizesInBytes = reinterpret_cast<UINT64*>(pLayouts + NumSubresources);
+    auto pNumRows = reinterpret_cast<UINT*>(pRowSizesInBytes + NumSubresources);
+
+    const auto Desc = pDestinationResource->GetDesc();
+    ID3D12Device* pDevice = nullptr;
+    pDestinationResource->GetDevice(IID_ID3D12Device, reinterpret_cast<void**>(&pDevice));
+    pDevice->GetCopyableFootprints(&Desc, FirstSubresource, NumSubresources, IntermediateOffset, pLayouts, pNumRows, pRowSizesInBytes, &RequiredSize);
+    pDevice->Release();
+
+    const UINT64 Result = UpdateSubresources(pCmdList, pDestinationResource, pIntermediate, FirstSubresource, NumSubresources, RequiredSize, pLayouts, pNumRows, pRowSizesInBytes, pSrcData);
+    HeapFree(GetProcessHeap(), 0, pMem);
+    return Result;
+}
+
+//------------------------------------------------------------------------------------------------
+// Heap-allocating UpdateSubresources implementation
+inline UINT64 UpdateSubresources(
+    _In_ ID3D12GraphicsCommandList* pCmdList,
+    _In_ ID3D12Resource* pDestinationResource,
+    _In_ ID3D12Resource* pIntermediate,
+    UINT64 IntermediateOffset,
+    _In_range_(0,D3D12_REQ_SUBRESOURCES) UINT FirstSubresource,
+    _In_range_(0,D3D12_REQ_SUBRESOURCES-FirstSubresource) UINT NumSubresources,
+    _In_ const void* pResourceData,
+    _In_reads_(NumSubresources) const D3D12_SUBRESOURCE_INFO* pSrcData) noexcept
+{
+    UINT64 RequiredSize = 0;
+    const auto MemToAlloc = static_cast<UINT64>(sizeof(D3D12_PLACED_SUBRESOURCE_FOOTPRINT) + sizeof(UINT) + sizeof(UINT64)) * NumSubresources;
+    if (MemToAlloc > SIZE_MAX)
+    {
+        return 0;
+    }
+    void* pMem = HeapAlloc(GetProcessHeap(), 0, static_cast<SIZE_T>(MemToAlloc));
+    if (pMem == nullptr)
+    {
+        return 0;
+    }
+    auto pLayouts = static_cast<D3D12_PLACED_SUBRESOURCE_FOOTPRINT*>(pMem);
+    auto pRowSizesInBytes = reinterpret_cast<UINT64*>(pLayouts + NumSubresources);
+    auto pNumRows = reinterpret_cast<UINT*>(pRowSizesInBytes + NumSubresources);
+
+    const auto Desc = pDestinationResource->GetDesc();
+    ID3D12Device* pDevice = nullptr;
+    pDestinationResource->GetDevice(IID_ID3D12Device, reinterpret_cast<void**>(&pDevice));
+    pDevice->GetCopyableFootprints(&Desc, FirstSubresource, NumSubresources, IntermediateOffset, pLayouts, pNumRows, pRowSizesInBytes, &RequiredSize);
+    pDevice->Release();
+
+    const UINT64 Result = UpdateSubresources(pCmdList, pDestinationResource, pIntermediate, FirstSubresource, NumSubresources, RequiredSize, pLayouts, pNumRows, pRowSizesInBytes, pResourceData, pSrcData);
+    HeapFree(GetProcessHeap(), 0, pMem);
+    return Result;
+}
+
+//------------------------------------------------------------------------------------------------
+// Stack-allocating UpdateSubresources implementation
+template <UINT MaxSubresources>
+inline UINT64 UpdateSubresources(
+    _In_ ID3D12GraphicsCommandList* pCmdList,
+    _In_ ID3D12Resource* pDestinationResource,
+    _In_ ID3D12Resource* pIntermediate,
+    UINT64 IntermediateOffset,
+    _In_range_(0,MaxSubresources) UINT FirstSubresource,
+    _In_range_(1,MaxSubresources-FirstSubresource) UINT NumSubresources,
+    _In_reads_(NumSubresources) const D3D12_SUBRESOURCE_DATA* pSrcData) noexcept
+{
+    UINT64 RequiredSize = 0;
+    D3D12_PLACED_SUBRESOURCE_FOOTPRINT Layouts[MaxSubresources];
+    UINT NumRows[MaxSubresources];
+    UINT64 RowSizesInBytes[MaxSubresources];
+
+    const auto Desc = pDestinationResource->GetDesc();
+    ID3D12Device* pDevice = nullptr;
+    pDestinationResource->GetDevice(IID_ID3D12Device, reinterpret_cast<void**>(&pDevice));
+    pDevice->GetCopyableFootprints(&Desc, FirstSubresource, NumSubresources, IntermediateOffset, Layouts, NumRows, RowSizesInBytes, &RequiredSize);
+    pDevice->Release();
+
+    return UpdateSubresources(pCmdList, pDestinationResource, pIntermediate, FirstSubresource, NumSubresources, RequiredSize, Layouts, NumRows, RowSizesInBytes, pSrcData);
+}
+
+//------------------------------------------------------------------------------------------------
+// Stack-allocating UpdateSubresources implementation
+template <UINT MaxSubresources>
+inline UINT64 UpdateSubresources(
+    _In_ ID3D12GraphicsCommandList* pCmdList,
+    _In_ ID3D12Resource* pDestinationResource,
+    _In_ ID3D12Resource* pIntermediate,
+    UINT64 IntermediateOffset,
+    _In_range_(0,MaxSubresources) UINT FirstSubresource,
+    _In_range_(1,MaxSubresources-FirstSubresource) UINT NumSubresources,
+    _In_ const void* pResourceData,
+    _In_reads_(NumSubresources) const D3D12_SUBRESOURCE_INFO* pSrcData) noexcept
+{
+    UINT64 RequiredSize = 0;
+    D3D12_PLACED_SUBRESOURCE_FOOTPRINT Layouts[MaxSubresources];
+    UINT NumRows[MaxSubresources];
+    UINT64 RowSizesInBytes[MaxSubresources];
+
+    const auto Desc = pDestinationResource->GetDesc();
+    ID3D12Device* pDevice = nullptr;
+    pDestinationResource->GetDevice(IID_ID3D12Device, reinterpret_cast<void**>(&pDevice));
+    pDevice->GetCopyableFootprints(&Desc, FirstSubresource, NumSubresources, IntermediateOffset, Layouts, NumRows, RowSizesInBytes, &RequiredSize);
+    pDevice->Release();
+
+    return UpdateSubresources(pCmdList, pDestinationResource, pIntermediate, FirstSubresource, NumSubresources, RequiredSize, Layouts, NumRows, RowSizesInBytes, pResourceData, pSrcData);
+}
+
+//------------------------------------------------------------------------------------------------
+constexpr bool D3D12IsLayoutOpaque( D3D12_TEXTURE_LAYOUT Layout ) noexcept
+{ return Layout == D3D12_TEXTURE_LAYOUT_UNKNOWN || Layout == D3D12_TEXTURE_LAYOUT_64KB_UNDEFINED_SWIZZLE; }
+
+//------------------------------------------------------------------------------------------------
+template <typename t_CommandListType>
+inline ID3D12CommandList * const * CommandListCast(t_CommandListType * const * pp) noexcept
+{
+    // This cast is useful for passing strongly typed command list pointers into
+    // ExecuteCommandLists.
+    // This cast is valid as long as the const-ness is respected. D3D12 APIs do
+    // respect the const-ness of their arguments.
+    return reinterpret_cast<ID3D12CommandList * const *>(pp);
+}
+
+
+inline D3D12_PIPELINE_STATE_SUBOBJECT_TYPE D3DX12GetBaseSubobjectType(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE SubobjectType) noexcept
+{
+    switch (SubobjectType)
+    {
+    case D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL1:
+        return D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL;
+    default:
+        return SubobjectType;
+    }
+}
+
+*/
+
+#[derive(Copy, Clone, Debug)]
+pub struct D3D12CopyableFootprint {
+    pub layout: D3D12PlacedSubresourceFootprint,
+    pub num_row: u32,
+    pub row_size_in_bytes: u64,
+    pub total_bytes: u64,
+}

@@ -33,7 +33,7 @@ pub trait IDxgiSwapChainMedia: IUnknown {
 	fn GetFrameStatisticsMedia(&self, ) -> Result<DxgiFrameStatisticsMedia, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_stats: MaybeUninit<DxgiFrameStatisticsMedia> = MaybeUninit::uninit();
+			let mut _out_stats: MaybeUninit<DxgiFrameStatisticsMedia> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_stats: *mut DxgiFrameStatisticsMedia, ) -> HResult
 				= transmute(vt[3]);
 			let _ret_ = f(vt, _out_stats.as_mut_ptr(), );
@@ -54,8 +54,8 @@ pub trait IDxgiSwapChainMedia: IUnknown {
 	fn CheckPresentDurationSupport(&self, desired_present_duration: u32, ) -> Result<(u32, u32, ), HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_closest_smaller_present_duration: MaybeUninit<u32> = MaybeUninit::uninit();
-			let mut _out_closest_larger_present_duration: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_closest_smaller_present_duration: MaybeUninit<u32> = MaybeUninit::zeroed();
+			let mut _out_closest_larger_present_duration: MaybeUninit<u32> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, desired_present_duration: u32, _out_closest_smaller_present_duration: *mut u32, _out_closest_larger_present_duration: *mut u32, ) -> HResult
 				= transmute(vt[5]);
 			let _ret_ = f(vt, desired_present_duration, _out_closest_smaller_present_duration.as_mut_ptr(), _out_closest_larger_present_duration.as_mut_ptr(), );
@@ -79,7 +79,7 @@ impl From<Unknown> for DxgiSwapChainMedia {
 }
 
 impl IUnknown for DxgiSwapChainMedia {
-	fn as_unknown(&self) -> &Unknown { &self.0 }
-	fn into_unknown(self) -> Unknown { self.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 

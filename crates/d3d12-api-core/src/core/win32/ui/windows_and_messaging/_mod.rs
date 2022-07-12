@@ -5,13 +5,26 @@ use crate::core::win32::ui::windows_and_messaging::{HCursor, LoadCursorA, Msg, P
 use crate::core::win32::foundation::{Bool, HInstance, HWnd};
 use crate::helpers::{AsPtrOrNull, ToNullTerminated};
 
-pub fn LoadCursorAById(cursor_id: CursorId) -> (HCursor) {
+pub fn LoadCursorAById(cursor_id: CursorId) -> HCursor {
     unsafe {
         #[link(name = "USER32")]
         extern "system" {
-            fn LoadCursorA(hInstance: *const c_void, lpCursorName: *const u8) -> HCursor;
+            fn LoadCursorA(hInstance: *const c_void, lpCursorName: *const u8) -> *const c_void;
         }
-        LoadCursorA(null(), cursor_id as i32 as isize as *const u8)
+        let ret = LoadCursorA(null(), cursor_id as i32 as isize as *const u8);
+        transmute(ret)
+    }
+}
+
+pub fn GetMessageA(wnd: Option<HWnd>, msg_filter_min: u32, msg_filter_max: u32, ) -> Option<Msg> {
+    unsafe {
+        #[link(name = "USER32")]
+        extern "system" {
+            fn GetMessageA(_out_msg: *mut c_void, wnd: *const c_void, msg_filter_min: u32, msg_filter_max: u32, ) -> Bool;
+        }
+        let mut _out_msg: MaybeUninit<Msg> = MaybeUninit::zeroed();
+        let _ret_ = GetMessageA(transmute(_out_msg.as_mut_ptr()), transmute(wnd), msg_filter_min, msg_filter_max, );
+        if _ret_.to_bool() { Some(_out_msg.assume_init()) } else { None }
     }
 }
 
@@ -19,10 +32,10 @@ pub fn PeekMessageA(wnd: Option<HWnd>, msg_filter_min: u32, msg_filter_max: u32,
     unsafe {
         #[link(name = "USER32")]
         extern "system" {
-            fn PeekMessageA(msg: *mut Msg, wnd: *const c_void, msg_filter_min: u32, msg_filter_max: u32, remove_msg: PeekMessageRemoveType) -> Bool;
+            fn PeekMessageA(msg: *mut c_void, wnd: *const c_void, msg_filter_min: u32, msg_filter_max: u32, remove_msg: PeekMessageRemoveType) -> Bool;
         }
         let mut msg: MaybeUninit<Msg> = MaybeUninit::uninit();
-        let ret = PeekMessageA(msg.as_mut_ptr(), transmute(wnd), msg_filter_min, msg_filter_max, remove_msg);
+        let ret = PeekMessageA(msg.as_mut_ptr() as _, transmute(wnd), msg_filter_min, msg_filter_max, remove_msg);
         if ret.to_bool() { Some(msg.assume_init()) } else { None }
     }
 }

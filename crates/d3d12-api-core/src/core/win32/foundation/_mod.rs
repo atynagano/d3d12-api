@@ -3,7 +3,6 @@ use std::mem::{MaybeUninit, transmute};
 use std::ptr::{NonNull, null};
 use std::slice;
 use crate::core::win32::foundation::{BStr, Rect};
-use crate::helpers::Uninit;
 use super::HResult;
 
 impl Rect {
@@ -177,6 +176,12 @@ impl PStr<'_> {
 
 impl Debug for PWStr<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "\"{}\"", self)
+    }
+}
+
+impl Display for PWStr<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         if self.value as *const u16 == null() {
             return write!(f, "");
         }
@@ -189,13 +194,13 @@ impl Debug for PWStr<'_> {
     }
 }
 
-impl Display for PWStr<'_> {
+impl Debug for PStr<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        <Self as Debug>::fmt(self, f)
+        write!(f, "\"{}\"", self)
     }
 }
 
-impl Debug for PStr<'_> {
+impl Display for PStr<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         if self.value as *const u8 == null() {
             return write!(f, "");
@@ -205,13 +210,7 @@ impl Debug for PStr<'_> {
                 slice::from_raw_parts(self.value as *const u8, self.len())
             }
         );
-        write!(f, "{}", text.to_string())
-    }
-}
-
-impl Display for PStr<'_> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        <Self as Debug>::fmt(self, f)
+        write!(f, "{}", text)
     }
 }
 
@@ -267,17 +266,17 @@ pub struct LResult {
 }
 
 impl LResult {
-    pub fn new(value: impl Into<usize>) -> Self {
+    pub fn new(value: usize) -> Self {
         Self {
             value: value.into()
         }
     }
 }
 
-impl<T: TryInto<usize>> From<T> for LResult {
+impl<T: Into<usize>> From<T> for LResult {
     fn from(value: T) -> Self {
         Self {
-            value: unsafe { value.try_into().unwrap_unchecked() }
+            value: value.into()
         }
     }
 }

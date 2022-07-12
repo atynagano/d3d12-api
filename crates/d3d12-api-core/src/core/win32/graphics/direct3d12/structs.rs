@@ -561,13 +561,6 @@ pub struct D3D12ClearValue {
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
-pub struct D3D12Range {
-	pub begin: usize,
-	pub end: usize,
-}
-
-#[repr(C)]
-#[derive(Copy, Clone, Debug)]
 pub struct D3D12RangeUInt64 {
 	pub begin: u64,
 	pub end: u64,
@@ -1313,8 +1306,8 @@ pub struct D3D12QueryDataPipelineStatistics {
 	pub vs_invocations: u64,
 	pub gs_invocations: u64,
 	pub gs_primitives: u64,
-	pub invocations: u64,
-	pub primitives: u64,
+	pub c_invocations: u64,
+	pub c_primitives: u64,
 	pub ps_invocations: u64,
 	pub hs_invocations: u64,
 	pub ds_invocations: u64,
@@ -1329,8 +1322,8 @@ pub struct D3D12QueryDataPipelineStatistics1 {
 	pub vs_invocations: u64,
 	pub gs_invocations: u64,
 	pub gs_primitives: u64,
-	pub invocations: u64,
-	pub primitives: u64,
+	pub c_invocations: u64,
+	pub c_primitives: u64,
 	pub ps_invocations: u64,
 	pub hs_invocations: u64,
 	pub ds_invocations: u64,
@@ -1928,8 +1921,8 @@ pub struct D3D12ShaderCacheSessionDesc {
 #[derive(Copy, Clone, Debug)]
 pub struct D3D12SubresourceData<'a> {
 	pub data: &'a c_void,
-	pub row_pitch: NonNull<c_void>,
-	pub slice_pitch: NonNull<c_void>,
+	pub row_pitch: NonNull<()>,
+	pub slice_pitch: NonNull<()>,
 }
 
 #[repr(C)]
@@ -2017,7 +2010,7 @@ pub struct D3D12ShaderBufferDesc<'a> {
 	pub ty: D3DCBufferType,
 	pub variables: u32,
 	pub size: u32,
-	pub flags: u32,
+	pub u_flags: u32,
 }
 
 #[repr(C)]
@@ -2026,7 +2019,7 @@ pub struct D3D12ShaderVariableDesc<'a> {
 	pub name: PStr<'a>,
 	pub start_offset: u32,
 	pub size: u32,
-	pub flags: u32,
+	pub u_flags: u32,
 	pub default_value: &'a c_void,
 	pub start_texture: u32,
 	pub texture_size: u32,
@@ -2080,14 +2073,14 @@ pub struct D3D12ShaderDesc<'a> {
 	pub gs_max_output_vertex_count: u32,
 	pub input_primitive: D3DPrimitive,
 	pub patch_constant_parameters: u32,
-	pub gs_instance_count: u32,
-	pub control_points: u32,
+	pub c_gs_instance_count: u32,
+	pub c_control_points: u32,
 	pub hs_output_primitive: D3DTessellatorOutputPrimitive,
 	pub hs_partitioning: D3DTessellatorPartitioning,
 	pub tessellator_domain: D3DTessellatorDomain,
-	pub barrier_instructions: u32,
-	pub interlocked_instructions: u32,
-	pub texture_store_instructions: u32,
+	pub c_barrier_instructions: u32,
+	pub c_interlocked_instructions: u32,
+	pub c_texture_store_instructions: u32,
 }
 
 #[repr(C)]
@@ -2097,12 +2090,12 @@ pub struct D3D12ShaderInputBindDesc<'a> {
 	pub ty: D3DShaderInputType,
 	pub bind_point: u32,
 	pub bind_count: u32,
-	pub flags: u32,
+	pub u_flags: u32,
 	pub return_type: D3DResourceReturnType,
 	pub dimension: D3DSrvDimension,
 	pub num_samples: u32,
 	pub space: u32,
-	pub id: u32,
+	pub u_id: u32,
 }
 
 #[repr(C)]

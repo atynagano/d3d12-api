@@ -64,7 +64,7 @@ pub trait IDxcOptimizerPass: IUnknown {
 	fn GetOptionArgCount(&self, ) -> Result<u32, HResult> {
 		unsafe {
 			let vt = self.as_param();
-			let mut _out_count: MaybeUninit<u32> = MaybeUninit::uninit();
+			let mut _out_count: MaybeUninit<u32> = MaybeUninit::zeroed();
 			let f: extern "system" fn(Param<Self>, _out_count: *mut u32, ) -> HResult
 				= transmute(vt[5]);
 			let _ret_ = f(vt, _out_count.as_mut_ptr(), );
@@ -117,7 +117,7 @@ impl From<Unknown> for DxcOptimizerPass {
 }
 
 impl IUnknown for DxcOptimizerPass {
-	fn as_unknown(&self) -> &Unknown { &self.0 }
-	fn into_unknown(self) -> Unknown { self.0 }
+	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
+	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
 }
 
