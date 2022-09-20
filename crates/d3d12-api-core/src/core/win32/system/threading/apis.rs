@@ -6,7 +6,9 @@
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
+use std::num::NonZeroUsize;
 use std::mem::{MaybeUninit, size_of_val, transmute};
+use std::ops::Deref;
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -17,72 +19,62 @@ use crate::core::win32::security::*;
 use crate::core::win32::system::threading::*;
 
 
-pub fn WaitForSingleObject(handle: Handle, milliseconds: u32, ) -> u32 {
+pub fn WaitForSingleObject(handle: Handle, milliseconds: u32) -> u32 {
 	unsafe {
 		#[link(name = "KERNEL32")]
 		extern "system" {
-			fn WaitForSingleObject(handle: Handle, milliseconds: u32, ) -> u32;
-		}
-		let _ret_ = WaitForSingleObject(handle, milliseconds, );
+			fn WaitForSingleObject(hHandle: Handle, dwMilliseconds: u32) -> u32;
+		} 
+		let _ret_ = WaitForSingleObject(handle, milliseconds);
 		_ret_
 	}
 }
 
-pub fn WaitForSingleObjectEx(handle: Handle, milliseconds: u32, alertable: bool, ) -> u32 {
+pub fn WaitForSingleObjectEx(handle: Handle, milliseconds: u32, alertable: bool) -> u32 {
 	unsafe {
 		#[link(name = "KERNEL32")]
 		extern "system" {
-			fn WaitForSingleObjectEx(handle: Handle, milliseconds: u32, alertable: Bool, ) -> u32;
-		}
-		let _ret_ = WaitForSingleObjectEx(handle, milliseconds, alertable.to_bool(), );
+			fn WaitForSingleObjectEx(hHandle: Handle, dwMilliseconds: u32, bAlertable: Bool) -> u32;
+		} 
+		let _ret_ = WaitForSingleObjectEx(handle, milliseconds, alertable.to_bool());
 		_ret_
 	}
 }
 
-pub fn CreateEventA(event_attributes: Option<&SecurityAttributes>, manual_reset: bool, initial_state: bool, name: Option<&str>, ) -> Option<Handle> {
+pub fn CreateEventA(event_attributes: Option<&SecurityAttributes>, manual_reset: bool, initial_state: bool, name: Option<&str>) -> Result<Handle, Win32Error> {
 	unsafe {
 		#[link(name = "KERNEL32")]
 		extern "system" {
-			fn CreateEventA(event_attributes: *const c_void, manual_reset: Bool, initial_state: Bool, name: *const u8, ) -> *const c_void;
-		}
-		let _ret_ = CreateEventA(transmute(event_attributes), manual_reset.to_bool(), initial_state.to_bool(), name.map(str::to_null_terminated).as_ptr_or_null(), );
-		transmute(_ret_)
+			fn CreateEventA(lpEventAttributes: *const c_void, bManualReset: Bool, bInitialState: Bool, lpName: *const u8) -> *const c_void;
+		} 
+		let _ret_ = CreateEventA(transmute(event_attributes), manual_reset.to_bool(), initial_state.to_bool(), name.map(str::to_null_terminated).as_ptr_or_null());
+		if _ret_.is_null() { Err(GetLastError()) } else { Ok(transmute(_ret_)) }
 	}
 }
 
-pub fn OpenEventA(desired_access: u32, inherit_handle: bool, name: &str, ) -> Option<Handle> {
+pub fn OpenEventA(desired_access: SynchronizationAccessRights, inherit_handle: bool, name: &str) -> Result<Handle, Win32Error> {
 	unsafe {
 		#[link(name = "KERNEL32")]
 		extern "system" {
-			fn OpenEventA(desired_access: u32, inherit_handle: Bool, name: *const u8, ) -> *const c_void;
-		}
-		let _ret_ = OpenEventA(desired_access, inherit_handle.to_bool(), name.to_null_terminated().as_ptr_or_null(), );
-		transmute(_ret_)
+			fn OpenEventA(dwDesiredAccess: SynchronizationAccessRights, bInheritHandle: Bool, lpName: *const u8) -> *const c_void;
+		} 
+		let _ret_ = OpenEventA(desired_access, inherit_handle.to_bool(), name.to_null_terminated().as_ptr_or_null());
+		if _ret_.is_null() { Err(GetLastError()) } else { Ok(transmute(_ret_)) }
 	}
 }
 
-pub fn CreateEventExA(event_attributes: Option<&SecurityAttributes>, name: Option<&str>, flags: CreateEvent, desired_access: u32, ) -> Option<Handle> {
+pub fn CreateEventExA(event_attributes: Option<&SecurityAttributes>, name: Option<&str>, flags: CreateEvent, desired_access: u32) -> Result<Handle, Win32Error> {
 	unsafe {
 		#[link(name = "KERNEL32")]
 		extern "system" {
-			fn CreateEventExA(event_attributes: *const c_void, name: *const u8, flags: CreateEvent, desired_access: u32, ) -> *const c_void;
-		}
-		let _ret_ = CreateEventExA(transmute(event_attributes), name.map(str::to_null_terminated).as_ptr_or_null(), flags, desired_access, );
-		transmute(_ret_)
+			fn CreateEventExA(lpEventAttributes: *const c_void, lpName: *const u8, dwFlags: CreateEvent, dwDesiredAccess: u32) -> *const c_void;
+		} 
+		let _ret_ = CreateEventExA(transmute(event_attributes), name.map(str::to_null_terminated).as_ptr_or_null(), flags, desired_access);
+		if _ret_.is_null() { Err(GetLastError()) } else { Ok(transmute(_ret_)) }
 	}
 }
 
-pub fn RegisterWaitForSingleObject(object: Handle, callback: WaitOrTimerCallback, context: *const (), milliseconds: u32, flags: WorkerThreadFlags, ) -> (bool, Option<Handle>, ) {
-	unsafe {
-		#[link(name = "KERNEL32")]
-		extern "system" {
-			fn RegisterWaitForSingleObject(_out_ph_new_wait_object: *mut c_void, object: Handle, callback: WaitOrTimerCallback, context: *const c_void, milliseconds: u32, flags: WorkerThreadFlags, ) -> Bool;
-		}
-		let mut _out_ph_new_wait_object: Option<Handle> = None;
-		let _ret_ = RegisterWaitForSingleObject(transmute(&mut _out_ph_new_wait_object), object, callback, context as _, milliseconds, flags, );
-		(_ret_.to_bool(), _out_ph_new_wait_object, )
-	}
-}
+pub unsafe fn RegisterWaitForSingleObject() { todo!() }
 
 
 pub type WaitOrTimerCallback 

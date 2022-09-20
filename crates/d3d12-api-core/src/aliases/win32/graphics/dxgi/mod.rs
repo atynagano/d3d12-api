@@ -6,6 +6,9 @@ use crate::core::win32::graphics::dxgi::*;
 
 pub type Rgba = DxgiRgba;
 pub type ResourcePriority = DxgiResourcePriority;
+pub type Present = DxgiPresent;
+pub type Usage = DxgiUsage;
+pub type Mwa = DxgiMwa;
 pub type FrameStatistics = DxgiFrameStatistics;
 pub type MappedRect<'a> = DxgiMappedRect<'a>;
 pub type AdapterDesc = DxgiAdapterDesc;
@@ -106,7 +109,7 @@ impl<T: IDxgiOutput1> IOutput1 for T {}
 pub type Device3 = DxgiDevice3;
 pub trait IDevice3: IDxgiDevice3 {}
 impl<T: IDxgiDevice3> IDevice3 for T {}
-pub type Matrix3X2F = DxgiMatrix3X2F;
+pub type Matrix3x2F = DxgiMatrix3x2F;
 pub type SwapChain2 = DxgiSwapChain2;
 pub trait ISwapChain2: IDxgiSwapChain2 {}
 impl<T: IDxgiSwapChain2> ISwapChain2 for T {}
@@ -117,7 +120,7 @@ pub type Factory3 = DxgiFactory3;
 pub trait IFactory3: IDxgiFactory3 {}
 impl<T: IDxgiFactory3> IFactory3 for T {}
 pub type DecodeSwapChainDesc = DxgiDecodeSwapChainDesc;
-pub type MultiplaneOverlayYcbcrFlags = DxgiMultiplaneOverlayYcbcrFlags;
+pub type MultiplaneOverlayYCbCrFlags = DxgiMultiplaneOverlayYCbCrFlags;
 pub type DecodeSwapChain = DxgiDecodeSwapChain;
 pub trait IDecodeSwapChain: IDxgiDecodeSwapChain {}
 impl<T: IDxgiDecodeSwapChain> IDecodeSwapChain for T {}
@@ -185,10 +188,10 @@ impl<T: IDxgiFactory6> IFactory6 for T {}
 pub type Factory7 = DxgiFactory7;
 pub trait IFactory7: IDxgiFactory7 {}
 impl<T: IDxgiFactory7> IFactory7 for T {}
-pub type DebugRLoFlags = DxgiDebugRLoFlags;
+pub type DebugRloFlags = DxgiDebugRloFlags;
 pub type InfoQueueMessageCategory = DxgiInfoQueueMessageCategory;
 pub type InfoQueueMessageSeverity = DxgiInfoQueueMessageSeverity;
-pub type InfoQueueMessage<'a> = DxgiInfoQueueMessage<'a>;
+pub type InfoQueueMessage = DxgiInfoQueueMessage;
 pub type InfoQueueFilterDesc<'a> = DxgiInfoQueueFilterDesc<'a>;
 pub type InfoQueueFilter<'a> = DxgiInfoQueueFilter<'a>;
 pub type InfoQueue = DxgiInfoQueue;

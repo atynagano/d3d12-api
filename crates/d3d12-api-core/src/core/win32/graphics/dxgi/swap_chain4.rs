@@ -6,7 +6,9 @@
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
+use std::num::NonZeroUsize;
 use std::mem::{MaybeUninit, size_of_val, transmute};
+use std::ops::Deref;
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -16,37 +18,44 @@ use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::dxgi::*;
 
 #[repr(C)]
+#[derive(Clone, Hash)]
 pub struct DxgiSwapChain4(pub(crate) DxgiSwapChain3);
+
+impl Deref for DxgiSwapChain4 {
+	type Target = DxgiSwapChain3;
+	fn deref(&self) -> &Self::Target { &self.0	}
+}
 
 impl Guid for DxgiSwapChain4 {
 	const IID: &'static GUID = &GUID::from_u128(0x3d585d5abd4a489eb1f43dbcb6452ffbu128);
 }
 
-impl Clone for DxgiSwapChain4 {
-	fn clone(&self) -> Self { DxgiSwapChain4(self.0.clone()) }
+impl Com for DxgiSwapChain4 {
+	fn vtable(&self) -> VTable { self.0.vtable() }
+}
+
+impl DxgiSwapChain4 {
+	pub fn SetHDRMetaData(&self, r#type: DxgiHdrMetaDataType, meta_data: Option<&[u8]>) -> Result<(), HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let (meta_data_ptr_, meta_data_len_) = meta_data.deconstruct();
+			let f: extern "system" fn(Param<Self>, DxgiHdrMetaDataType, u32, *const u8) -> HResult
+				= transmute(vt[40]);
+			let _ret_ = f(vt, r#type, meta_data_len_ as u32, meta_data_ptr_);
+			_ret_.ok()
+		}
+	}
 }
 
 pub trait IDxgiSwapChain4: IDxgiSwapChain3 {
 	fn as_swap_chain4(&self) -> &DxgiSwapChain4;
 	fn into_swap_chain4(self) -> DxgiSwapChain4;
-
-	fn SetHDRMetaData(&self, ty: DxgiHdrMetaDataType, meta_data: Option<&[u8]>, ) -> Result<(), HResult> {
-		unsafe {
-			let vt = self.as_param();
-			let (_ptr_meta_data, _len_meta_data) = meta_data.deconstruct();
-			let f: extern "system" fn(Param<Self>, ty: DxgiHdrMetaDataType, size: u32, meta_data: *const u8, ) -> HResult
-				= transmute(vt[40]);
-			let _ret_ = f(vt, ty, _len_meta_data as u32, _ptr_meta_data, );
-			_ret_.ok()
-		}
-	}
 }
 
 impl IDxgiSwapChain4 for DxgiSwapChain4 {
 	fn as_swap_chain4(&self) -> &DxgiSwapChain4 { self }
 	fn into_swap_chain4(self) -> DxgiSwapChain4 { self }
 }
-
 impl IDxgiSwapChain3 for DxgiSwapChain4 {
 	fn as_swap_chain3(&self) -> &DxgiSwapChain3 { &self.0.as_swap_chain3() }
 	fn into_swap_chain3(self) -> DxgiSwapChain3 { self.0.into_swap_chain3() }
@@ -77,14 +86,14 @@ impl IDxgiObject for DxgiSwapChain4 {
 	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
-impl From<Unknown> for DxgiSwapChain4 {
-    fn from(v: Unknown) -> Self {
-        Self(DxgiSwapChain3::from(v))
-    }
-}
-
 impl IUnknown for DxgiSwapChain4 {
 	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
 	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
+}
+
+impl From<UnknownWrapper> for DxgiSwapChain4 {
+    fn from(v: UnknownWrapper) -> Self {
+        Self(DxgiSwapChain3::from(v))
+    }
 }
 

@@ -6,7 +6,9 @@
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
+use std::num::NonZeroUsize;
 use std::mem::{MaybeUninit, size_of_val, transmute};
+use std::ops::Deref;
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -17,148 +19,172 @@ use crate::core::win32::graphics::direct3d::dxc::*;
 use crate::core::win32::system::com::*;
 
 #[repr(C)]
+#[derive(Clone, Hash)]
 pub struct DxcUtils(pub(crate) Unknown);
+
+impl Deref for DxcUtils {
+	type Target = Unknown;
+	fn deref(&self) -> &Self::Target { &self.0	}
+}
 
 impl Guid for DxcUtils {
 	const IID: &'static GUID = &GUID::from_u128(0x4605c4cb2019492aada465f20bb7d67fu128);
 }
 
-impl Clone for DxcUtils {
-	fn clone(&self) -> Self { DxcUtils(self.0.clone()) }
+impl Com for DxcUtils {
+	fn vtable(&self) -> VTable { self.0.vtable() }
+}
+
+impl DxcUtils {
+	pub fn CreateBlobFromBlob(&self, blob: &DxcBlob, offset: u32, length: u32) -> Result<DxcBlob, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut result_out_: Option<DxcBlob> = None;
+			let f: extern "system" fn(Param<Self>, VTable, u32, u32, *mut c_void) -> HResult
+				= transmute(vt[3]);
+			let _ret_ = f(vt, blob.vtable(), offset, length, transmute(&mut result_out_));
+			if _ret_.is_ok() { if let Some(result_out_) = result_out_ { return Ok(result_out_); } }
+			Err(_ret_)
+		}
+	}
+
+	pub fn CreateBlobFromPinned(&self, data: &[u8], code_page: DxcCp) -> Result<DxcBlobEncoding, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let (data_ptr_, data_len_) = data.deconstruct();
+			let mut blob_encoding_out_: Option<DxcBlobEncoding> = None;
+			let f: extern "system" fn(Param<Self>, *const u8, u32, DxcCp, *mut c_void) -> HResult
+				= transmute(vt[4]);
+			let _ret_ = f(vt, data_ptr_, data_len_ as u32, code_page, transmute(&mut blob_encoding_out_));
+			if _ret_.is_ok() { if let Some(blob_encoding_out_) = blob_encoding_out_ { return Ok(blob_encoding_out_); } }
+			Err(_ret_)
+		}
+	}
+
+	pub fn MoveToBlob(&self, data: &[u8], i_malloc: &Malloc, code_page: DxcCp) -> Result<DxcBlobEncoding, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let (data_ptr_, data_len_) = data.deconstruct();
+			let mut blob_encoding_out_: Option<DxcBlobEncoding> = None;
+			let f: extern "system" fn(Param<Self>, *const u8, VTable, u32, DxcCp, *mut c_void) -> HResult
+				= transmute(vt[5]);
+			let _ret_ = f(vt, data_ptr_, i_malloc.vtable(), data_len_ as u32, code_page, transmute(&mut blob_encoding_out_));
+			if _ret_.is_ok() { if let Some(blob_encoding_out_) = blob_encoding_out_ { return Ok(blob_encoding_out_); } }
+			Err(_ret_)
+		}
+	}
+
+	pub fn CreateBlob(&self, data: &[u8], code_page: DxcCp) -> Result<DxcBlobEncoding, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let (data_ptr_, data_len_) = data.deconstruct();
+			let mut blob_encoding_out_: Option<DxcBlobEncoding> = None;
+			let f: extern "system" fn(Param<Self>, *const u8, u32, DxcCp, *mut c_void) -> HResult
+				= transmute(vt[6]);
+			let _ret_ = f(vt, data_ptr_, data_len_ as u32, code_page, transmute(&mut blob_encoding_out_));
+			if _ret_.is_ok() { if let Some(blob_encoding_out_) = blob_encoding_out_ { return Ok(blob_encoding_out_); } }
+			Err(_ret_)
+		}
+	}
+
+	pub fn LoadFile(&self, file_name: &str, code_page: Option<&DxcCp>) -> Result<DxcBlobEncoding, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut blob_encoding_out_: Option<DxcBlobEncoding> = None;
+			let f: extern "system" fn(Param<Self>, *const u16, *const c_void, *mut c_void) -> HResult
+				= transmute(vt[7]);
+			let _ret_ = f(vt, file_name.to_utf16().as_ptr_or_null(), transmute(code_page), transmute(&mut blob_encoding_out_));
+			if _ret_.is_ok() { if let Some(blob_encoding_out_) = blob_encoding_out_ { return Ok(blob_encoding_out_); } }
+			Err(_ret_)
+		}
+	}
+
+	pub fn CreateReadOnlyStreamFromBlob(&self, blob: &DxcBlob) -> Result<Stream, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut stream_out_: Option<Stream> = None;
+			let f: extern "system" fn(Param<Self>, VTable, *mut c_void) -> HResult
+				= transmute(vt[8]);
+			let _ret_ = f(vt, blob.vtable(), transmute(&mut stream_out_));
+			if _ret_.is_ok() { if let Some(stream_out_) = stream_out_ { return Ok(stream_out_); } }
+			Err(_ret_)
+		}
+	}
+
+	pub fn CreateDefaultIncludeHandler(&self) -> Result<DxcIncludeHandler, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut result_out_: Option<DxcIncludeHandler> = None;
+			let f: extern "system" fn(Param<Self>, *mut c_void) -> HResult
+				= transmute(vt[9]);
+			let _ret_ = f(vt, transmute(&mut result_out_));
+			if _ret_.is_ok() { if let Some(result_out_) = result_out_ { return Ok(result_out_); } }
+			Err(_ret_)
+		}
+	}
+
+	pub fn GetBlobAsUtf8(&self, blob: &DxcBlob) -> Result<DxcBlobUtf8, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut blob_encoding_out_: Option<DxcBlobUtf8> = None;
+			let f: extern "system" fn(Param<Self>, VTable, *mut c_void) -> HResult
+				= transmute(vt[10]);
+			let _ret_ = f(vt, blob.vtable(), transmute(&mut blob_encoding_out_));
+			if _ret_.is_ok() { if let Some(blob_encoding_out_) = blob_encoding_out_ { return Ok(blob_encoding_out_); } }
+			Err(_ret_)
+		}
+	}
+
+	pub fn GetBlobAsUtf16(&self, blob: &DxcBlob) -> Result<DxcBlobUtf16, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut blob_encoding_out_: Option<DxcBlobUtf16> = None;
+			let f: extern "system" fn(Param<Self>, VTable, *mut c_void) -> HResult
+				= transmute(vt[11]);
+			let _ret_ = f(vt, blob.vtable(), transmute(&mut blob_encoding_out_));
+			if _ret_.is_ok() { if let Some(blob_encoding_out_) = blob_encoding_out_ { return Ok(blob_encoding_out_); } }
+			Err(_ret_)
+		}
+	}
+
+	pub unsafe fn GetDxilContainerPart(&self) { todo!() }
+
+	pub unsafe fn CreateReflection(&self) { todo!() }
+
+	pub fn BuildArguments(&self, source_name: Option<&str>, entry_point: Option<&str>, target_profile: &str, arguments: Option<&[&str]>, defines: &[DxcDefine]) -> Result<DxcCompilerArgs, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let (arguments_ptr_, arguments_len_) = arguments.deconstruct();
+			let (defines_ptr_, defines_len_) = defines.deconstruct();
+			let mut args_out_: Option<DxcCompilerArgs> = None;
+			let f: extern "system" fn(Param<Self>, *const u16, *const u16, *const u16, *const PWStr, u32, *const DxcDefine, u32, *mut c_void) -> HResult
+				= transmute(vt[14]);
+			let _ret_ = f(vt, source_name.map(str::to_utf16).as_ptr_or_null(), entry_point.map(str::to_utf16).as_ptr_or_null(), target_profile.to_utf16().as_ptr_or_null(), arguments.to_utf16_vec().ptr(), arguments_len_ as u32, defines_ptr_, defines_len_ as u32, transmute(&mut args_out_));
+			if _ret_.is_ok() { if let Some(args_out_) = args_out_ { return Ok(args_out_); } }
+			Err(_ret_)
+		}
+	}
+
+	pub unsafe fn GetPDBContents(&self) { todo!() }
 }
 
 pub trait IDxcUtils: IUnknown {
 	fn as_utils(&self) -> &DxcUtils;
 	fn into_utils(self) -> DxcUtils;
-
-	fn CreateBlobFromBlob(&self, blob: &(impl IDxcBlob + ?Sized), offset: u32, length: u32, ) -> Result<DxcBlob, HResult> {
-		unsafe {
-			let vt = self.as_param();
-			let mut _out_result: Option<DxcBlob> = None;
-			let f: extern "system" fn(Param<Self>, blob: VTable, offset: u32, length: u32, result: *mut c_void, ) -> HResult
-				= transmute(vt[3]);
-			let _ret_ = f(vt, blob.vtable(), offset, length, transmute(&mut _out_result), );
-			if _ret_.is_ok() {
-				if let Some(_out_result) = _out_result {
-					return Ok(_out_result);
-				}
-			}
-			Err(_ret_)
-		}
-	}
-
-	fn LoadFile(&self, file_name: &str, code_page: Option<&DxcCp>, ) -> Result<DxcBlobEncoding, HResult> {
-		unsafe {
-			let vt = self.as_param();
-			let mut _out_blob_encoding: Option<DxcBlobEncoding> = None;
-			let f: extern "system" fn(Param<Self>, file_name: *const u16, code_page: *const c_void, blob_encoding: *mut c_void, ) -> HResult
-				= transmute(vt[7]);
-			let _ret_ = f(vt, file_name.to_utf16().as_ptr_or_null(), transmute(code_page), transmute(&mut _out_blob_encoding), );
-			if _ret_.is_ok() {
-				if let Some(_out_blob_encoding) = _out_blob_encoding {
-					return Ok(_out_blob_encoding);
-				}
-			}
-			Err(_ret_)
-		}
-	}
-
-	fn CreateReadOnlyStreamFromBlob(&self, blob: &(impl IDxcBlob + ?Sized), ) -> Result<Stream, HResult> {
-		unsafe {
-			let vt = self.as_param();
-			let mut _out_stream: Option<Stream> = None;
-			let f: extern "system" fn(Param<Self>, blob: VTable, stream: *mut c_void, ) -> HResult
-				= transmute(vt[8]);
-			let _ret_ = f(vt, blob.vtable(), transmute(&mut _out_stream), );
-			if _ret_.is_ok() {
-				if let Some(_out_stream) = _out_stream {
-					return Ok(_out_stream);
-				}
-			}
-			Err(_ret_)
-		}
-	}
-
-	fn CreateDefaultIncludeHandler(&self, ) -> Result<DxcIncludeHandler, HResult> {
-		unsafe {
-			let vt = self.as_param();
-			let mut _out_result: Option<DxcIncludeHandler> = None;
-			let f: extern "system" fn(Param<Self>, result: *mut c_void, ) -> HResult
-				= transmute(vt[9]);
-			let _ret_ = f(vt, transmute(&mut _out_result), );
-			if _ret_.is_ok() {
-				if let Some(_out_result) = _out_result {
-					return Ok(_out_result);
-				}
-			}
-			Err(_ret_)
-		}
-	}
-
-	fn GetBlobAsUtf8(&self, blob: &(impl IDxcBlob + ?Sized), ) -> Result<DxcBlobUtf8, HResult> {
-		unsafe {
-			let vt = self.as_param();
-			let mut _out_blob_encoding: Option<DxcBlobUtf8> = None;
-			let f: extern "system" fn(Param<Self>, blob: VTable, blob_encoding: *mut c_void, ) -> HResult
-				= transmute(vt[10]);
-			let _ret_ = f(vt, blob.vtable(), transmute(&mut _out_blob_encoding), );
-			if _ret_.is_ok() {
-				if let Some(_out_blob_encoding) = _out_blob_encoding {
-					return Ok(_out_blob_encoding);
-				}
-			}
-			Err(_ret_)
-		}
-	}
-
-	fn GetBlobAsUtf16(&self, blob: &(impl IDxcBlob + ?Sized), ) -> Result<DxcBlobUtf16, HResult> {
-		unsafe {
-			let vt = self.as_param();
-			let mut _out_blob_encoding: Option<DxcBlobUtf16> = None;
-			let f: extern "system" fn(Param<Self>, blob: VTable, blob_encoding: *mut c_void, ) -> HResult
-				= transmute(vt[11]);
-			let _ret_ = f(vt, blob.vtable(), transmute(&mut _out_blob_encoding), );
-			if _ret_.is_ok() {
-				if let Some(_out_blob_encoding) = _out_blob_encoding {
-					return Ok(_out_blob_encoding);
-				}
-			}
-			Err(_ret_)
-		}
-	}
-
-	fn BuildArguments(&self, source_name: Option<&str>, entry_point: Option<&str>, target_profile: &str, arguments: Option<&[&str]>, defines: &[DxcDefine], ) -> Result<DxcCompilerArgs, HResult> {
-		unsafe {
-			let vt = self.as_param();
-			let (_ptr_arguments, _len_arguments) = arguments.deconstruct();
-			let (_ptr_defines, _len_defines) = defines.deconstruct();
-			let mut _out_args: Option<DxcCompilerArgs> = None;
-			let f: extern "system" fn(Param<Self>, source_name: *const u16, entry_point: *const u16, target_profile: *const u16, arguments: *const PWStr, arg_count: u32, defines: *const DxcDefine, define_count: u32, args: *mut c_void, ) -> HResult
-				= transmute(vt[14]);
-			let _ret_ = f(vt, source_name.map(str::to_utf16).as_ptr_or_null(), entry_point.map(str::to_utf16).as_ptr_or_null(), target_profile.to_utf16().as_ptr_or_null(), arguments.to_utf16_vec().ptr(), _len_arguments as u32, _ptr_defines, _len_defines as u32, transmute(&mut _out_args), );
-			if _ret_.is_ok() {
-				if let Some(_out_args) = _out_args {
-					return Ok(_out_args);
-				}
-			}
-			Err(_ret_)
-		}
-	}
 }
 
 impl IDxcUtils for DxcUtils {
 	fn as_utils(&self) -> &DxcUtils { self }
 	fn into_utils(self) -> DxcUtils { self }
 }
-
-impl From<Unknown> for DxcUtils {
-    fn from(v: Unknown) -> Self {
-        Self(Unknown::from(v))
-    }
-}
-
 impl IUnknown for DxcUtils {
 	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
 	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
+}
+
+impl From<UnknownWrapper> for DxcUtils {
+    fn from(v: UnknownWrapper) -> Self {
+        Self(Unknown::from(v))
+    }
 }
 

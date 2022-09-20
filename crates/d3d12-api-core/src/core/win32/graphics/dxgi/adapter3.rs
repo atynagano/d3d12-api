@@ -6,7 +6,9 @@
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
+use std::num::NonZeroUsize;
 use std::mem::{MaybeUninit, size_of_val, transmute};
+use std::ops::Deref;
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -16,87 +18,94 @@ use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::dxgi::*;
 
 #[repr(C)]
+#[derive(Clone, Hash)]
 pub struct DxgiAdapter3(pub(crate) DxgiAdapter2);
+
+impl Deref for DxgiAdapter3 {
+	type Target = DxgiAdapter2;
+	fn deref(&self) -> &Self::Target { &self.0	}
+}
 
 impl Guid for DxgiAdapter3 {
 	const IID: &'static GUID = &GUID::from_u128(0x645967a413924310a7988053ce3e93fdu128);
 }
 
-impl Clone for DxgiAdapter3 {
-	fn clone(&self) -> Self { DxgiAdapter3(self.0.clone()) }
+impl Com for DxgiAdapter3 {
+	fn vtable(&self) -> VTable { self.0.vtable() }
+}
+
+impl DxgiAdapter3 {
+	pub fn RegisterHardwareContentProtectionTeardownStatusEvent(&self, event: Handle) -> Result<u32, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut pdw_cookie_out_: MaybeUninit<u32> = MaybeUninit::zeroed();
+			let f: extern "system" fn(Param<Self>, Handle, *mut u32) -> HResult
+				= transmute(vt[12]);
+			let _ret_ = f(vt, event, pdw_cookie_out_.as_mut_ptr());
+			if _ret_.is_ok() { Ok(pdw_cookie_out_.assume_init()) } else { Err(_ret_) }
+		}
+	}
+
+	pub fn UnregisterHardwareContentProtectionTeardownStatus(&self, cookie: u32) -> () {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, u32) -> ()
+				= transmute(vt[13]);
+			let _ret_ = f(vt, cookie);
+		}
+	}
+
+	pub fn QueryVideoMemoryInfo(&self, node_index: u32, memory_segment_group: DxgiMemorySegmentGroup) -> Result<DxgiQueryVideoMemoryInfo, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut video_memory_info_out_: MaybeUninit<DxgiQueryVideoMemoryInfo> = MaybeUninit::zeroed();
+			let f: extern "system" fn(Param<Self>, u32, DxgiMemorySegmentGroup, *mut DxgiQueryVideoMemoryInfo) -> HResult
+				= transmute(vt[14]);
+			let _ret_ = f(vt, node_index, memory_segment_group, video_memory_info_out_.as_mut_ptr());
+			if _ret_.is_ok() { Ok(video_memory_info_out_.assume_init()) } else { Err(_ret_) }
+		}
+	}
+
+	pub fn SetVideoMemoryReservation(&self, node_index: u32, memory_segment_group: DxgiMemorySegmentGroup, reservation: u64) -> Result<(), HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, u32, DxgiMemorySegmentGroup, u64) -> HResult
+				= transmute(vt[15]);
+			let _ret_ = f(vt, node_index, memory_segment_group, reservation);
+			_ret_.ok()
+		}
+	}
+
+	pub fn RegisterVideoMemoryBudgetChangeNotificationEvent(&self, event: Handle) -> Result<u32, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut pdw_cookie_out_: MaybeUninit<u32> = MaybeUninit::zeroed();
+			let f: extern "system" fn(Param<Self>, Handle, *mut u32) -> HResult
+				= transmute(vt[16]);
+			let _ret_ = f(vt, event, pdw_cookie_out_.as_mut_ptr());
+			if _ret_.is_ok() { Ok(pdw_cookie_out_.assume_init()) } else { Err(_ret_) }
+		}
+	}
+
+	pub fn UnregisterVideoMemoryBudgetChangeNotification(&self, cookie: u32) -> () {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, u32) -> ()
+				= transmute(vt[17]);
+			let _ret_ = f(vt, cookie);
+		}
+	}
 }
 
 pub trait IDxgiAdapter3: IDxgiAdapter2 {
 	fn as_adapter3(&self) -> &DxgiAdapter3;
 	fn into_adapter3(self) -> DxgiAdapter3;
-
-	fn RegisterHardwareContentProtectionTeardownStatusEvent(&self, event: Handle, ) -> Result<u32, HResult> {
-		unsafe {
-			let vt = self.as_param();
-			let mut _out_pdw_cookie: MaybeUninit<u32> = MaybeUninit::zeroed();
-			let f: extern "system" fn(Param<Self>, event: Handle, _out_pdw_cookie: *mut u32, ) -> HResult
-				= transmute(vt[12]);
-			let _ret_ = f(vt, event, _out_pdw_cookie.as_mut_ptr(), );
-			Ok(_out_pdw_cookie.assume_init())
-		}
-	}
-
-	fn UnregisterHardwareContentProtectionTeardownStatus(&self, cookie: u32, ) -> () {
-		unsafe {
-			let vt = self.as_param();
-			let f: extern "system" fn(Param<Self>, cookie: u32, ) -> ()
-				= transmute(vt[13]);
-			let _ret_ = f(vt, cookie, );
-		}
-	}
-
-	fn QueryVideoMemoryInfo(&self, node_index: u32, memory_segment_group: DxgiMemorySegmentGroup, ) -> Result<DxgiQueryVideoMemoryInfo, HResult> {
-		unsafe {
-			let vt = self.as_param();
-			let mut _out_video_memory_info: MaybeUninit<DxgiQueryVideoMemoryInfo> = MaybeUninit::zeroed();
-			let f: extern "system" fn(Param<Self>, node_index: u32, memory_segment_group: DxgiMemorySegmentGroup, _out_video_memory_info: *mut DxgiQueryVideoMemoryInfo, ) -> HResult
-				= transmute(vt[14]);
-			let _ret_ = f(vt, node_index, memory_segment_group, _out_video_memory_info.as_mut_ptr(), );
-			Ok(_out_video_memory_info.assume_init())
-		}
-	}
-
-	fn SetVideoMemoryReservation(&self, node_index: u32, memory_segment_group: DxgiMemorySegmentGroup, reservation: u64, ) -> Result<(), HResult> {
-		unsafe {
-			let vt = self.as_param();
-			let f: extern "system" fn(Param<Self>, node_index: u32, memory_segment_group: DxgiMemorySegmentGroup, reservation: u64, ) -> HResult
-				= transmute(vt[15]);
-			let _ret_ = f(vt, node_index, memory_segment_group, reservation, );
-			_ret_.ok()
-		}
-	}
-
-	fn RegisterVideoMemoryBudgetChangeNotificationEvent(&self, event: Handle, ) -> Result<u32, HResult> {
-		unsafe {
-			let vt = self.as_param();
-			let mut _out_pdw_cookie: MaybeUninit<u32> = MaybeUninit::zeroed();
-			let f: extern "system" fn(Param<Self>, event: Handle, _out_pdw_cookie: *mut u32, ) -> HResult
-				= transmute(vt[16]);
-			let _ret_ = f(vt, event, _out_pdw_cookie.as_mut_ptr(), );
-			Ok(_out_pdw_cookie.assume_init())
-		}
-	}
-
-	fn UnregisterVideoMemoryBudgetChangeNotification(&self, cookie: u32, ) -> () {
-		unsafe {
-			let vt = self.as_param();
-			let f: extern "system" fn(Param<Self>, cookie: u32, ) -> ()
-				= transmute(vt[17]);
-			let _ret_ = f(vt, cookie, );
-		}
-	}
 }
 
 impl IDxgiAdapter3 for DxgiAdapter3 {
 	fn as_adapter3(&self) -> &DxgiAdapter3 { self }
 	fn into_adapter3(self) -> DxgiAdapter3 { self }
 }
-
 impl IDxgiAdapter2 for DxgiAdapter3 {
 	fn as_adapter2(&self) -> &DxgiAdapter2 { &self.0.as_adapter2() }
 	fn into_adapter2(self) -> DxgiAdapter2 { self.0.into_adapter2() }
@@ -117,14 +126,14 @@ impl IDxgiObject for DxgiAdapter3 {
 	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
-impl From<Unknown> for DxgiAdapter3 {
-    fn from(v: Unknown) -> Self {
-        Self(DxgiAdapter2::from(v))
-    }
-}
-
 impl IUnknown for DxgiAdapter3 {
 	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
 	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
+}
+
+impl From<UnknownWrapper> for DxgiAdapter3 {
+    fn from(v: UnknownWrapper) -> Self {
+        Self(DxgiAdapter2::from(v))
+    }
 }
 

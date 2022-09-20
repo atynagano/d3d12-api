@@ -1,23 +1,24 @@
 use std::mem::{MaybeUninit, size_of, size_of_val, transmute};
+use std::num::NonZeroUsize;
 use std::panic::catch_unwind;
 use std::pin::Pin;
 use std::ptr::{copy_nonoverlapping};
 use array_init::try_array_init;
-use d3d12_api::aliases::win32::graphics::direct3d12::{Blend, BlendDesc, BlendOp, ColorWriteEnable, CommandAllocator, CommandListType, CommandQueue, CommandQueueDesc, CpuDescriptorHandle, CullMode, Debug, DescriptorHeap, DescriptorHeapDesc, DescriptorHeapFlags, DescriptorHeapType, Device, Feature, FeatureDataRootSignature, Fence, FenceFlags, FillMode, GraphicsCommandList, GraphicsPipelineStateDesc, HeapFlags, HeapProperties, ICommandList, IDevice, InputClassification, InputElementDesc, InputLayoutDesc, IRootSignature, LogicOp, PipelineState, PrimitiveTopologyType, RasterizerDesc, RenderTargetBlendDesc, Resource, ResourceDesc, ResourceStates, RootSignature, RootSignatureVersion, ShaderByteCode, VertexBufferView, Viewport};
+use d3d12_api::aliases::win32::graphics::direct3d12::{Blend, BlendDesc, BlendOp, ColorWriteEnable, CommandAllocator, CommandList, CommandListType, CommandQueue, CommandQueueDesc, CpuDescriptorHandle, CullMode, Debug, DescriptorHeap, DescriptorHeapDesc, DescriptorHeapFlags, DescriptorHeapType, Device, Feature, FeatureDataRootSignature, Fence, FenceFlags, FillMode, GraphicsCommandList, GraphicsPipelineStateDesc, HeapFlags, HeapProperties, InputClassification, InputElementDesc, InputLayoutDesc, LogicOp, PipelineState, PrimitiveTopologyType, RasterizerDesc, RenderTargetBlendDesc, Resource, ResourceDesc, ResourceStates, RootSignature, RootSignatureVersion, ShaderByteCode, VertexBufferView, Viewport};
 use d3d12_api::aliases::win32::graphics::direct3d::FeatureLevel;
-use d3d12_api::aliases::win32::graphics::dxgi::{Adapter1, AdapterFlag, Factory4, IFactory1, IFactory2, IFactory4, InfoQueue, Scaling, SwapChain3, SwapChainDesc1, SwapEffect};
+use d3d12_api::aliases::win32::graphics::dxgi::{Adapter1, AdapterFlag, Factory4, InfoQueue, Present, Scaling, SwapChain3, SwapChainDesc1, SwapEffect, Usage};
 use d3d12_api::aliases::win32::graphics::dxgi::common::{AlphaMode, Format, SampleDesc};
-use d3d12_api::core::win32::foundation::{AsPStr, Handle, HResult, HWnd, LParam, LResult, OkOrErr, Rect, WParam};
-use d3d12_api::core::win32::graphics::direct3d12::{D3D12CreateDevice, D3D12GetDebugInterface, ID3D12CommandAllocator, ID3D12CommandQueue, ID3D12Debug, ID3D12DescriptorHeap, ID3D12Fence, ID3D12GraphicsCommandList, ID3D12Resource};
+use d3d12_api::core::win32::foundation::{AsPStr, Handle, HResult, HWnd, LParam, LResult, OkOrErr, Rect, Win32Error, WParam};
+use d3d12_api::core::win32::graphics::direct3d12::{D3D12CreateDevice, D3D12GetDebugInterface, ID3D12RootSignature};
 use d3d12_api::core::win32::graphics::direct3d::D3DPrimitiveTopology;
-use d3d12_api::core::win32::graphics::dxgi::{CreateDXGIFactory2, DXGI_CREATE_FACTORY_DEBUG, DXGI_MWA_NO_ALT_ENTER, DXGI_USAGE_RENDER_TARGET_OUTPUT, DXGIGetDebugInterface1, IDxgiAdapter1, IDxgiSwapChain, IDxgiSwapChain3};
+use d3d12_api::core::win32::graphics::dxgi::{CreateDXGIFactory2, DXGI_CREATE_FACTORY_DEBUG, DxgiFactory1, DxgiFactory2, DxgiFactory4, DXGIGetDebugInterface1, DxgiMwa, DxgiSwapChainFlag};
 use d3d12_api::core::win32::system::com::{AsParam, IUnknown};
 use d3d12_api::core::win32::system::library_loader::GetModuleHandleA;
 use d3d12_api::core::win32::system::threading::{CreateEventA, WaitForSingleObject};
 use d3d12_api::core::win32::system::windows_programming::INFINITE;
-use d3d12_api::core::win32::ui::windows_and_messaging::{AdjustWindowRectEx, CreateStructA, CreateWindowExA, CursorId, CW_USEDEFAULT, DefWindowProcA, DispatchMessageA, GetWindowLongPtrA, LoadCursorAById, PeekMessageA, PeekMessageRemoveType, RegisterClassExA, SetWindowLongPtrA, ShowWindow, ShowWindowCmd, TranslateMessage, WindowExStyle, WindowLongPtrIndex, WindowMessage, WindowStyle, WndClassExA, WndClassStyles};
-use d3d12_api::extensions::win32::graphics::direct3d12::{ID3D12CommandQueueEx, ID3D12GraphicsCommandListEx};
-use d3d12_api::extensions::win32::graphics::dxgi::IDxgiInfoQueueEx;
+use d3d12_api::core::win32::ui::windows_and_messaging::{AdjustWindowRectEx, CreateStructA, CreateWindowExA, CursorId, CW_USEDEFAULT, DefWindowProcA, DispatchMessageA, GetWindowLongPtrA, LoadCursorAById, PeekMessageA, PeekMessageRemoveType, RegisterClassExA, SetWindowLongPtrA, ShowWindow, ShowWindowCmd, TranslateMessage, WindowExStyle, WindowLongPtrIndex, WindowLongPtrUserData, WindowMessage, WindowMsg, WindowStyle, WndClassExA, WndClassStyles};
+//use d3d12_api::extensions::win32::graphics::direct3d12::{ID3D12CommandQueueEx, ID3D12GraphicsCommandListEx};
+//use d3d12_api::extensions::win32::graphics::dxgi::IDxgiInfoQueueEx;
 use d3d12_api::helpers::FillRestWith;
 use d3d12_api::hlsl_root_sig;
 
@@ -42,6 +43,12 @@ impl From<HResult> for Err {
     }
 }
 
+impl From<Win32Error> for Err {
+    fn from(value: Win32Error) -> Self {
+        panic!("{}", value)
+    }
+}
+
 struct HelloTriangleWindow {
     window_handle: HWnd,
     resources: Resources,
@@ -52,7 +59,7 @@ impl HelloTriangleWindow {
     fn new(width: u32, height: u32) -> Result<Pin<Box<Self>>, Err> {
         //
         let class_name = "hello-triangle-window\0";
-        let instance = GetModuleHandleA(None).ok_or_err()?;
+        let instance = GetModuleHandleA(None)?;
 
         #[allow(invalid_value)]
             let window_class = WndClassExA {
@@ -61,13 +68,12 @@ impl HelloTriangleWindow {
             wnd_proc: window_procedure::<Self>,
             instance,
             cursor: Some(LoadCursorAById(CursorId::Arrow)),
-            class_name: class_name.as_pstr(),
+            class_name: class_name.as_pstr().unwrap(),
             ..unsafe { MaybeUninit::zeroed().assume_init() }
         };
-        let atom = RegisterClassExA(&window_class);
-        debug_assert_ne!(atom, 0);
+        let atom = RegisterClassExA(&window_class).unwrap();
         let mut rect = Rect { left: 0, top: 0, right: width as i32, bottom: height as i32 };
-        AdjustWindowRectEx(&mut rect, WindowStyle::OverlappedWindow, false, WindowExStyle::AppWindow);
+        AdjustWindowRectEx(&mut rect, WindowStyle::OverlappedWindow, false, WindowExStyle::AppWindow).unwrap();
 
         // note: nightly: Box::new_uninit()
         let mut window = Box::new(MaybeUninit::<Self>::uninit());
@@ -83,7 +89,7 @@ impl HelloTriangleWindow {
             None,
             Some(instance),
             window.as_ptr() as _,
-        ).ok_or_err()?;
+        )?;
 
         let (factory, _, device) = create_device()?;
         let resources = Resources::new(window_handle, width, height, &factory, &device)?;
@@ -112,10 +118,12 @@ impl HelloTriangleWindow {
         // note: keep self alive
         loop {
             if let Some(msg) = PeekMessageA(None, 0, 0, PeekMessageRemoveType::Remove) {
-                TranslateMessage(&msg);
-                DispatchMessageA(&msg);
-                if msg.message == WindowMessage::Quit {
-                    break;
+                match &msg {
+                    WindowMsg::Msg(msg) => {
+                        TranslateMessage(&msg);
+                        DispatchMessageA(&msg);
+                    }
+                    WindowMsg::Quit(_) => break,
                 }
             }
         }
@@ -139,16 +147,16 @@ impl Window for HelloTriangleWindow {
 extern "system" fn window_procedure<T: Window>(window_handle: HWnd, message: WindowMessage, w_param: WParam, l_param: LParam) -> LResult {
     fn window_procedure_core<T: Window>(window_handle: HWnd, message: WindowMessage, w_param: WParam, l_param: LParam) -> LResult {
         //
-        if message == WindowMessage::Create && l_param.value != 0 {
+        if message == WindowMessage::Create && l_param.0 != 0 {
             let create_struct: &CreateStructA = unsafe { transmute(l_param) };
             SetWindowLongPtrA(window_handle, WindowLongPtrIndex::UserData, unsafe { transmute(create_struct.create_params) });
             return LResult::new(0);
         }
 
-        let user_data = GetWindowLongPtrA(window_handle, WindowLongPtrIndex::UserData);
+        let user_data = GetWindowLongPtrA::<WindowLongPtrUserData>(window_handle).unwrap().0;
         let window = if let Some(user_data) = user_data {
             unsafe {
-                &mut *(user_data.as_ptr() as *mut T)
+                &mut *transmute::<NonZeroUsize, *mut T>(user_data)
             }
         } else {
             return DefWindowProcA(window_handle, message, w_param, l_param);
@@ -185,7 +193,7 @@ struct Frame {
 
 impl Frame {
     //
-    fn new(window_handle: HWnd, width: u32, height: u32, factory: &impl IFactory2, device: &impl IDevice) -> Result<Self, Err> {
+    fn new(window_handle: HWnd, width: u32, height: u32, factory: &DxgiFactory2, device: &Device) -> Result<Self, Err> {
         //
         let command_queue: CommandQueue = device.CreateCommandQueue(&CommandQueueDesc::Direct)?;
 
@@ -196,14 +204,14 @@ impl Frame {
                 buffer_count: Resources::FRAME_COUNT,
                 width: width as u32,
                 height: height as u32,
-                format: Format::R8G8B8A8UNorm,
-                buffer_usage: DXGI_USAGE_RENDER_TARGET_OUTPUT,
+                format: Format::R8G8B8A8Unorm,
+                buffer_usage: Usage::RenderTargetOutput,
                 swap_effect: SwapEffect::FlipDiscard,
                 alpha_mode: AlphaMode::Unspecified,
                 sample_desc: SampleDesc::new(1, 0),
                 stereo: false.into(),
                 scaling: Scaling::Stretch,
-                flags: 0,
+                flags: DxgiSwapChainFlag::None,
             },
             None,
             None)?
@@ -212,7 +220,7 @@ impl Frame {
         let frame_index = swap_chain.GetCurrentBackBufferIndex();
         let fence: Fence = device.CreateFence(0, FenceFlags::None)?;
         let fence_value = 0;
-        let fence_event = CreateEventA(None, false, false, None).ok_or_err()?;
+        let fence_event = CreateEventA(None, false, false, None)?;
 
         Ok(Self {
             command_queue,
@@ -228,12 +236,12 @@ impl Frame {
         self.frame_index as usize
     }
 
-    fn execute_command_list(&self, command_list: &impl ICommandList) {
+    fn execute_command_list(&self, command_list: &CommandList) {
         self.command_queue.execute_command_list(command_list)
     }
 
     fn present(&self) -> Result<(), Err> {
-        self.swap_chain.Present(1, 0)?;
+        self.swap_chain.Present(1, Present::None)?;
         Ok(())
     }
 
@@ -274,11 +282,11 @@ impl Resources {
     //
     const FRAME_COUNT: u32 = 2;
 
-    fn new(window_handle: HWnd, width: u32, height: u32, factory: &impl IFactory4, device: &impl IDevice) -> Result<Resources, Err> {
+    fn new(window_handle: HWnd, width: u32, height: u32, factory: &DxgiFactory4, device: &Device) -> Result<Resources, Err> {
         //
         let frame = Frame::new(window_handle, width, height, factory, device)?;
 
-        factory.MakeWindowAssociation(window_handle, DXGI_MWA_NO_ALT_ENTER)?;
+        factory.MakeWindowAssociation(window_handle, DxgiMwa::NoAltEnter)?;
 
         let rtv_heap: DescriptorHeap =
             device.CreateDescriptorHeap(&DescriptorHeapDesc {
@@ -291,7 +299,7 @@ impl Resources {
         let rtv_descriptor_size =
             device.GetDescriptorHandleIncrementSize(DescriptorHeapType::Rtv) as usize;
 
-        let rtv_handle = rtv_heap.GetCPUDescriptorHandleForHeapStart();
+        let rtv_handle = rtv_heap.GetCPUDescriptorHandleForHeapStart().ok_or_err()?;
 
         let render_targets: [Resource; Resources::FRAME_COUNT as usize] =
             try_array_init(|i: usize| -> Result<Resource, Err> {
@@ -303,7 +311,7 @@ impl Resources {
             })?;
 
         let viewport = Viewport::new(width as f32, height as f32);
-        let scissor_rect = Rect::new(width, height);
+        let scissor_rect = Rect::with_size(0, 0, width, height);
 
         {
             let mut feature_data = FeatureDataRootSignature { highest_version: RootSignatureVersion::_1_1 };
@@ -342,7 +350,7 @@ impl Resources {
     }
 
     fn rtv_handle(&self) -> CpuDescriptorHandle {
-        self.rtv_heap.GetCPUDescriptorHandleForHeapStart() + self.rtv_descriptor_size * self.frame.frame_index()
+        self.rtv_heap.GetCPUDescriptorHandleForHeapStart().unwrap() + self.rtv_descriptor_size * self.frame.frame_index()
     }
 
     fn populate_command_list(&self) -> Result<(), Err> {
@@ -360,7 +368,7 @@ impl Resources {
 
         let rtv_handle = self.rtv_handle();
         self.command_list.om_set_render_target(Some(&rtv_handle), None);
-        self.command_list.ClearRenderTargetView(rtv_handle, [0.0, 0.2, 0.4, 1.0], None);
+        self.command_list.ClearRenderTargetView(rtv_handle, &[0.0, 0.2, 0.4, 1.0], None);
         self.command_list.IASetPrimitiveTopology(D3DPrimitiveTopology::TriangleList);
         self.command_list.IASetVertexBuffers(0, Some(&[self.vertex_buffer_view]));
         self.command_list.DrawInstanced(3, 1, 0, 0);
@@ -408,7 +416,7 @@ fn create_device() -> Result<(Factory4, Adapter1, Device), Err> {
     Ok((factory, adapter, device.ok_or_err()?))
 }
 
-fn get_hardware_adapter(factory: &impl IFactory1) -> Result<Adapter1, Err> {
+fn get_hardware_adapter(factory: &DxgiFactory1) -> Result<Adapter1, Err> {
     for i in 0.. {
         let adapter = factory.EnumAdapters1(i)?;
         let desc = adapter.GetDesc1()?;
@@ -425,7 +433,7 @@ fn get_hardware_adapter(factory: &impl IFactory1) -> Result<Adapter1, Err> {
     unreachable!()
 }
 
-fn create_pipeline_state(device: &impl IDevice, root_sig: &impl IRootSignature) -> Result<PipelineState, Err> {
+fn create_pipeline_state(device: &Device, root_sig: &RootSignature) -> Result<PipelineState, Err> {
     let pipeline_state: PipelineState = device.CreateGraphicsPipelineState(#[allow(invalid_value)] &GraphicsPipelineStateDesc {
         root_signature: root_sig.as_root_signature().as_param(),
         vs: ShaderByteCode::new(include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/hello-triangle-vs.dxil"))),
@@ -454,7 +462,7 @@ fn create_pipeline_state(device: &impl IDevice, root_sig: &impl IRootSignature) 
         },
         input_layout: InputLayoutDesc::new(&[
             InputElementDesc {
-                semantic_name: "POSITION\0".as_pstr(),
+                semantic_name: "POSITION\0".as_pstr().unwrap(),
                 semantic_index: 0,
                 format: Format::R32G32B32Float,
                 input_slot: 0,
@@ -463,7 +471,7 @@ fn create_pipeline_state(device: &impl IDevice, root_sig: &impl IRootSignature) 
                 instance_data_step_rate: 0,
             },
             InputElementDesc {
-                semantic_name: "COLOR\0".as_pstr(),
+                semantic_name: "COLOR\0".as_pstr().unwrap(),
                 semantic_index: 0,
                 format: Format::R32G32B32A32Float,
                 input_slot: 0,
@@ -474,7 +482,7 @@ fn create_pipeline_state(device: &impl IDevice, root_sig: &impl IRootSignature) 
         ]),
         primitive_topology_type: PrimitiveTopologyType::Triangle,
         num_render_targets: 1,
-        rtv_formats: [Format::R8G8B8A8UNorm].fill_rest_with(Format::Unknown),
+        rtv_formats: [Format::R8G8B8A8Unorm].fill_rest_with(Format::Unknown),
         sample_desc: SampleDesc { count: 1, quality: 0 },
         ..unsafe { MaybeUninit::zeroed().assume_init() }
     })?;
@@ -482,7 +490,7 @@ fn create_pipeline_state(device: &impl IDevice, root_sig: &impl IRootSignature) 
     Ok(pipeline_state)
 }
 
-fn create_vertex_buffer(device: &impl IDevice, aspect_ratio: f32) -> Result<(Resource, VertexBufferView), Err> {
+fn create_vertex_buffer(device: &Device, aspect_ratio: f32) -> Result<(Resource, VertexBufferView), Err> {
     struct Vertex {
         #[allow(dead_code)] position: [f32; 3],
         #[allow(dead_code)] color: [f32; 4],
@@ -505,7 +513,7 @@ fn create_vertex_buffer(device: &impl IDevice, aspect_ratio: f32) -> Result<(Res
     let vertex_buffer = vertex_buffer.ok_or_err()?;
 
     let mut dest = None;
-    vertex_buffer.Map(0, None, Some(&mut dest))?;
+    vertex_buffer.Map(0, Some(&(0..0)), Some(&mut dest))?;
     let dest = dest.ok_or_err()?;
     unsafe {
         copy_nonoverlapping(vertices.as_ptr(), dest.as_ptr() as *mut Vertex, vertices.len());
@@ -513,7 +521,7 @@ fn create_vertex_buffer(device: &impl IDevice, aspect_ratio: f32) -> Result<(Res
     vertex_buffer.Unmap(0, None);
 
     let vertex_buffer_view = VertexBufferView {
-        buffer_location: vertex_buffer.GetGPUVirtualAddress(),
+        buffer_location: vertex_buffer.GetGPUVirtualAddress().unwrap(),
         stride_in_bytes: size_of::<Vertex>() as u32,
         size_in_bytes: size_of_val(&vertices) as u32,
     };

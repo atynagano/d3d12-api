@@ -7,63 +7,60 @@
 use std::mem::transmute;
 use std::ops::{BitOr, BitOrAssign};
 
-#[repr(u32)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub enum CreateEvent
-{
-	InitialSet           = 0x2u32,
-	ManualReset          = 0x1u32,
-}
-
-impl BitOr for CreateEvent {
-	type Output = CreateEvent;
-	fn bitor(self, rhs: Self) -> <Self as BitOr>::Output {
-		unsafe { transmute(self as u32 | rhs as u32) }
+bitflags::bitflags! {
+	/// SYNCHRONIZATION_ACCESS_RIGHTS
+	#[repr(transparent)]
+	pub struct SynchronizationAccessRights: u32 {
+		/// EVENT_ALL_ACCESS = 0x1F0003u32
+		const AllAccess            = 0x1F0003u32;
+		/// EVENT_MODIFY_STATE = 0x2u32
+		const ModifyState          = 0x2u32;
+		/// TIMER_QUERY_STATE = 0x1u32
+		const QueryState           = 0x1u32;
+		/// SYNCHRONIZATION_DELETE = 0x10000u32
+		const Delete               = 0x10000u32;
+		/// SYNCHRONIZATION_READ_CONTROL = 0x20000u32
+		const ReadControl          = 0x20000u32;
+		/// SYNCHRONIZATION_WRITE_DAC = 0x40000u32
+		const WriteDac             = 0x40000u32;
+		/// SYNCHRONIZATION_WRITE_OWNER = 0x80000u32
+		const WriteOwner           = 0x80000u32;
+		/// SYNCHRONIZATION_SYNCHRONIZE = 0x100000u32
+		const Synchronize          = 0x100000u32;
 	}
 }
 
-impl BitOrAssign for CreateEvent {
-	fn bitor_assign(&mut self, rhs: Self) {
-		*self = *self | rhs;
+bitflags::bitflags! {
+	/// CREATE_EVENT
+	#[repr(transparent)]
+	pub struct CreateEvent: u32 {
+		/// CREATE_EVENT_INITIAL_SET = 0x2u32
+		const InitialSet           = 0x2u32;
+		/// CREATE_EVENT_MANUAL_RESET = 0x1u32
+		const ManualReset          = 0x1u32;
 	}
 }
 
-impl CreateEvent {
-    pub fn contains(self, other: CreateEvent) -> bool {
-        (self as u32) & (other as u32) == (other as u32)
-    }
-}
-
-#[repr(u32)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub enum WorkerThreadFlags
-{
-	ExecuteDefault       = 0x0u32,
-	ExecuteInIoThread    = 0x1u32,
-	ExecuteInPersistentThread = 0x80u32,
-	ExecuteInWaitThread  = 0x4u32,
-	ExECutElongFunction  = 0x10u32,
-	ExecuteOnlyOnce      = 0x8u32,
-	TransferImpersonation = 0x100u32,
-	ExecuteInTimerThread = 0x20u32,
-}
-
-impl BitOr for WorkerThreadFlags {
-	type Output = WorkerThreadFlags;
-	fn bitor(self, rhs: Self) -> <Self as BitOr>::Output {
-		unsafe { transmute(self as u32 | rhs as u32) }
+bitflags::bitflags! {
+	/// WORKER_THREAD_FLAGS
+	#[repr(transparent)]
+	pub struct WorkerThreadFlags: u32 {
+		/// WT_EXECUTEDEFAULT = 0x0u32
+		const ExecuteDefault       = 0x0u32;
+		/// WT_EXECUTEINIOTHREAD = 0x1u32
+		const ExecuteInIoThread    = 0x1u32;
+		/// WT_EXECUTEINPERSISTENTTHREAD = 0x80u32
+		const ExecuteInPersistentThread = 0x80u32;
+		/// WT_EXECUTEINWAITTHREAD = 0x4u32
+		const ExecuteInWaitThread  = 0x4u32;
+		/// WT_EXECUTELONGFUNCTION = 0x10u32
+		const ExECutElongFunction  = 0x10u32;
+		/// WT_EXECUTEONLYONCE = 0x8u32
+		const ExecuteOnlyOnce      = 0x8u32;
+		/// WT_TRANSFER_IMPERSONATION = 0x100u32
+		const TransferImpersonation = 0x100u32;
+		/// WT_EXECUTEINTIMERTHREAD = 0x20u32
+		const ExecuteInTimerThread = 0x20u32;
 	}
-}
-
-impl BitOrAssign for WorkerThreadFlags {
-	fn bitor_assign(&mut self, rhs: Self) {
-		*self = *self | rhs;
-	}
-}
-
-impl WorkerThreadFlags {
-    pub fn contains(self, other: WorkerThreadFlags) -> bool {
-        (self as u32) & (other as u32) == (other as u32)
-    }
 }
 

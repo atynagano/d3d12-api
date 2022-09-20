@@ -1,12 +1,14 @@
+use std::borrow::Cow;
 use std::ffi::c_void;
+use std::fmt::{Debug, Display, Formatter};
 use std::mem::transmute;
 use std::ops::Deref;
 use std::slice;
 use crate::core::win32::foundation::HResult;
 use crate::core::win32::graphics::direct3d::dxc::*;
-use crate::core::win32::system::com::{Clsid, Com, GUID, IMalloc, IUnknown, Unknown, VTable};
+use crate::core::win32::system::com::{Clsid, Com, GUID, IMalloc, IUnknown, Unknown, UnknownWrapper, VTable};
 
-pub fn DxcCreateInstance<T: IUnknown + Clsid>() -> Result<T, HResult> {
+pub fn DxcCreateInstance<T: IUnknown + From<UnknownWrapper> + Clsid>() -> Result<T, HResult> {
     unsafe {
         #[link(name = "dxcompiler")]
         extern "system" {
@@ -24,14 +26,14 @@ pub fn DxcCreateInstance<T: IUnknown + Clsid>() -> Result<T, HResult> {
         );
         if ret.is_ok() {
             if let Some(o) = out {
-                return Ok(T::from(o));
+                return Ok(T::from(UnknownWrapper(o)));
             }
         }
         Err(ret)
     }
 }
 
-pub fn DxcCreateInstance2<T: IUnknown + Clsid>(
+pub fn DxcCreateInstance2<T: IUnknown + From<UnknownWrapper> + Clsid>(
     malloc: &impl IMalloc,
 ) -> Result<T, HResult> {
     unsafe {
@@ -53,7 +55,7 @@ pub fn DxcCreateInstance2<T: IUnknown + Clsid>(
         );
         if ret.is_ok() {
             if let Some(o) = out {
-                return Ok(T::from(o));
+                return Ok(T::from(UnknownWrapper(o)));
             }
         }
         Err(ret)
@@ -100,22 +102,23 @@ impl DxcCompiler3 {
     }
 }
 
-impl Deref for DxcBlob {
-    type Target = [u8];
-
-    fn deref(&self) -> &Self::Target {
-        unsafe {
-            slice::from_raw_parts(
-                self.GetBufferPointer() as *const u8,
-                self.GetBufferSize(),
-            )
-        }
+impl AsRef<[u8]> for DxcBlob {
+    fn as_ref(&self) -> &[u8] {
+        self.as_slice()
     }
 }
 
-impl AsRef<[u8]> for DxcBlob {
-    fn as_ref(&self) -> &[u8] {
-        self.deref()
+impl DxcBlob {
+    pub fn as_slice(&self) -> &[u8] {
+        unsafe {
+            let ptr: *const u8 = self.GetBufferPointer() as _;
+            let len = self.GetBufferSize();
+            if ptr == std::ptr::null() || len == 0 {
+                &[]
+            } else {
+                slice::from_raw_parts(ptr, len)
+            }
+        }
     }
 }
 
@@ -126,5 +129,29 @@ impl DxcBuffer<'_> {
             size: shader.len(),
             encoding: 0xFDE9,
         }
+    }
+}
+
+impl Debug for DxcBlob {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        <Cow<str> as Debug>::fmt(&String::from_utf8_lossy(self.as_slice()), f)
+    }
+}
+
+impl Display for DxcBlob {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        <Cow<str> as Display>::fmt(&String::from_utf8_lossy(self.as_slice()), f)
+    }
+}
+
+impl Debug for DxcBlobEncoding {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        <DxcBlob as Debug>::fmt(self.as_blob(), f)
+    }
+}
+
+impl Display for DxcBlobEncoding {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        <DxcBlob as Display>::fmt(self.as_blob(), f)
     }
 }

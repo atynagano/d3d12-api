@@ -6,10 +6,17 @@
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
+use std::num::NonZeroUsize;
 use std::mem::{MaybeUninit, size_of_val, transmute};
+use std::ops::Deref;
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
 use crate::core::win32::system::com::*;
 
+use crate::core::win32::foundation::*;
+use crate::core::win32::system::com::*;
+
+pub type LPExCepFinoDeferredFilLin 
+	= unsafe extern "system" fn(excep_info: &mut ExCepInfo, ) -> HResult;
 

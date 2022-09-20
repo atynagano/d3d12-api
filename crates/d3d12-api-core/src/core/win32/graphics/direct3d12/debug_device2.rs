@@ -6,7 +6,9 @@
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
+use std::num::NonZeroUsize;
 use std::mem::{MaybeUninit, size_of_val, transmute};
+use std::ops::Deref;
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -16,14 +18,35 @@ use crate::core::win32::foundation::*;
 use crate::core::win32::graphics::direct3d12::*;
 
 #[repr(C)]
+#[derive(Clone, Hash)]
 pub struct D3D12DebugDevice2(pub(crate) D3D12DebugDevice);
+
+impl Deref for D3D12DebugDevice2 {
+	type Target = D3D12DebugDevice;
+	fn deref(&self) -> &Self::Target { &self.0	}
+}
 
 impl Guid for D3D12DebugDevice2 {
 	const IID: &'static GUID = &GUID::from_u128(0x60eccbc1378d4df1894cf8ac5ce4d7ddu128);
 }
 
-impl Clone for D3D12DebugDevice2 {
-	fn clone(&self) -> Self { D3D12DebugDevice2(self.0.clone()) }
+impl Com for D3D12DebugDevice2 {
+	fn vtable(&self) -> VTable { self.0.vtable() }
+}
+
+impl D3D12DebugDevice2 {
+	pub fn SetDebugParameter(&self, r#type: D3D12DebugDeviceParameterType, data: &[u8]) -> Result<(), HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let (data_ptr_, data_len_) = data.deconstruct();
+			let f: extern "system" fn(Param<Self>, D3D12DebugDeviceParameterType, *const u8, u32) -> HResult
+				= transmute(vt[6]);
+			let _ret_ = f(vt, r#type, data_ptr_, data_len_ as u32);
+			_ret_.ok()
+		}
+	}
+
+	pub unsafe fn GetDebugParameter(&self) { todo!() }
 }
 
 pub trait ID3D12DebugDevice2: ID3D12DebugDevice {
@@ -35,20 +58,19 @@ impl ID3D12DebugDevice2 for D3D12DebugDevice2 {
 	fn as_debug_device2(&self) -> &D3D12DebugDevice2 { self }
 	fn into_debug_device2(self) -> D3D12DebugDevice2 { self }
 }
-
 impl ID3D12DebugDevice for D3D12DebugDevice2 {
 	fn as_debug_device(&self) -> &D3D12DebugDevice { &self.0.as_debug_device() }
 	fn into_debug_device(self) -> D3D12DebugDevice { self.0.into_debug_device() }
 }
 
-impl From<Unknown> for D3D12DebugDevice2 {
-    fn from(v: Unknown) -> Self {
-        Self(D3D12DebugDevice::from(v))
-    }
-}
-
 impl IUnknown for D3D12DebugDevice2 {
 	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
 	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
+}
+
+impl From<UnknownWrapper> for D3D12DebugDevice2 {
+    fn from(v: UnknownWrapper) -> Self {
+        Self(D3D12DebugDevice::from(v))
+    }
 }
 

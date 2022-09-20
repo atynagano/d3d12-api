@@ -16,6 +16,10 @@ pub use self::apis::*;
 mod constants;
 pub use self::constants::*;
 
+
+mod _shader_component_mapping;
+pub use self::_shader_component_mapping::*;
+
 mod object;
 pub use self::object::*;
 mod device_child;

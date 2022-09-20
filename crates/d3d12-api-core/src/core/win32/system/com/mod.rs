@@ -16,9 +16,16 @@ pub use self::apis::*;
 mod constants;
 pub use self::constants::*;
 
-mod malloc;
-pub use self::malloc::*;
 mod stream;
 pub use self::stream::*;
 mod sequential_stream;
 pub use self::sequential_stream::*;
+mod malloc;
+pub use self::malloc::*;
+mod enum_unknown;
+pub use self::enum_unknown::*;
+mod enum_string;
+pub use self::enum_string::*;
+mod error_log;
+pub use self::error_log::*;
+pub mod structured_storage;

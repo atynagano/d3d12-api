@@ -2,6 +2,8 @@ use std::ffi::c_void;
 use std::mem::transmute;
 use std::ops::Deref;
 use std::ptr::null;
+use d3d12_api_core::aliases::win32::graphics::direct3d12::Device5;
+use d3d12_api_core::helpers::{ToUtf16, Utf16};
 use crate::aliases::win32::graphics::direct3d12::{
     DxilLibraryDesc,
     DxilSubobjectToExportsAssociation,
@@ -10,7 +12,6 @@ use crate::aliases::win32::graphics::direct3d12::{
     GlobalRootSignature,
     HitGroupDesc,
     HitGroupType,
-    IDevice5,
     IRootSignature,
     LocalRootSignature,
     NodeMask,
@@ -26,7 +27,7 @@ use crate::aliases::win32::graphics::direct3d12::{
     SubobjectToExportsAssociation,
 };
 use crate::core::win32::graphics::direct3d12::D3D12ExportDesc;
-use crate::extensions::win32::graphics::direct3d12::ID3D12Device5Ex;
+//use crate::extensions::win32::graphics::direct3d12::ID3D12Device5Ex;
 use crate::core::win32::foundation::{AsPWStr, HResult, PWStr};
 use crate::core::win32::system::com::AsParam;
 
@@ -46,19 +47,19 @@ pub enum StateSubobjectData<'a> {
     RaytracingPipelineConfig1(Box<RaytracingPipelineConfig1>),
     //MaxValid(MaxValidDesc),
     Export(Vec<D3D12ExportDesc<'a>>),
-    Vec(Vec<Vec<u16>>),
+    Vec(Vec<Utf16<'static>>),
     PWStr(Vec<PWStr<'a>>),
 }
 
 #[repr(C)]
 // #[derive(Copy, Clone, Debug)] note: ダメ
-pub struct StateSubobjectWrapper<'a> {
+pub struct StateSubobjectAssociation<'a> {
     // note: private。勝手にインスタンス化されては困る
     raw: StateSubobject<'a>,
     location: *const StateSubobject<'a>,
 }
 
-impl StateSubobjectWrapper<'_> {
+impl StateSubobjectAssociation<'_> {
     fn new<T>(obj_type: StateSubobjectType, desc: &T) -> Self {
         Self {
             raw: StateSubobject {
@@ -72,7 +73,7 @@ impl StateSubobjectWrapper<'_> {
 
 // todo: StateObjectDescではかぶる
 pub struct StateObjectDesc<'a> {
-    objects: Vec<Box<StateSubobjectWrapper<'a>>>,
+    objects: Vec<Box<StateSubobjectAssociation<'a>>>,
     descs: Vec<StateSubobjectData<'a>>,
 }
 
@@ -100,44 +101,44 @@ impl<'a> StateObjectDesc<'a> {
         }
     }
 
-    pub fn push_state_object_config(&mut self) -> &'a StateSubobjectWrapper<'a> {
+    pub fn push_state_object_config(&mut self) -> &'a StateSubobjectAssociation<'a> {
         todo!()
     }
 
-    pub fn push_global_root_sig(&mut self, root_sig: &'a impl IRootSignature) -> &'a StateSubobjectWrapper<'a> {
+    pub fn push_global_root_sig(&mut self, root_sig: &'a impl IRootSignature) -> &'a StateSubobjectAssociation<'a> {
         let desc = Box::new(GlobalRootSignature { global_root_signature: root_sig.as_root_signature().as_param() });
-        let obj = Box::new(StateSubobjectWrapper::new(StateSubobjectType::GlobalRootSignature, &*desc));
-        let ptr = obj.deref() as *const StateSubobjectWrapper;
+        let obj = Box::new(StateSubobjectAssociation::new(StateSubobjectType::GlobalRootSignature, &*desc));
+        let ptr = obj.deref() as *const StateSubobjectAssociation;
         self.descs.push(StateSubobjectData::GlobalRootSignature(desc));
         self.objects.push(obj);
         unsafe { &*ptr }
     }
 
-    pub fn push_local_root_sig(&mut self, root_sig: &'a impl IRootSignature) -> &'a StateSubobjectWrapper<'a> {
+    pub fn push_local_root_sig(&mut self, root_sig: &'a impl IRootSignature) -> &'a StateSubobjectAssociation<'a> {
         let desc = Box::new(LocalRootSignature { local_root_signature: root_sig.as_root_signature().as_param() });
         // note: Boxにしないと戻り値のptrを固定できない。
-        let obj = Box::new(StateSubobjectWrapper::new(StateSubobjectType::LocalRootSignature, &*desc));
-        let ptr = obj.deref() as *const StateSubobjectWrapper;
+        let obj = Box::new(StateSubobjectAssociation::new(StateSubobjectType::LocalRootSignature, &*desc));
+        let ptr = obj.deref() as *const StateSubobjectAssociation;
         self.descs.push(StateSubobjectData::LocalRootSignature(desc));
         self.objects.push(obj);
         unsafe { &*ptr }
     }
 
-    pub fn push_node_mask(&mut self) -> &'a StateSubobjectWrapper<'a> {
+    pub fn push_node_mask(&mut self) -> &'a StateSubobjectAssociation<'a> {
         todo!()
     }
 
-    pub fn push_dxil_lib(&mut self, shader: &'a [u8], exports: &[ExportDesc]) -> &'a StateSubobjectWrapper<'a> {
+    pub fn push_dxil_lib(&mut self, shader: &'a [u8], exports: &[ExportDesc]) -> &'a StateSubobjectAssociation<'a> {
         // note: Vecがmutでは困るのだ。x2しないと。
         let mut vec = Vec::with_capacity(exports.len() * 2);
         let mut exports_ = Vec::with_capacity(exports.len());
         for e in exports {
-            let tmp = e.name.encode_utf16().chain([0u16]).collect::<Vec<_>>();
+            let tmp = e.name.to_utf16();
             let name = unsafe { transmute(tmp.as_pwstr()) };
             vec.push(tmp);
 
             let etr = if let Some(ex) = e.export_to_rename {
-                let tmp = ex.encode_utf16().chain([0u16]).collect::<Vec<_>>();
+                let tmp = ex.to_utf16();
                 let tmp2 = unsafe { transmute(tmp.as_pwstr()) };
                 vec.push(tmp);
                 Some(tmp2)
@@ -159,8 +160,8 @@ impl<'a> StateObjectDesc<'a> {
             exports: unsafe { transmute(exports.first().unwrap()) },
         };
         let desc = Box::new(desc);
-        let obj = Box::new(StateSubobjectWrapper::new(StateSubobjectType::DxilLibrary, &*desc));
-        let ptr = obj.deref() as *const StateSubobjectWrapper;
+        let obj = Box::new(StateSubobjectAssociation::new(StateSubobjectType::DxilLibrary, &*desc));
+        let ptr = obj.deref() as *const StateSubobjectAssociation;
         self.descs.push(StateSubobjectData::DxilLibrary(desc));
         self.descs.push(StateSubobjectData::Vec(vec));
         self.descs.push(StateSubobjectData::Export(exports));
@@ -168,14 +169,14 @@ impl<'a> StateObjectDesc<'a> {
         unsafe { &*ptr }
     }
 
-    pub fn push_existing_collection(&mut self) -> &'a StateSubobjectWrapper<'a> {
+    pub fn push_existing_collection(&mut self) -> &'a StateSubobjectAssociation<'a> {
         todo!()
     }
 
-    pub fn push_subobject_to_exports_assoc(&mut self, obj: &'a StateSubobjectWrapper, exports: &[&str]) -> &'a StateSubobjectWrapper<'a> {
+    pub fn push_subobject_to_exports_assoc(&mut self, obj: &'a StateSubobjectAssociation, exports: &[&str]) -> &'a StateSubobjectAssociation<'a> {
         let vec = exports
             .into_iter()
-            .map(|&x| x.encode_utf16().chain([0u16]).collect::<Vec<_>>())
+            .map(|&x| x.to_utf16())
             .collect::<Vec<_>>();
 
         let exports = vec
@@ -188,8 +189,8 @@ impl<'a> StateObjectDesc<'a> {
             num_exports: exports.len() as u32,
             exports: unsafe { transmute(exports.first().unwrap()) },
         });
-        let obj = Box::new(StateSubobjectWrapper::new(StateSubobjectType::SubobjectToExportsAssociation, &*desc));
-        let ptr = obj.deref() as *const StateSubobjectWrapper;
+        let obj = Box::new(StateSubobjectAssociation::new(StateSubobjectType::SubobjectToExportsAssociation, &*desc));
+        let ptr = obj.deref() as *const StateSubobjectAssociation;
         self.descs.push(StateSubobjectData::SubobjectToExportsAssociation(desc));
         self.descs.push(StateSubobjectData::Vec(vec));
         self.descs.push(StateSubobjectData::PWStr(exports));
@@ -197,27 +198,27 @@ impl<'a> StateObjectDesc<'a> {
         unsafe { &*ptr }
     }
 
-    pub fn push_rt_shader_config(&mut self, payload: u32, attr: u32) -> &'a StateSubobjectWrapper<'a> {
+    pub fn push_rt_shader_config(&mut self, payload: u32, attr: u32) -> &'a StateSubobjectAssociation<'a> {
         let desc = Box::new(RaytracingShaderConfig {
             max_payload_size_in_bytes: payload,
             max_attribute_size_in_bytes: attr,
         });
-        let obj = Box::new(StateSubobjectWrapper::new(StateSubobjectType::RaytracingShaderConfig, &*desc));
-        let ptr = obj.deref() as *const StateSubobjectWrapper;
+        let obj = Box::new(StateSubobjectAssociation::new(StateSubobjectType::RaytracingShaderConfig, &*desc));
+        let ptr = obj.deref() as *const StateSubobjectAssociation;
         self.descs.push(StateSubobjectData::RaytracingShaderConfig(desc));
         self.objects.push(obj);
         unsafe { &*ptr }
     }
 
-    pub fn push_rt_pipeline_config(&mut self, max_trace_recursion_depth: u32) -> &'a StateSubobjectWrapper<'a> {
+    pub fn push_rt_pipeline_config(&mut self, max_trace_recursion_depth: u32) -> &'a StateSubobjectAssociation<'a> {
         if max_trace_recursion_depth == 0 {
             panic!("max_trace_recursion_depth should be greater than 0");
         }
         let desc = Box::new(RaytracingPipelineConfig {
             max_trace_recursion_depth
         });
-        let obj = Box::new(StateSubobjectWrapper::new(StateSubobjectType::RaytracingPipelineConfig, &*desc));
-        let ptr = obj.deref() as *const StateSubobjectWrapper;
+        let obj = Box::new(StateSubobjectAssociation::new(StateSubobjectType::RaytracingPipelineConfig, &*desc));
+        let ptr = obj.deref() as *const StateSubobjectAssociation;
         self.descs.push(StateSubobjectData::RaytracingPipelineConfig(desc));
         self.objects.push(obj);
         unsafe { &*ptr }
@@ -230,15 +231,15 @@ impl<'a> StateObjectDesc<'a> {
         any_hit_import: Option<&str>,
         closest_hit_import: &str,
         intersection_import: Option<&str>,
-    ) -> &'a StateSubobjectWrapper<'a> {
+    ) -> &'a StateSubobjectAssociation<'a> {
         let mut vec = Vec::with_capacity(4);
 
-        let hge = hit_group_export.encode_utf16().chain([0u16]).collect::<Vec<_>>();
+        let hge = hit_group_export.to_utf16();
         let phge = unsafe { transmute(hge.as_pwstr()) };
         vec.push(hge);
 
         let pahi = if let Some(ahi) = any_hit_import {
-            let ahi = ahi.encode_utf16().chain([0u16]).collect::<Vec<_>>();
+            let ahi = ahi.to_utf16();
             let pahi = unsafe { transmute(ahi.as_pwstr()) };
             vec.push(ahi);
             Some(pahi)
@@ -246,12 +247,12 @@ impl<'a> StateObjectDesc<'a> {
             None
         };
 
-        let chi = closest_hit_import.encode_utf16().chain([0u16]).collect::<Vec<_>>();
+        let chi = closest_hit_import.to_utf16();
         let pchi = unsafe { transmute(chi.as_pwstr()) };
         vec.push(chi);
 
         let pii = if let Some(ii) = intersection_import {
-            let ii = ii.encode_utf16().chain([0u16]).collect::<Vec<_>>();
+            let ii = ii.to_utf16();
             let pii = unsafe { transmute(ii.as_pwstr()) };
             vec.push(ii);
             Some(pii)
@@ -267,23 +268,23 @@ impl<'a> StateObjectDesc<'a> {
             intersection_shader_import: pii,
         });
 
-        let obj = Box::new(StateSubobjectWrapper::new(StateSubobjectType::HitGroup, &*desc));
-        let ptr = obj.deref() as *const StateSubobjectWrapper;
+        let obj = Box::new(StateSubobjectAssociation::new(StateSubobjectType::HitGroup, &*desc));
+        let ptr = obj.deref() as *const StateSubobjectAssociation;
         self.descs.push(StateSubobjectData::HitGroup(desc));
         self.descs.push(StateSubobjectData::Vec(vec));
         self.objects.push(obj);
         unsafe { &*ptr }
     }
 
-    pub fn push_rt_pipeline_config1(&mut self) -> &'a StateSubobjectWrapper<'a> {
+    pub fn push_rt_pipeline_config1(&mut self) -> &'a StateSubobjectAssociation<'a> {
         todo!()
     }
 
-    pub fn push_max_valid(&mut self) -> &'a StateSubobjectWrapper<'a> {
+    pub fn push_max_valid(&mut self) -> &'a StateSubobjectAssociation<'a> {
         todo!()
     }
 
-    pub fn create_state_object(&mut self, device: &impl IDevice5, obj_type: StateObjectType) -> Result<StateObject, HResult> {
+    pub fn create_state_object(&mut self, device: &Device5, obj_type: StateObjectType) -> Result<StateObject, HResult> {
         // note: 慎重に。with_capacityでないとreallocされてしまいlocationが変わってしまう。
         // note: https://github.com/microsoft/DirectX-Headers/blob/9f23d202a27adb285f53398a1850b5a377cd782e/include/directx/d3dx12.h#L3323
         let mut objects = Vec::with_capacity(self.objects.len());
@@ -292,21 +293,21 @@ impl<'a> StateObjectDesc<'a> {
             obj.location = objects.last().unwrap();
         }
         for obj in &mut objects {
-                if obj.ty == StateSubobjectType::SubobjectToExportsAssociation {
-                    unsafe {
-                        let desc: *mut SubobjectToExportsAssociation = transmute(obj.desc);
-                        let wrapper: &StateSubobjectWrapper = transmute((*desc).subobject_to_associate);
-                        (*desc).subobject_to_associate = transmute(wrapper.location);
-                    }
+            if obj.ty == StateSubobjectType::SubobjectToExportsAssociation {
+                unsafe {
+                    let desc: *mut SubobjectToExportsAssociation = transmute(obj.desc);
+                    let wrapper: &StateSubobjectAssociation = transmute((*desc).subobject_to_associate);
+                    (*desc).subobject_to_associate = transmute(wrapper.location);
                 }
+            }
         }
         device.create_state_object(obj_type, objects.as_slice())
     }
 
     pub fn dump(&self) {
-        fn search_index(objects: &[Box<StateSubobjectWrapper>], target: *const StateSubobjectWrapper) -> isize {
+        fn search_index(objects: &[Box<StateSubobjectAssociation>], target: *const StateSubobjectAssociation) -> isize {
             for (i, obj) in objects.iter().enumerate() {
-                if target == obj.deref() as *const StateSubobjectWrapper {
+                if target == obj.deref() as *const StateSubobjectAssociation {
                     return i as isize;
                 }
             }
@@ -350,7 +351,7 @@ impl<'a> StateObjectDesc<'a> {
                     for j in 0..(desc.num_exports as isize) {
                         let e: *const PWStr = unsafe { transmute(desc.exports) };
                         let e = unsafe { *e.offset(j) };
-                        println!("|   - Export {}: \"{:?}\"", j, e);
+                        println!("|   - Export {}: {:?}", j, e);
                     }
                 }
                 StateSubobjectType::DxilSubobjectToExportsAssociation => {
@@ -370,9 +371,9 @@ impl<'a> StateObjectDesc<'a> {
 | {:2}: Hit Group: {{
 |       HitGroupExport: \"{}\",
 |       Type: {:?},
-|       AnyHitShaderImport: \"{:?}\",
-|       ClosestHitShaderImport: \"{:?}\",
-|       IntersectionShaderImport: \"{:?}\" }}",
+|       AnyHitShaderImport: {:?},
+|       ClosestHitShaderImport: {:?},
+|       IntersectionShaderImport: {:?} }}",
                              i,
                              desc.hit_group_export,
                              desc.ty,

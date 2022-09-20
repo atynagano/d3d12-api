@@ -17,3 +17,4 @@ mod constants;
 pub use self::constants::*;
 
 pub mod file_system;
+pub mod xps;

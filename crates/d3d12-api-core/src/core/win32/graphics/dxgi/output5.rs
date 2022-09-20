@@ -6,7 +6,9 @@
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
+use std::num::NonZeroUsize;
 use std::mem::{MaybeUninit, size_of_val, transmute};
+use std::ops::Deref;
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -18,43 +20,46 @@ use crate::core::win32::graphics::dxgi::common::*;
 use crate::core::win32::graphics::dxgi::*;
 
 #[repr(C)]
+#[derive(Clone, Hash)]
 pub struct DxgiOutput5(pub(crate) DxgiOutput4);
+
+impl Deref for DxgiOutput5 {
+	type Target = DxgiOutput4;
+	fn deref(&self) -> &Self::Target { &self.0	}
+}
 
 impl Guid for DxgiOutput5 {
 	const IID: &'static GUID = &GUID::from_u128(0x80a07424ab5242eb833c0c42fd282d98u128);
 }
 
-impl Clone for DxgiOutput5 {
-	fn clone(&self) -> Self { DxgiOutput5(self.0.clone()) }
+impl Com for DxgiOutput5 {
+	fn vtable(&self) -> VTable { self.0.vtable() }
+}
+
+impl DxgiOutput5 {
+	pub fn DuplicateOutput1(&self, device: &Unknown, flags: u32, supported_formats: &[DxgiFormat]) -> Result<DxgiOutputDuplication, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let (supported_formats_ptr_, supported_formats_len_) = supported_formats.deconstruct();
+			let mut output_duplication_out_: Option<DxgiOutputDuplication> = None;
+			let f: extern "system" fn(Param<Self>, VTable, u32, u32, *const DxgiFormat, *mut c_void) -> HResult
+				= transmute(vt[26]);
+			let _ret_ = f(vt, device.vtable(), flags, supported_formats_len_ as u32, supported_formats_ptr_, transmute(&mut output_duplication_out_));
+			if _ret_.is_ok() { if let Some(output_duplication_out_) = output_duplication_out_ { return Ok(output_duplication_out_); } }
+			Err(_ret_)
+		}
+	}
 }
 
 pub trait IDxgiOutput5: IDxgiOutput4 {
 	fn as_output5(&self) -> &DxgiOutput5;
 	fn into_output5(self) -> DxgiOutput5;
-
-	fn DuplicateOutput1(&self, device: &(impl IUnknown + ?Sized), flags: u32, supported_formats: &[DxgiFormat], ) -> Result<DxgiOutputDuplication, HResult> {
-		unsafe {
-			let vt = self.as_param();
-			let (_ptr_supported_formats, _len_supported_formats) = supported_formats.deconstruct();
-			let mut _out_output_duplication: Option<DxgiOutputDuplication> = None;
-			let f: extern "system" fn(Param<Self>, device: VTable, flags: u32, supported_formats_count: u32, supported_formats: *const DxgiFormat, output_duplication: *mut c_void, ) -> HResult
-				= transmute(vt[26]);
-			let _ret_ = f(vt, device.vtable(), flags, _len_supported_formats as u32, _ptr_supported_formats, transmute(&mut _out_output_duplication), );
-			if _ret_.is_ok() {
-				if let Some(_out_output_duplication) = _out_output_duplication {
-					return Ok(_out_output_duplication);
-				}
-			}
-			Err(_ret_)
-		}
-	}
 }
 
 impl IDxgiOutput5 for DxgiOutput5 {
 	fn as_output5(&self) -> &DxgiOutput5 { self }
 	fn into_output5(self) -> DxgiOutput5 { self }
 }
-
 impl IDxgiOutput4 for DxgiOutput5 {
 	fn as_output4(&self) -> &DxgiOutput4 { &self.0.as_output4() }
 	fn into_output4(self) -> DxgiOutput4 { self.0.into_output4() }
@@ -85,14 +90,14 @@ impl IDxgiObject for DxgiOutput5 {
 	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
-impl From<Unknown> for DxgiOutput5 {
-    fn from(v: Unknown) -> Self {
-        Self(DxgiOutput4::from(v))
-    }
-}
-
 impl IUnknown for DxgiOutput5 {
 	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
 	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
+}
+
+impl From<UnknownWrapper> for DxgiOutput5 {
+    fn from(v: UnknownWrapper) -> Self {
+        Self(DxgiOutput4::from(v))
+    }
 }
 

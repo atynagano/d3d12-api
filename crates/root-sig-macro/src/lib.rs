@@ -84,8 +84,10 @@ impl DescriptorArgs {
         let mut result = Self {
             ty,
             raw: RootDescriptor1 {
-                shader_register: 0,
-                register_space: 0,
+                base: RootDescriptor {
+                    shader_register: 0,
+                    register_space: 0,
+                },
                 flags: RootDescriptorFlags::None,
             },
             shader_visibility: ShaderVisibility::All,
@@ -175,7 +177,7 @@ impl DescRangeArgs {
         let mut result = Self {
             raw: DescriptorRange1 {
                 range_type: ty,
-                num_descriptors: 0,
+                num_descriptors: 1,
                 base_shader_register: 0,
                 register_space: 0,
                 flags: DescriptorRangeFlags::None,
@@ -213,7 +215,8 @@ impl DescRangeArgs {
             let id_str = id.to_string();
 
             match id_str.deref() {
-                "num_descriptors" => {
+                "num_descriptors" |
+                "num_descs" => {
                     result.raw.num_descriptors = parse_num(input)?;
                 }
                 "space" => {
@@ -323,6 +326,7 @@ impl Parse for DescTableArgs {
 struct RootConstantsArgs {
     raw: RootConstants,
     shader_visibility: ShaderVisibility,
+    validation: Option<String>,
 }
 
 impl Parse for RootConstantsArgs {
@@ -335,6 +339,7 @@ impl Parse for RootConstantsArgs {
                 num_32bit_values: 0,
             },
             shader_visibility: ShaderVisibility::All,
+            validation: None,
         };
 
         while !input.is_empty() {
@@ -344,10 +349,21 @@ impl Parse for RootConstantsArgs {
                 "space" => {
                     result.raw.register_space = parse_num(input)?;
                 }
-                "num_32bit_constants" => {
-                    result.raw.num_32bit_values = parse_num(input)?;
+                "num_32bit_constants" |
+                "num" => {
+                    let num = parse_num(input)?;
+                    result.raw.num_32bit_values = num;
+                    if input.parse::<Token![=]>().is_ok() {
+                        let id = input.parse::<Ident>()?;
+                        if id.to_string().deref() == "sizeof" {
+                            let ty = proc_macro::TokenStream::from(input.parse::<Group>()?.stream()).to_string();
+                            result.validation = Some(format!("unsafe {{ transmute::<{}, [u32; {}]>(MaybeUninit::<{}>::uninit().assume_init()); }}", ty, num, ty));
+                        } else {
+                            return Err(Error::new(id.span(), "\"sizeof(T)\" is expected"));
+                        }
+                    }
                 }
-                "visibility" => {
+                "visibility" | "vis" => {
                     result.shader_visibility = parse_visibility(input)?;
                 }
                 tmp @ _ if Some('b') == tmp.chars().next() => {
@@ -442,7 +458,7 @@ impl Parse for RootSig {
             let args = proc_macro::TokenStream::from(input.parse::<Group>()?.stream());
 
             match id.to_string().deref() {
-                "RootFlags" => {
+                "RootFlags" | "RF" => {
                     if root_flags_defined {
                         return Err(syn::Error::new(id.span(), "RootFlags is defined multiple times"));
                     }
@@ -461,15 +477,15 @@ impl Parse for RootSig {
                     let args = parse_macro_input::parse::<UavArgs>(args)?;
                     root_params.push(RootParam::Descriptor(args.0));
                 }
-                "DescriptorTable" => {
+                "DescriptorTable" | "DT" => {
                     let args = parse_macro_input::parse::<DescTableArgs>(args)?;
                     root_params.push(RootParam::DescriptorTable(args));
                 }
-                "RootConstants" => {
+                "RootConstants" | "RC" => {
                     let args = parse_macro_input::parse::<RootConstantsArgs>(args)?;
                     root_params.push(RootParam::RootConstants(args));
                 }
-                "StaticSampler" => {
+                "StaticSampler" | "SS" => {
                     let args = parse_macro_input::parse::<StaticSamplerArgs>(args)?;
                     static_samplers.push(args.raw);
                 }
@@ -505,6 +521,8 @@ pub fn hlsl_root_sig_core(args: TokenStream) -> TokenStream {
 
     let mut root_params_ = Vec::<RootParameter1>::new();
 
+    let mut validations = String::new();
+
     for root_param in root_params {
         match root_param {
             // note: descriptor tableがライフタイムを持っており面倒くさいので全部型を作り直した。
@@ -527,7 +545,10 @@ pub fn hlsl_root_sig_core(args: TokenStream) -> TokenStream {
                         constants: args.raw
                     },
                     shader_visibility: args.shader_visibility,
-                })
+                });
+                if let Some(validation) = &args.validation {
+                    validations.push_str(validation);
+                }
             }
             RootParam::Descriptor(args) => {
                 root_params_.push(RootParameter1 {
@@ -557,6 +578,6 @@ pub fn hlsl_root_sig_core(args: TokenStream) -> TokenStream {
         },
     };
     let blob = D3D12SerializeVersionedRootSignature(&desc, None).unwrap();
-    let lit = format!("&{:?}", blob.as_slice());
+    let lit = format!("{{ {} &{:?} }}", &*validations, blob.as_slice());
     TokenStream::from_str(&*lit).unwrap()
 }

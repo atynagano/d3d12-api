@@ -7,6 +7,8 @@
 use std::ffi::c_void;
 use std::mem::transmute;
 use std::ptr::NonNull;
+use std::num::NonZeroUsize;
+use std::ops::{Deref, DerefMut};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::system::com::*;

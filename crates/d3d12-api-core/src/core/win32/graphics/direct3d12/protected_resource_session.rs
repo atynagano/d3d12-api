@@ -6,7 +6,9 @@
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
+use std::num::NonZeroUsize;
 use std::mem::{MaybeUninit, size_of_val, transmute};
+use std::ops::Deref;
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -15,37 +17,44 @@ use crate::core::win32::system::com::*;
 use crate::core::win32::graphics::direct3d12::*;
 
 #[repr(C)]
+#[derive(Clone, Hash)]
 pub struct D3D12ProtectedResourceSession(pub(crate) D3D12ProtectedSession);
+
+impl Deref for D3D12ProtectedResourceSession {
+	type Target = D3D12ProtectedSession;
+	fn deref(&self) -> &Self::Target { &self.0	}
+}
 
 impl Guid for D3D12ProtectedResourceSession {
 	const IID: &'static GUID = &GUID::from_u128(0x6cd696f4f28940cc80915a6c0a099c3du128);
 }
 
-impl Clone for D3D12ProtectedResourceSession {
-	fn clone(&self) -> Self { D3D12ProtectedResourceSession(self.0.clone()) }
+impl Com for D3D12ProtectedResourceSession {
+	fn vtable(&self) -> VTable { self.0.vtable() }
+}
+
+impl D3D12ProtectedResourceSession {
+	pub fn GetDesc(&self) -> D3D12ProtectedResourceSessionDesc {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_: MaybeUninit<D3D12ProtectedResourceSessionDesc> = MaybeUninit::zeroed();
+			let f: extern "system" fn(Param<Self>, *mut D3D12ProtectedResourceSessionDesc) -> ()
+				= transmute(vt[10]);
+			let _ret_ = f(vt, _out_.as_mut_ptr());
+			_out_.assume_init()
+		}
+	}
 }
 
 pub trait ID3D12ProtectedResourceSession: ID3D12ProtectedSession {
 	fn as_protected_resource_session(&self) -> &D3D12ProtectedResourceSession;
 	fn into_protected_resource_session(self) -> D3D12ProtectedResourceSession;
-
-	fn GetDesc(&self, ) -> D3D12ProtectedResourceSessionDesc {
-		unsafe {
-			let vt = self.as_param();
-			let mut _out__out_desc: MaybeUninit<D3D12ProtectedResourceSessionDesc> = MaybeUninit::zeroed();
-			let f: extern "system" fn(Param<Self>, _out__out_desc: *mut D3D12ProtectedResourceSessionDesc, ) -> ()
-				= transmute(vt[10]);
-			let _ret_ = f(vt, _out__out_desc.as_mut_ptr(), );
-			_out__out_desc.assume_init()
-		}
-	}
 }
 
 impl ID3D12ProtectedResourceSession for D3D12ProtectedResourceSession {
 	fn as_protected_resource_session(&self) -> &D3D12ProtectedResourceSession { self }
 	fn into_protected_resource_session(self) -> D3D12ProtectedResourceSession { self }
 }
-
 impl ID3D12ProtectedSession for D3D12ProtectedResourceSession {
 	fn as_protected_session(&self) -> &D3D12ProtectedSession { &self.0.as_protected_session() }
 	fn into_protected_session(self) -> D3D12ProtectedSession { self.0.into_protected_session() }
@@ -61,14 +70,14 @@ impl ID3D12Object for D3D12ProtectedResourceSession {
 	fn into_object(self) -> D3D12Object { self.0.into_object() }
 }
 
-impl From<Unknown> for D3D12ProtectedResourceSession {
-    fn from(v: Unknown) -> Self {
-        Self(D3D12ProtectedSession::from(v))
-    }
-}
-
 impl IUnknown for D3D12ProtectedResourceSession {
 	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
 	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
+}
+
+impl From<UnknownWrapper> for D3D12ProtectedResourceSession {
+    fn from(v: UnknownWrapper) -> Self {
+        Self(D3D12ProtectedSession::from(v))
+    }
 }
 

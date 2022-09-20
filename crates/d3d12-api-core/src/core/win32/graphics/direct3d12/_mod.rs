@@ -1,14 +1,22 @@
 use std::mem::transmute;
-use std::ops::Add;
-use crate::core::win32::foundation::PWStr;
+use std::num::{NonZeroU64, NonZeroUsize};
+use std::ops::{Add, AddAssign};
+use std::ptr::{NonNull, null_mut};
+use std::slice;
+use crate::aliases::win32::graphics::direct3d12::GpuVirtualAddress;
+use crate::core::win32::foundation::{HResult, PWStr};
 use crate::core::win32::graphics::dxgi::common::{DxgiFormat, DxgiSampleDesc};
-use crate::core::win32::system::com::AsParam;
+use crate::core::win32::system::com::{AsParam, Param, UnknownWrapper};
 use super::*;
+
+pub type D3D12PrimitiveTopology = crate::core::win32::graphics::direct3d::D3DPrimitiveTopology;
+pub type D3D12Primitive = crate::core::win32::graphics::direct3d::D3DPrimitive;
+pub type D3D12Rect = crate::core::win32::foundation::Rect;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub union D3D12BuildRaytracingAccelerationStructureInputsAnonymousUnion<'a> {
-    pub instance_descs: u64,
+    pub instance_descs: D3D12GpuVirtualAddress,
     pub p_geometry_descs: &'a D3D12RaytracingGeometryDesc,
     pub pp_geometry_descs: &'a &'a D3D12RaytracingGeometryDesc,
 }
@@ -304,7 +312,7 @@ impl D3D12FeatureDataQueryMetaCommand<'_> {}
 
 impl D3D12FeatureDataD3D12Options8 {}
 
-impl D3D12WaveMMaTier {}
+impl D3D12WaveMmaTier {}
 
 impl D3D12FeatureDataD3D12Options9 {}
 
@@ -339,7 +347,7 @@ impl D3D12HeapProperties {
             creation_node_mask: 1,
             visible_node_mask: 1,
         };
-    pub const READ_BACK: Self =
+    pub const READBACK: Self =
         Self {
             ty: D3D12HeapType::ReadBack,
             cpu_page_property: D3D12CpuPageProperty::Unknown,
@@ -376,9 +384,9 @@ impl D3D12ResourceDesc {
             flags: D3D12ResourceFlags::None,
         }
     }
-    pub const fn Tex1D(format: DxgiFormat, width: u64) -> Self {
+    pub const fn Tex1d(format: DxgiFormat, width: u64) -> Self {
         Self {
-            dimension: D3D12ResourceDimension::Texture1D,
+            dimension: D3D12ResourceDimension::Texture1d,
             alignment: 0,
             width,
             height: 1,
@@ -390,9 +398,9 @@ impl D3D12ResourceDesc {
             flags: D3D12ResourceFlags::None,
         }
     }
-    pub const fn Tex2D(format: DxgiFormat, width: u32, height: u32) -> Self {
+    pub const fn Tex2d(format: DxgiFormat, width: u32, height: u32) -> Self {
         Self {
-            dimension: D3D12ResourceDimension::Texture2D,
+            dimension: D3D12ResourceDimension::Texture2d,
             alignment: 0,
             width: width as u64,
             height,
@@ -404,9 +412,9 @@ impl D3D12ResourceDesc {
             flags: D3D12ResourceFlags::None,
         }
     }
-    pub const fn Tex3D(format: DxgiFormat, width: u64, height: u32, depth: u16) -> Self {
+    pub const fn Tex3d(format: DxgiFormat, width: u64, height: u32, depth: u16) -> Self {
         Self {
-            dimension: D3D12ResourceDimension::Texture3D,
+            dimension: D3D12ResourceDimension::Texture3d,
             alignment: 0,
             width,
             height,
@@ -461,7 +469,57 @@ impl D3D12ResourceDesc {
 }
 
 impl D3D12ResourceDesc1 {
-    //
+    // todo
+    pub const fn Buffer(size: u64) -> Self {
+        Self {
+            base: D3D12ResourceDesc::Buffer(size),
+            sampler_feedback_mip_region: D3D12MipRegion {
+                width: 0,
+                height: 0,
+                depth: 0,
+            },
+        }
+    }
+    pub const fn with_alignment(mut self, alignment: u64) -> Self {
+        self.base.alignment = alignment;
+        self
+    }
+    pub const fn with_width(mut self, width: u64) -> Self {
+        self.base.width = width;
+        self
+    }
+    pub const fn with_height(mut self, height: u32) -> Self {
+        self.base.height = height;
+        self
+    }
+    pub const fn with_depth(mut self, depth: u16) -> Self {
+        self.base.depth_or_array_size = depth;
+        self
+    }
+    pub const fn with_array_size(mut self, mip_levels: u16) -> Self {
+        self.base.depth_or_array_size = mip_levels;
+        self
+    }
+    pub const fn with_mip_levels(mut self, mip_levels: u16) -> Self {
+        self.base.mip_levels = mip_levels;
+        self
+    }
+    pub const fn with_format(mut self, format: DxgiFormat) -> Self {
+        self.base.format = format;
+        self
+    }
+    pub const fn with_sample_desc(mut self, count: u32, quality: u32) -> Self {
+        self.base.sample_desc = DxgiSampleDesc::new(count, quality);
+        self
+    }
+    pub const fn with_layout(mut self, layout: D3D12TextureLayout) -> Self {
+        self.base.layout = layout;
+        self
+    }
+    pub const fn with_flags(mut self, flags: D3D12ResourceFlags) -> Self {
+        self.base.flags = flags;
+        self
+    }
 }
 
 impl D3D12DepthStencilValue {}
@@ -487,9 +545,9 @@ impl D3D12ClearValue {
 
 pub type D3D12Range = std::ops::Range<usize>;
 
-impl D3D12RangeUInt64 {}
+impl D3D12RangeUint64 {}
 
-impl D3D12SubresourceRangeUInt64 {}
+impl D3D12SubresourceRangeUint64 {}
 
 impl D3D12SubresourceInfo {}
 
@@ -581,7 +639,7 @@ impl D3D12TextureCopyType {}
 impl D3D12TextureCopyLocationAnonymousUnion {}
 
 impl<'a> D3D12TextureCopyLocation<'a> {
-    pub fn SubresourceIndex(resource: &'a (impl ID3D12Resource + ?Sized), index: u32) -> Self {
+    pub fn SubresourceIndex(resource: &'a D3D12Resource, index: u32) -> Self {
         Self {
             resource: resource.as_resource().as_param(),
             ty: D3D12TextureCopyType::SubresourceIndex,
@@ -590,7 +648,7 @@ impl<'a> D3D12TextureCopyLocation<'a> {
             },
         }
     }
-    pub fn PlacedFootprint(resource: &'a (impl ID3D12Resource + ?Sized), footprint: D3D12PlacedSubresourceFootprint) -> Self {
+    pub fn PlacedFootprint(resource: &'a D3D12Resource, footprint: D3D12PlacedSubresourceFootprint) -> Self {
         Self {
             resource: resource.as_resource().as_param(),
             ty: D3D12TextureCopyType::PlacedFootprint,
@@ -617,23 +675,23 @@ impl D3D12BufferSrvFlags {}
 
 impl D3D12BufferSrv {}
 
-impl D3D12Tex1DSrv {}
+impl D3D12Tex1dSrv {}
 
-impl D3D12Tex1DArraySrv {}
+impl D3D12Tex1dArraySrv {}
 
-impl D3D12Tex2DSrv {}
+impl D3D12Tex2dSrv {}
 
-impl D3D12Tex2DArraySrv {}
+impl D3D12Tex2dArraySrv {}
 
-impl D3D12Tex3DSrv {}
+impl D3D12Tex3dSrv {}
 
 impl D3D12TexCubeSrv {}
 
 impl D3D12TexCubeArraySrv {}
 
-impl D3D12Tex2DMsSrv {}
+impl D3D12Tex2dMsSrv {}
 
-impl D3D12Tex2DMsArraySrv {}
+impl D3D12Tex2dMsArraySrv {}
 
 impl D3D12RaytracingAccelerationStructureSrv {}
 
@@ -659,15 +717,15 @@ impl D3D12BufferUavFlags {}
 
 impl D3D12BufferUav {}
 
-impl D3D12Tex1DUav {}
+impl D3D12Tex1dUav {}
 
-impl D3D12Tex1DArrayUav {}
+impl D3D12Tex1dArrayUav {}
 
-impl D3D12Tex2DUav {}
+impl D3D12Tex2dUav {}
 
-impl D3D12Tex2DArrayUav {}
+impl D3D12Tex2dArrayUav {}
 
-impl D3D12Tex3DUav {}
+impl D3D12Tex3dUav {}
 
 impl D3D12UavDimension {}
 
@@ -677,19 +735,19 @@ impl D3D12UnorderedAccessViewDesc {}
 
 impl D3D12BufferRtv {}
 
-impl D3D12Tex1DRtv {}
+impl D3D12Tex1dRtv {}
 
-impl D3D12Tex1DArrayRtv {}
+impl D3D12Tex1dArrayRtv {}
 
-impl D3D12Tex2DRtv {}
+impl D3D12Tex2dRtv {}
 
-impl D3D12Tex2DMsRtv {}
+impl D3D12Tex2dMsRtv {}
 
-impl D3D12Tex2DArrayRtv {}
+impl D3D12Tex2dArrayRtv {}
 
-impl D3D12Tex2DMsArrayRtv {}
+impl D3D12Tex2dMsArrayRtv {}
 
-impl D3D12Tex3DRtv {}
+impl D3D12Tex3dRtv {}
 
 impl D3D12RtvDimension {}
 
@@ -697,17 +755,17 @@ impl D3D12RenderTargetViewDescAnonymousUnion {}
 
 impl D3D12RenderTargetViewDesc {}
 
-impl D3D12Tex1DDsv {}
+impl D3D12Tex1dDsv {}
 
-impl D3D12Tex1DArrayDsv {}
+impl D3D12Tex1dArrayDsv {}
 
-impl D3D12Tex2DDsv {}
+impl D3D12Tex2dDsv {}
 
-impl D3D12Tex2DArrayDsv {}
+impl D3D12Tex2dArrayDsv {}
 
-impl D3D12Tex2DMsDsv {}
+impl D3D12Tex2dMsDsv {}
 
-impl D3D12Tex2DMsArrayDsv {}
+impl D3D12Tex2dMsArrayDsv {}
 
 impl D3D12DsvFlags {}
 
@@ -830,20 +888,64 @@ impl D3D12VersionedRootSignatureDescAnonymousUnion<'_> {}
 
 impl D3D12VersionedRootSignatureDesc<'_> {}
 
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
+pub struct D3D12CpuDescriptorHandle {
+    pub ptr: NonZeroUsize,
+}
+
+#[repr(transparent)]
+#[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
+pub struct D3D12GpuDescriptorHandle {
+    pub ptr: NonZeroU64,
+}
+
 impl<T: Into<usize>> Add<T> for D3D12CpuDescriptorHandle {
     type Output = Self;
 
     fn add(self, rhs: T) -> Self::Output {
-        Self::Output { ptr: self.ptr + rhs.into() }
+        unsafe {
+            Self::Output { ptr: NonZeroUsize::new_unchecked(self.ptr.get() + rhs.into()) }
+        }
     }
+}
+
+impl<T: Into<usize>> AddAssign<T> for D3D12CpuDescriptorHandle {
+    fn add_assign(&mut self, rhs: T) { *self = *self + rhs; }
 }
 
 impl<T: Into<u64>> Add<T> for D3D12GpuDescriptorHandle {
     type Output = Self;
 
     fn add(self, rhs: T) -> Self::Output {
-        Self::Output { ptr: self.ptr + rhs.into() }
+        unsafe {
+            Self::Output { ptr: NonZeroU64::new_unchecked(self.ptr.get() + rhs.into()) }
+        }
     }
+}
+
+impl<T: Into<u64>> AddAssign<T> for D3D12GpuDescriptorHandle {
+    fn add_assign(&mut self, rhs: T) { *self = *self + rhs; }
+}
+
+#[repr(transparent)]
+#[derive(Copy, Clone, Debug)]
+pub struct D3D12GpuVirtualAddress {
+    pub ptr: NonZeroU64,
+}
+
+impl<T: Into<u64>> Add<T> for D3D12GpuVirtualAddress {
+    type Output = Self;
+
+    fn add(self, rhs: T) -> Self::Output {
+        unsafe {
+            Self::Output { ptr: NonZeroU64::new_unchecked(self.ptr.get() + rhs.into()) }
+        }
+    }
+}
+
+impl<T: Into<u64>> AddAssign<T> for D3D12GpuVirtualAddress {
+    fn add_assign(&mut self, rhs: T) { *self = *self + rhs; }
 }
 
 impl D3D12DiscardRegion<'_> {}
@@ -1034,7 +1136,21 @@ impl D3D12RaytracingGeometryDesc {}
 
 impl D3D12BuildRaytracingAccelerationStructureInputs<'_> {}
 
-impl D3D12BuildRaytracingAccelerationStructureDesc<'_> {}
+impl<'a> D3D12BuildRaytracingAccelerationStructureDesc<'a> {
+    pub fn new(
+        dest_as: D3D12GpuVirtualAddress,
+        inputs: D3D12BuildRaytracingAccelerationStructureInputs<'a>,
+        source_as: Option<D3D12GpuVirtualAddress>,
+        scratch_as: D3D12GpuVirtualAddress,
+    ) -> Self {
+        Self {
+            dest_acceleration_structure_data: dest_as,
+            inputs: inputs,
+            source_acceleration_structure_data: source_as,
+            scratch_acceleration_structure_data: scratch_as,
+        }
+    }
+}
 
 impl D3D12RaytracingAccelerationStructurePrebuildInfo {}
 
@@ -1550,4 +1666,161 @@ pub struct D3D12CopyableFootprint {
     pub num_row: u32,
     pub row_size_in_bytes: u64,
     pub total_bytes: u64,
+}
+
+impl D3D12Resource {
+    pub fn map(&self, subresource: u32, read_range: Option<&D3D12Range>) -> Result<NonNull<()>, HResult> {
+        let mut out: Option<NonNull<()>> = None;
+        self.Map(subresource, read_range, Some(&mut out))?;
+        if let Some(out) = out {
+            return Ok(out);
+        }
+        Err(HResult::E_FAIL)
+    }
+}
+
+impl D3D12GraphicsCommandList {
+    pub fn resource_barrier_transition_all(
+        &self,
+        resource: &D3D12Resource,
+        before: D3D12ResourceStates,
+        after: D3D12ResourceStates,
+    ) {
+        self.ResourceBarrier(&[
+            D3D12ResourceBarrier::Transition(resource, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, before, after)])
+    }
+
+    pub fn resource_barrier_uav(&self, resource: &D3D12Resource) {
+        self.ResourceBarrier(&[D3D12ResourceBarrier::Uav(resource)])
+    }
+}
+
+impl D3D12CommandQueue {
+    pub fn execute_command_list(&self, command_list: &D3D12CommandList) -> () {
+        self.ExecuteCommandLists(&[command_list.as_param()])
+    }
+}
+
+impl D3D12Device {
+    pub fn create_root_sig(&self, blob: &[u8]) -> Result<D3D12RootSignature, HResult> {
+        self.CreateRootSignature(0, blob)
+    }
+
+    pub fn enable_break_on_error(&self) -> Result<(), HResult> {
+        self.QueryInterface::<D3D12InfoQueue>()?.enable_break_on_error()
+    }
+
+    pub fn enable_break_on_corruption(&self) -> Result<(), HResult> {
+        self.QueryInterface::<D3D12InfoQueue>()?.enable_break_on_corruption()
+    }
+
+    pub fn create_desc_heap_rtv<U: ID3D12DescriptorHeap + From<UnknownWrapper>>(&self, count: u32) -> Result<U, HResult> {
+        self.CreateDescriptorHeap(&D3D12DescriptorHeapDesc::Rtv(count))
+    }
+
+    pub fn create_desc_heap_sampler<U: ID3D12DescriptorHeap + From<UnknownWrapper>>(&self, count: u32, shader_visible: bool) -> Result<U, HResult> {
+        self.CreateDescriptorHeap(&D3D12DescriptorHeapDesc::Sampler(count).with_shader_visible(shader_visible))
+    }
+
+    pub fn create_desc_heap_dsv<U: ID3D12DescriptorHeap + From<UnknownWrapper>>(&self, count: u32) -> Result<U, HResult> {
+        self.CreateDescriptorHeap(&D3D12DescriptorHeapDesc::Dsv(count))
+    }
+
+    pub fn create_desc_heap_cbv_srv_uav<U: ID3D12DescriptorHeap + From<UnknownWrapper>>(&self, count: u32, shader_visible: bool) -> Result<U, HResult> {
+        self.CreateDescriptorHeap(&D3D12DescriptorHeapDesc::CbvSrvUav(count).with_shader_visible(shader_visible))
+    }
+}
+
+pub type D3D12ShaderIdentifier = [u8; D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES as usize];
+
+impl D3D12StateObjectProperties {
+    pub fn get_shader_identifier(&self, export_name: &str) -> Option<&D3D12ShaderIdentifier> {
+        unsafe { transmute(self.GetShaderIdentifier(export_name)) }
+    }
+}
+
+impl D3D12Device5 {
+    pub fn create_state_object(&self, obj_type: D3D12StateObjectType, objs: &[D3D12StateSubobject]) -> Result<D3D12StateObject, HResult> {
+        self.CreateStateObject(&D3D12StateObjectDesc::new(obj_type, objs))
+    }
+}
+
+pub struct D3D12Message {
+    pub category: D3D12MessageCategory,
+    pub severity: D3D12MessageSeverity,
+    pub id: D3D12MessageId,
+    pub description: String,
+}
+
+impl D3D12InfoQueue {
+    // 5 HRESULT GetMessage([In] ulong MessageIndex, [MemorySize(BytesParamIndex = 2), Out, Optional] D3D12_MESSAGE* pMessage, [In, Out] UIntPtr* pMessageByteLength);
+    // 13 HRESULT GetStorageFilter([MemorySize(BytesParamIndex = 1), Out, Optional] D3D12_INFO_QUEUE_FILTER* pFilter, [In, Out] UIntPtr* pFilterByteLength);
+    // 21 HRESULT GetRetrievalFilter([MemorySize(BytesParamIndex = 1), Out, Optional] D3D12_INFO_QUEUE_FILTER* pFilter, [In, Out] UIntPtr* pFilterByteLength);
+
+    pub fn get_message(&self, index: u64) -> Result<D3D12Message, HResult> {
+        let vt = self.as_param();
+        let f: extern "system" fn(Param<Self>, message_index: u64, p_message: *mut u8, p_message_byte_length: &mut usize) -> HResult
+            = unsafe { transmute(vt[5]) };
+
+        let mut length: usize = 0;
+        f(vt, index, null_mut(), &mut length).ok()?;
+
+        let mut vec = Vec::<u8>::with_capacity(length);
+        let vec = vec.as_mut_ptr();
+        f(vt, index, vec, &mut length).ok()?;
+
+        let msg: &RawD3D12Message = unsafe { transmute(vec) };
+        let size = msg.description_byte_length;
+        let size = if size > 0 { size - 1 } else { 0 };
+        let ptr: *const u8 = unsafe { transmute(msg.description) };
+        let desc = String::from_utf8_lossy(unsafe { slice::from_raw_parts(ptr, size) }).to_string();
+
+        Ok(D3D12Message {
+            category: msg.category,
+            severity: msg.severity,
+            id: msg.id,
+            description: desc,
+        })
+    }
+
+    pub fn enable_break_on_error(&self) -> Result<(), HResult> {
+        self.SetBreakOnSeverity(D3D12MessageSeverity::Error, true)
+    }
+
+    pub fn enable_break_on_corruption(&self) -> Result<(), HResult> {
+        self.SetBreakOnSeverity(D3D12MessageSeverity::Corruption, true)
+    }
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug)]
+pub struct D3D12RaytracingInstanceDesc {
+    pub transform: [[f32; 4]; 3],
+    pub bitfield1: u32,
+    pub bitfield2: u32,
+    pub acceleration_structure: GpuVirtualAddress,
+}
+
+impl D3D12RaytracingInstanceDesc {
+    pub fn new(
+        transform: &[[f32; 4]; 3],
+        instance_id: u32,
+        instance_mask: u8,
+        hit_group_address_index: u32,
+        flags: D3D12RaytracingInstanceFlags,
+        acceleration_structure: GpuVirtualAddress,
+    ) -> Self {
+        if instance_id > 0xFFFFFF {
+            panic!("instance_id should be less than 0x1000000");
+        }
+        if hit_group_address_index > 0xFFFFFF {
+            panic!("instance_contribution_to_hit_group_index should be less than 0x1000000");
+        }
+        Self {
+            transform: *transform,
+            bitfield1: ((instance_mask as u32) << 24) | instance_id,
+            bitfield2: ((flags.bits() as u32) << 24) | hit_group_address_index,
+            acceleration_structure,
+        }
+    }
 }

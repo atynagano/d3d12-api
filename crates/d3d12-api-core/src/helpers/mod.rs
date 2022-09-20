@@ -1,5 +1,5 @@
 use std::borrow::Cow;
-use std::fmt::{Debug, Display, Formatter, Write};
+use std::fmt::{Debug, Display, Formatter};
 use std::mem::{MaybeUninit, transmute};
 use std::ops::Deref;
 use std::ptr::{null, null_mut};
@@ -44,6 +44,15 @@ impl<T> Deconstruct<(*const T, usize)> for &[T] {
     }
 }
 
+impl<T> Deconstruct<(*mut T, usize)> for &mut [T] {
+    fn deconstruct(self) -> (*mut T, usize) {
+        if self.len() > 0 {
+            return (self.as_mut_ptr(), self.len());
+        }
+        (null_mut(), 0)
+    }
+}
+
 impl<T> Deconstruct<(*const T, usize)> for Option<&[T]> {
     fn deconstruct(self) -> (*const T, usize) {
         if let Some(v) = self {
@@ -55,7 +64,31 @@ impl<T> Deconstruct<(*const T, usize)> for Option<&[T]> {
     }
 }
 
-pub(crate) enum Utf16Vec {
+impl Deconstruct<(*const u8, usize)> for &str {
+    fn deconstruct(self) -> (*const u8, usize) {
+        if self.len() > 0 {
+            return (self.as_ptr(), self.len());
+        }
+        (null(), 0)
+    }
+}
+
+impl Deconstruct<(*const u8, usize)> for Option<&str> {
+    fn deconstruct(self) -> (*const u8, usize) {
+        if let Some(v) = self {
+            if v.len() > 0 {
+                return (v.as_ptr(), v.len());
+            }
+        }
+        (null(), 0)
+    }
+}
+
+pub fn low_high_word(v: u32) -> (u16, u16) {
+    (v as u16 & 0xFFFFu16, ((v >> 16) as u16) & 0xFFFFu16)
+}
+
+pub enum Utf16Vec {
     Some(Vec<Utf16<'static>>, Vec<PWStr<'static>>),
     None,
 }
@@ -69,7 +102,7 @@ impl Utf16Vec {
     }
 }
 
-pub(crate) trait ToUtf16Vec {
+pub trait ToUtf16Vec {
     fn to_utf16_vec(&self) -> Utf16Vec;
 }
 
@@ -102,13 +135,13 @@ impl ToUtf16Vec for Option<&[&str]> {
     }
 }
 
-pub(crate) enum NullTerminatedVec<'a> {
+pub enum NullTerminatedVec<'a> {
     Some(Vec<NullTerminated<'a>>, Vec<PStr<'a>>),
     None,
 }
 
 impl NullTerminatedVec<'_> {
-    pub(crate) fn ptr(&self) -> *const PStr {
+    pub fn ptr(&self) -> *const PStr {
         match self {
             NullTerminatedVec::Some(_, v) => unsafe { transmute(v.as_ptr()) }
             NullTerminatedVec::None => null()
@@ -116,7 +149,7 @@ impl NullTerminatedVec<'_> {
     }
 }
 
-pub(crate) trait ToNullTerminatedVec {
+pub trait ToNullTerminatedVec {
     fn to_null_terminated_vec(&self) -> NullTerminatedVec;
 }
 
@@ -147,7 +180,7 @@ impl ToNullTerminatedVec for Option<&[&str]> {
     }
 }
 
-pub(crate) trait AsPtrOrNull<T> {
+pub trait AsPtrOrNull<T> {
     fn as_ptr_or_null(&self) -> *const T;
 }
 
@@ -277,7 +310,13 @@ impl<T> AsMutPtrOrNull<T> for &mut [T] {
     }
 }
 
-pub struct NullTerminated<'a>(Cow<'a, str>);
+pub struct NullTerminated<'a>(pub Cow<'a, str>);
+
+impl NullTerminated<'_> {
+    pub fn as_pstr(&self) -> PStr<'_> {
+        unsafe { self.0.as_pstr().unwrap_unchecked() }
+    }
+}
 
 /*
 impl NullTerminated<'_> {
@@ -302,7 +341,7 @@ impl Debug for NullTerminated<'_> {
 
 impl Display for NullTerminated<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0.deref().as_pstr())
+        write!(f, "{}", self.as_pstr())
     }
 }
 
@@ -318,11 +357,17 @@ impl ToNullTerminated for str {
             }
         }
 
-        NullTerminated(format!("{}\0", self).into())
+        NullTerminated(Cow::Owned(format!("{}\0", self)))
     }
 }
 
 pub struct Utf16<'a>(Cow<'a, [u16]>);
+
+impl Utf16<'_> {
+    pub fn as_pwstr(&self) -> PWStr<'_> {
+        unsafe { self.0.as_pwstr().unwrap_unchecked() }
+    }
+}
 
 /*
 impl Utf16 {
@@ -347,7 +392,7 @@ impl Debug for Utf16<'_> {
 
 impl Display for Utf16<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0.deref().as_pwstr())
+        write!(f, "{}", self.as_pwstr())
     }
 }
 

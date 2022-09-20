@@ -7,42 +7,33 @@
 use std::mem::transmute;
 use std::ops::{BitOr, BitOrAssign};
 
+/// STREAM_SEEK
 #[repr(u32)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum StreamSeek
 {
+	/// STREAM_SEEK_SET = 0x0u32
 	Set                  = 0x0u32,
+	/// STREAM_SEEK_CUR = 0x1u32
 	Cur                  = 0x1u32,
+	/// STREAM_SEEK_END = 0x2u32
 	End                  = 0x2u32,
 }
 
-#[repr(u32)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub enum StgC
-{
-	Default              = 0x0u32,
-	Overwrite            = 0x1u32,
-	OnlyIfCurrent        = 0x2u32,
-	DangerouslyCommitMerelyToDiskCache = 0x4u32,
-	Consolidate          = 0x8u32,
-}
-
-impl BitOr for StgC {
-	type Output = StgC;
-	fn bitor(self, rhs: Self) -> <Self as BitOr>::Output {
-		unsafe { transmute(self as u32 | rhs as u32) }
+bitflags::bitflags! {
+	/// STGC
+	#[repr(transparent)]
+	pub struct StgC: u32 {
+		/// STGC_DEFAULT = 0x0u32
+		const Default              = 0x0u32;
+		/// STGC_OVERWRITE = 0x1u32
+		const Overwrite            = 0x1u32;
+		/// STGC_ONLYIFCURRENT = 0x2u32
+		const OnlyIfCurrent        = 0x2u32;
+		/// STGC_DANGEROUSLYCOMMITMERELYTODISKCACHE = 0x4u32
+		const DangerouslyCommitMerelyToDiskCache = 0x4u32;
+		/// STGC_CONSOLIDATE = 0x8u32
+		const Consolidate          = 0x8u32;
 	}
-}
-
-impl BitOrAssign for StgC {
-	fn bitor_assign(&mut self, rhs: Self) {
-		*self = *self | rhs;
-	}
-}
-
-impl StgC {
-    pub fn contains(self, other: StgC) -> bool {
-        (self as u32) & (other as u32) == (other as u32)
-    }
 }
 

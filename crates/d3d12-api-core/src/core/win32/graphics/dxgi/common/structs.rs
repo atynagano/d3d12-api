@@ -7,12 +7,15 @@
 use std::ffi::c_void;
 use std::mem::transmute;
 use std::ptr::NonNull;
+use std::num::NonZeroUsize;
+use std::ops::{Deref, DerefMut};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::system::com::*;
 use crate::core::win32::graphics::dxgi::common::*;
 use crate::core::win32::foundation::*;
 
+/// DXGI_SAMPLE_DESC
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct DxgiSampleDesc {
@@ -20,6 +23,7 @@ pub struct DxgiSampleDesc {
 	pub quality: u32,
 }
 
+/// DXGI_MODE_DESC
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct DxgiModeDesc {
@@ -31,6 +35,7 @@ pub struct DxgiModeDesc {
 	pub scaling: DxgiModeScaling,
 }
 
+/// DXGI_RATIONAL
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct DxgiRational {
@@ -38,6 +43,7 @@ pub struct DxgiRational {
 	pub denominator: u32,
 }
 
+/// DXGI_GAMMA_CONTROL_CAPABILITIES
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct DxgiGammaControlCapabilities {
@@ -48,6 +54,7 @@ pub struct DxgiGammaControlCapabilities {
 	pub control_point_positions: [f32; 1025],
 }
 
+/// DXGI_GAMMA_CONTROL
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct DxgiGammaControl {
@@ -56,6 +63,7 @@ pub struct DxgiGammaControl {
 	pub gamma_curve: [DxgiRgb; 1025],
 }
 
+/// DXGI_RGB
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct DxgiRgb {

@@ -6,7 +6,9 @@
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
+use std::num::NonZeroUsize;
 use std::mem::{MaybeUninit, size_of_val, transmute};
+use std::ops::Deref;
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -17,57 +19,66 @@ use crate::core::win32::graphics::dxgi::common::*;
 use crate::core::win32::system::com::*;
 
 #[repr(C)]
+#[derive(Clone, Hash)]
 pub struct DxgiSwapChain3(pub(crate) DxgiSwapChain2);
+
+impl Deref for DxgiSwapChain3 {
+	type Target = DxgiSwapChain2;
+	fn deref(&self) -> &Self::Target { &self.0	}
+}
 
 impl Guid for DxgiSwapChain3 {
 	const IID: &'static GUID = &GUID::from_u128(0x94d99bdbf1f84ab0b2367da0170edab1u128);
 }
 
-impl Clone for DxgiSwapChain3 {
-	fn clone(&self) -> Self { DxgiSwapChain3(self.0.clone()) }
+impl Com for DxgiSwapChain3 {
+	fn vtable(&self) -> VTable { self.0.vtable() }
+}
+
+impl DxgiSwapChain3 {
+	pub fn GetCurrentBackBufferIndex(&self) -> u32 {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>) -> u32
+				= transmute(vt[36]);
+			let _ret_ = f(vt);
+			_ret_
+		}
+	}
+
+	pub fn CheckColorSpaceSupport(&self, color_space: DxgiColorSpaceType) -> Result<u32, HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let mut color_space_support_out_: MaybeUninit<u32> = MaybeUninit::zeroed();
+			let f: extern "system" fn(Param<Self>, DxgiColorSpaceType, *mut u32) -> HResult
+				= transmute(vt[37]);
+			let _ret_ = f(vt, color_space, color_space_support_out_.as_mut_ptr());
+			if _ret_.is_ok() { Ok(color_space_support_out_.assume_init()) } else { Err(_ret_) }
+		}
+	}
+
+	pub fn SetColorSpace1(&self, color_space: DxgiColorSpaceType) -> Result<(), HResult> {
+		unsafe {
+			let vt = self.as_param();
+			let f: extern "system" fn(Param<Self>, DxgiColorSpaceType) -> HResult
+				= transmute(vt[38]);
+			let _ret_ = f(vt, color_space);
+			_ret_.ok()
+		}
+	}
+
+	pub unsafe fn ResizeBuffers1() { todo!() }
 }
 
 pub trait IDxgiSwapChain3: IDxgiSwapChain2 {
 	fn as_swap_chain3(&self) -> &DxgiSwapChain3;
 	fn into_swap_chain3(self) -> DxgiSwapChain3;
-
-	fn GetCurrentBackBufferIndex(&self, ) -> u32 {
-		unsafe {
-			let vt = self.as_param();
-			let f: extern "system" fn(Param<Self>, ) -> u32
-				= transmute(vt[36]);
-			let _ret_ = f(vt, );
-			_ret_
-		}
-	}
-
-	fn CheckColorSpaceSupport(&self, color_space: DxgiColorSpaceType, ) -> Result<u32, HResult> {
-		unsafe {
-			let vt = self.as_param();
-			let mut _out_color_space_support: MaybeUninit<u32> = MaybeUninit::zeroed();
-			let f: extern "system" fn(Param<Self>, color_space: DxgiColorSpaceType, _out_color_space_support: *mut u32, ) -> HResult
-				= transmute(vt[37]);
-			let _ret_ = f(vt, color_space, _out_color_space_support.as_mut_ptr(), );
-			Ok(_out_color_space_support.assume_init())
-		}
-	}
-
-	fn SetColorSpace1(&self, color_space: DxgiColorSpaceType, ) -> Result<(), HResult> {
-		unsafe {
-			let vt = self.as_param();
-			let f: extern "system" fn(Param<Self>, color_space: DxgiColorSpaceType, ) -> HResult
-				= transmute(vt[38]);
-			let _ret_ = f(vt, color_space, );
-			_ret_.ok()
-		}
-	}
 }
 
 impl IDxgiSwapChain3 for DxgiSwapChain3 {
 	fn as_swap_chain3(&self) -> &DxgiSwapChain3 { self }
 	fn into_swap_chain3(self) -> DxgiSwapChain3 { self }
 }
-
 impl IDxgiSwapChain2 for DxgiSwapChain3 {
 	fn as_swap_chain2(&self) -> &DxgiSwapChain2 { &self.0.as_swap_chain2() }
 	fn into_swap_chain2(self) -> DxgiSwapChain2 { self.0.into_swap_chain2() }
@@ -93,14 +104,14 @@ impl IDxgiObject for DxgiSwapChain3 {
 	fn into_object(self) -> DxgiObject { self.0.into_object() }
 }
 
-impl From<Unknown> for DxgiSwapChain3 {
-    fn from(v: Unknown) -> Self {
-        Self(DxgiSwapChain2::from(v))
-    }
-}
-
 impl IUnknown for DxgiSwapChain3 {
 	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
 	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
+}
+
+impl From<UnknownWrapper> for DxgiSwapChain3 {
+    fn from(v: UnknownWrapper) -> Self {
+        Self(DxgiSwapChain2::from(v))
+    }
 }
 

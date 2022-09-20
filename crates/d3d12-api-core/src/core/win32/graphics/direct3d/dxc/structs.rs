@@ -7,11 +7,14 @@
 use std::ffi::c_void;
 use std::mem::transmute;
 use std::ptr::NonNull;
+use std::num::NonZeroUsize;
+use std::ops::{Deref, DerefMut};
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::system::com::*;
 use crate::core::win32::foundation::*;
 
+/// DxcShaderHash
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct DxcShaderHash {
@@ -19,6 +22,7 @@ pub struct DxcShaderHash {
 	pub hash_digest: [u8; 16],
 }
 
+/// DxcBuffer
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct DxcBuffer<'a> {
@@ -27,6 +31,7 @@ pub struct DxcBuffer<'a> {
 	pub encoding: u32,
 }
 
+/// DxcDefine
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct DxcDefine<'a> {
@@ -34,6 +39,7 @@ pub struct DxcDefine<'a> {
 	pub value: PWStr<'a>,
 }
 
+/// DxcArgPair
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct DxcArgPair<'a> {

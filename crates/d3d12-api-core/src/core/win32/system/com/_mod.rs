@@ -60,37 +60,45 @@ pub(crate) fn option_to_vtable(a: Option<&impl Com>) -> *const c_void {
     }
 }
 
-impl<T: IUnknown> Com for T {
+/* note: 概ねうまくいくが部分的に再帰的評価を引き起こすのでやめる
+impl<T: Guid + IUnknown> Com for T {
     fn vtable(&self) -> VTable {
         self.as_unknown().0
     }
-}
+}*/
 
 #[repr(C)]
+#[derive(Hash)]
 pub struct Unknown(VTable);
 
-impl Clone for Unknown {
-    // note: AddRef
-    fn clone(&self) -> Self {
+impl Unknown {
+    pub unsafe fn new(vt: VTable) -> Self { Self(vt) }
+    /// Do not call AddRef() unless there is a special reason. this is called by Clone::clone().
+    pub unsafe fn AddRef(&self) -> u32 {
         let vt = self.vtable();
         let f: extern "system" fn(VTable) -> u32
             = unsafe { transmute(vt[1]) };
-        f(vt);
-        Unknown(self.0)
+        f(vt)
     }
+    /// Do not call Release() unless there is a special reason. this is called by Drop::drop().
+    pub unsafe fn Release(&self) -> u32 {
+        let vt = self.vtable();
+        let f: extern "system" fn(VTable) -> u32
+            = unsafe { transmute(vt[2]) };
+        f(vt)
+    }
+}
 
-    fn clone_from(&mut self, source: &Self) {
-        *self = source.clone();
+impl Clone for Unknown {
+    fn clone(&self) -> Self {
+        unsafe { self.AddRef(); }
+        Unknown(self.0)
     }
 }
 
 impl Drop for Unknown {
-    // note: Release
     fn drop(&mut self) {
-        let vt = self.vtable();
-        let f: extern "system" fn(VTable) -> u32
-            = unsafe { transmute(vt[2]) };
-        f(vt);
+        unsafe { self.Release(); }
     }
 }
 
@@ -98,16 +106,12 @@ impl Guid for Unknown {
     const IID: &'static GUID = &GUID::from_u128(0x00000000_0000_0000_c000_000000000046);
 }
 
-impl IUnknown for Unknown {
-    fn as_unknown(&self) -> &Unknown { self }
-    fn into_unknown(self) -> Unknown { self }
+impl Com for Unknown {
+    fn vtable(&self) -> VTable { self.0 }
 }
 
-pub trait IUnknown: Com + Clone + From<Unknown> {
-    fn as_unknown(&self) -> &Unknown;
-    fn into_unknown(self) -> Unknown;
-
-    fn QueryInterface<T: IUnknown>(&self) -> Result<T, HResult> {
+impl Unknown {
+    pub fn QueryInterface<T: IUnknown + From<UnknownWrapper>>(&self) -> Result<T, HResult> {
         let vt = self.as_param();
         let mut out: Option<Unknown> = None;
         let f: extern "system" fn(Param<Self>, *const GUID, &mut Option<Unknown>) -> HResult
@@ -115,15 +119,37 @@ pub trait IUnknown: Com + Clone + From<Unknown> {
         let ret = f(vt, T::IID, &mut out);
         if ret.is_ok() {
             if let Some(o) = out {
-                return Ok(T::from(o));
+                return Ok(T::from(UnknownWrapper(o)));
             }
         }
         Err(ret)
     }
 }
 
+impl IUnknown for Unknown {
+    fn as_unknown(&self) -> &Unknown { self }
+    fn into_unknown(self) -> Unknown { self }
+}
+
+// pub trait IUnknown: Com + Clone + From<Unknown> { // note: cloneは必須でなくて良い, fromを公開しない
+pub trait IUnknown: Com {
+    fn as_unknown(&self) -> &Unknown;
+    fn into_unknown(self) -> Unknown;
+}
+
+#[repr(transparent)]
+pub struct UnknownWrapper(pub(crate) Unknown);
+
+impl UnknownWrapper {
+    pub unsafe fn new(v: Unknown) -> Self { Self(v) }
+}
+
+impl From<UnknownWrapper> for Unknown {
+    fn from(v: UnknownWrapper) -> Self { v.0 }
+}
+
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Hash)]
 pub struct VTable(NonNull<*const *const c_void>);
 
 impl Index<isize> for VTable {
@@ -167,7 +193,7 @@ pub trait AsParam {
     fn as_param(&self) -> Param<Self>;
 }
 
-impl<T: IUnknown> AsParam for T {
+impl<T: Com + ?Sized> AsParam for T {
     fn as_param(&self) -> Param<T> {
         Param::<T>(self.vtable(), PhantomData)
     }

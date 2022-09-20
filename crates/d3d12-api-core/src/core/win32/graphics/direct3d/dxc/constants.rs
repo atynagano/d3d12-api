@@ -6,7 +6,9 @@
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
+use std::num::NonZeroUsize;
 use std::mem::{MaybeUninit, size_of_val, transmute};
+use std::ops::Deref;
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -14,15 +16,15 @@ use crate::core::win32::system::com::*;
 
 use std::ops::{BitOr, BitOrAssign};
 
-pub const DXC_HASHFLAG_INCLUDES_SOURCE: u32 = 0x1;
-pub const DxcValidatorFlags_Default: u32 = 0x0;
-pub const DxcValidatorFlags_InPlaceEdit: u32 = 0x1;
-pub const DxcValidatorFlags_RootSignatureOnly: u32 = 0x2;
-pub const DxcValidatorFlags_ModuleOnly: u32 = 0x4;
-pub const DxcValidatorFlags_ValidMask: u32 = 0x7;
-pub const DxcVersionInfoFlags_None: u32 = 0x0;
-pub const DxcVersionInfoFlags_Debug: u32 = 0x1;
-pub const DxcVersionInfoFlags_Internal: u32 = 0x2;
+pub const DXC_HASHFLAG_INCLUDES_SOURCE: u32 = 0x1u32;
+pub const DxcValidatorFlags_Default: u32 = 0x0u32;
+pub const DxcValidatorFlags_InPlaceEdit: u32 = 0x1u32;
+pub const DxcValidatorFlags_RootSignatureOnly: u32 = 0x2u32;
+pub const DxcValidatorFlags_ModuleOnly: u32 = 0x4u32;
+pub const DxcValidatorFlags_ValidMask: u32 = 0x7u32;
+pub const DxcVersionInfoFlags_None: u32 = 0x0u32;
+pub const DxcVersionInfoFlags_Debug: u32 = 0x1u32;
+pub const DxcVersionInfoFlags_Internal: u32 = 0x2u32;
 pub const CLSID_DxcCompiler: GUID = GUID::from_u128(0x73e22d93e6ce47f3b5bff0664f39c1b0u128);
 pub const CLSID_DxcLinker: GUID = GUID::from_u128(0xef6a8087b0ea4d569e45d07e1a8b7806u128);
 pub const CLSID_DxcDiaDataSource: GUID = GUID::from_u128(0xcd1f6b732ab0484d8edcebe7a43ca09fu128);

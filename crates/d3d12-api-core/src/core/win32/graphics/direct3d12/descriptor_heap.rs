@@ -6,7 +6,9 @@
 
 use std::ffi::c_void;
 use std::ptr::{NonNull, null};
+use std::num::NonZeroUsize;
 use std::mem::{MaybeUninit, size_of_val, transmute};
+use std::ops::Deref;
 use crate::helpers::*;
 use super::*;
 use crate::core::win32::foundation::*;
@@ -15,55 +17,62 @@ use crate::core::win32::system::com::*;
 use crate::core::win32::graphics::direct3d12::*;
 
 #[repr(C)]
+#[derive(Clone, Hash)]
 pub struct D3D12DescriptorHeap(pub(crate) D3D12Pageable);
+
+impl Deref for D3D12DescriptorHeap {
+	type Target = D3D12Pageable;
+	fn deref(&self) -> &Self::Target { &self.0	}
+}
 
 impl Guid for D3D12DescriptorHeap {
 	const IID: &'static GUID = &GUID::from_u128(0x8efb471d616c4f4990f7127bb763fa51u128);
 }
 
-impl Clone for D3D12DescriptorHeap {
-	fn clone(&self) -> Self { D3D12DescriptorHeap(self.0.clone()) }
+impl Com for D3D12DescriptorHeap {
+	fn vtable(&self) -> VTable { self.0.vtable() }
+}
+
+impl D3D12DescriptorHeap {
+	pub fn GetDesc(&self) -> D3D12DescriptorHeapDesc {
+		unsafe {
+			let vt = self.as_param();
+			let mut _out_: MaybeUninit<D3D12DescriptorHeapDesc> = MaybeUninit::zeroed();
+			let f: extern "system" fn(Param<Self>, *mut D3D12DescriptorHeapDesc) -> ()
+				= transmute(vt[8]);
+			let _ret_ = f(vt, _out_.as_mut_ptr());
+			_out_.assume_init()
+		}
+	}
+
+	pub fn GetCPUDescriptorHandleForHeapStart(&self) -> Option<D3D12CpuDescriptorHandle> {
+		let vt = self.as_param();
+		let mut out = None;
+		let f: extern "system" fn(Param<Self>, *mut Option<D3D12CpuDescriptorHandle>) -> *const D3D12CpuDescriptorHandle
+			= unsafe { transmute(vt[9]) };
+		let _ = f(vt, &mut out);
+		out
+	}
+
+	pub fn GetGPUDescriptorHandleForHeapStart(&self) -> Option<D3D12GpuDescriptorHandle> {
+		let vt = self.as_param();
+		let mut out = None;
+		let f: extern "system" fn(Param<Self>, &mut Option<D3D12GpuDescriptorHandle>) -> *const D3D12GpuDescriptorHandle
+			= unsafe { transmute(vt[10]) };
+		let _ = f(vt, &mut out);
+		out
+	}
 }
 
 pub trait ID3D12DescriptorHeap: ID3D12Pageable {
 	fn as_descriptor_heap(&self) -> &D3D12DescriptorHeap;
 	fn into_descriptor_heap(self) -> D3D12DescriptorHeap;
-
-	fn GetDesc(&self, ) -> D3D12DescriptorHeapDesc {
-		unsafe {
-			let vt = self.as_param();
-			let mut _out__out_desc: MaybeUninit<D3D12DescriptorHeapDesc> = MaybeUninit::zeroed();
-			let f: extern "system" fn(Param<Self>, _out__out_desc: *mut D3D12DescriptorHeapDesc, ) -> ()
-				= transmute(vt[8]);
-			let _ret_ = f(vt, _out__out_desc.as_mut_ptr(), );
-			_out__out_desc.assume_init()
-		}
-	}
-
-	fn GetCPUDescriptorHandleForHeapStart(&self) -> (D3D12CpuDescriptorHandle) {
-		let vt = self.as_param();
-		let mut out = D3D12CpuDescriptorHandle { ptr: 0 };
-		let f: extern "system" fn(Param<Self>, &mut D3D12CpuDescriptorHandle) -> *const D3D12CpuDescriptorHandle
-			= unsafe { transmute(vt[9]) };
-		let _ = f(vt, &mut out);
-		return (out);
-	}
-
-	fn GetGPUDescriptorHandleForHeapStart(&self) -> (D3D12CpuDescriptorHandle) {
-		let vt = self.as_param();
-		let mut out = D3D12CpuDescriptorHandle { ptr: 0 };
-		let f: extern "system" fn(Param<Self>, &mut D3D12CpuDescriptorHandle) -> *const D3D12CpuDescriptorHandle
-			= unsafe { transmute(vt[10]) };
-		let _ = f(vt, &mut out);
-		return (out);
-	}
 }
 
 impl ID3D12DescriptorHeap for D3D12DescriptorHeap {
 	fn as_descriptor_heap(&self) -> &D3D12DescriptorHeap { self }
 	fn into_descriptor_heap(self) -> D3D12DescriptorHeap { self }
 }
-
 impl ID3D12Pageable for D3D12DescriptorHeap {
 	fn as_pageable(&self) -> &D3D12Pageable { &self.0.as_pageable() }
 	fn into_pageable(self) -> D3D12Pageable { self.0.into_pageable() }
@@ -79,14 +88,14 @@ impl ID3D12Object for D3D12DescriptorHeap {
 	fn into_object(self) -> D3D12Object { self.0.into_object() }
 }
 
-impl From<Unknown> for D3D12DescriptorHeap {
-    fn from(v: Unknown) -> Self {
-        Self(D3D12Pageable::from(v))
-    }
-}
-
 impl IUnknown for D3D12DescriptorHeap {
 	fn as_unknown(&self) -> &Unknown { &self.0.as_unknown() }
 	fn into_unknown(self) -> Unknown { self.0.into_unknown() }
+}
+
+impl From<UnknownWrapper> for D3D12DescriptorHeap {
+    fn from(v: UnknownWrapper) -> Self {
+        Self(D3D12Pageable::from(v))
+    }
 }
 
